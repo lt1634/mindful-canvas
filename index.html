@@ -89,6 +89,44 @@ body {
 .scene-card .title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
 .scene-card .desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
 
+.mode-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 340px;
+  margin-top: 8px;
+}
+.mode-card {
+  background: var(--surface);
+  border: 1px solid rgba(226,181,90,0.25);
+  border-radius: 16px;
+  padding: 22px 20px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.mode-card:active { transform: scale(0.98); border-color: var(--accent); }
+.mode-card.zen {
+  border-color: rgba(139,94,131,0.45);
+  background: linear-gradient(145deg, #16213e 0%, #1a1a2e 100%);
+}
+.mode-card .mode-emoji { font-size: 32px; margin-bottom: 8px; }
+.mode-card .mode-title { font-size: 17px; font-weight: 600; color: var(--accent); margin-bottom: 6px; }
+.mode-card .mode-desc { font-size: 13px; color: var(--text-muted); line-height: 1.65; }
+.mode-card .mode-meta { font-size: 11px; color: #666; margin-top: 10px; letter-spacing: 1px; }
+
+.zen-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  pointer-events: none;
+  padding: 14px 16px;
+  text-align: center;
+  z-index: 5;
+}
+.zen-timer { font-size: 14px; color: var(--accent); letter-spacing: 2px; }
+.zen-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+
 /* ===== CANVAS SCREEN ===== */
 #canvasScreen { background: var(--bg); }
 
@@ -455,57 +493,20 @@ body {
 <div id="welcome" class="screen active">
   <h1 id="welcomeLogo">覺知畫布</h1>
   <p style="font-size:11px; color:#555; margin-top:-8px;">Mindful Canvas™</p>
-  <p>用色彩釋放情緒<br>每一筆都會慢慢消失<br>一切終將過去</p>
+  <p>選一種方式，與色彩同在</p>
 
-  <div style="width:100%; max-width:320px; margin-top:20px;">
-    <div style="font-size:11px; color:#555; text-align:center; margin-bottom:8px; letter-spacing:2px;">情緒出口</div>
-    <div class="scene-cards" style="margin-top:0;">
-      <div class="scene-card" onclick="startCanvas('anxious')">
-        <div class="emoji">😰</div>
-        <div class="title">面對空白感到焦慮</div>
-        <div class="desc">深呼吸，白紙只是一片安靜的雪地</div>
-      </div>
-      <div class="scene-card" onclick="startCanvas('chaotic')">
-        <div class="emoji">🌀</div>
-        <div class="title">腦袋很亂</div>
-        <div class="desc">把混亂的思緒，透過畫筆引導到紙上</div>
-      </div>
-      <div class="scene-card" onclick="startCanvas('stuck')">
-        <div class="emoji">⏸️</div>
-        <div class="title">創作卡住了</div>
-        <div class="desc">停頓是休止符，與此刻共處</div>
-      </div>
-      <div class="scene-card" onclick="startCanvas('free')">
-        <div class="emoji">🎨</div>
-        <div class="title">自由書寫</div>
-        <div class="desc">隨心所欲，讓過程成為目的</div>
-      </div>
+  <div class="mode-cards">
+    <div class="mode-card" onclick="startFreeMode()">
+      <div class="mode-emoji">🎨</div>
+      <div class="mode-title">自由畫報</div>
+      <div class="mode-desc">冇規則、冇對錯。用手指自由塗抹，每一筆都會慢慢消失，讓情緒自然流走。</div>
+      <div class="mode-meta">約 5 分鐘 · 自己決定幾時完成</div>
     </div>
-  </div>
-
-  <div style="width:100%; max-width:320px; margin-top:16px;">
-    <div style="font-size:11px; color:#555; text-align:center; margin-bottom:8px; letter-spacing:2px;">四無量心</div>
-    <div class="scene-cards" style="margin-top:0;">
-      <div class="scene-card" onclick="startCanvas('metta')" style="border-color:rgba(90,122,90,0.3);">
-        <div class="emoji">💚</div>
-        <div class="title">慈 — 願你快樂</div>
-        <div class="desc">為你想祝福的人，用色彩送上善意</div>
-      </div>
-      <div class="scene-card" onclick="startCanvas('karuna')" style="border-color:rgba(44,95,124,0.3);">
-        <div class="emoji">💧</div>
-        <div class="title">悲 — 願你離苦</div>
-        <div class="desc">為正在受苦的人，畫出你的陪伴</div>
-      </div>
-      <div class="scene-card" onclick="startCanvas('mudita')" style="border-color:rgba(226,181,90,0.3);">
-        <div class="emoji">✨</div>
-        <div class="title">喜 — 為你歡喜</div>
-        <div class="desc">為他人的快樂，畫出由衷的喜悅</div>
-      </div>
-      <div class="scene-card" onclick="startCanvas('upekkha')" style="border-color:rgba(139,94,131,0.3);">
-        <div class="emoji">🌊</div>
-        <div class="title">捨 — 平等放下</div>
-        <div class="desc">接納無常，平靜地與不完美共處</div>
-      </div>
+    <div class="mode-card zen" onclick="startZenMode()">
+      <div class="mode-emoji">🪷</div>
+      <div class="mode-title">禪繞唐卡</div>
+      <div class="mode-desc">畫面會慢慢浮現禪意圖案，伴隨柔和音樂。輕觸畫面感受光暈，跟住節奏，約 1 分鐘完成一幅畫。</div>
+      <div class="mode-meta">約 1 分鐘 · 引導體驗</div>
     </div>
   </div>
 </div>
@@ -514,22 +515,28 @@ body {
 <div id="canvasScreen" class="screen">
   <div class="canvas-header">
     <button class="btn-text" onclick="goHome()">← 返回</button>
-    <span class="title">自由繪畫</span>
-    <button class="btn-text" onclick="generateCard()">完成 →</button>
+    <span class="title" id="canvasTitle">自由畫報</span>
+    <button class="btn-text" id="completeBtn" onclick="generateCard()">完成 →</button>
   </div>
   <div class="canvas-area">
     <canvas id="drawCanvas"></canvas>
+    <div class="zen-overlay" id="zenOverlay" style="display:none;">
+      <div class="zen-timer" id="zenTimer">1:00</div>
+      <div class="zen-hint" id="zenHint">輕觸畫面，感受指尖的光</div>
+    </div>
   </div>
-  <div class="color-bar" id="colorBar"></div>
-  <div class="size-bar" id="sizeBar"></div>
-  <div class="voice-bar">
-    <div class="voice-text" id="voiceText"></div>
-    <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎙️</button>
-    <div class="voice-hint" id="voiceHint">按一下開始，再按一下停止</div>
+  <div id="freeModeUI">
+    <div class="color-bar" id="colorBar"></div>
+    <div class="size-bar" id="sizeBar"></div>
+    <div class="voice-bar">
+      <div class="voice-text" id="voiceText"></div>
+      <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎙️</button>
+      <div class="voice-hint" id="voiceHint">按一下開始，再按一下停止</div>
+    </div>
+    <label class="particle-toggle">
+      <input type="checkbox" id="particleToggle" checked> 禪意粒子
+    </label>
   </div>
-  <label class="particle-toggle">
-    <input type="checkbox" id="particleToggle" checked> 禪意粒子
-  </label>
 </div>
 
 <!-- CARD -->
@@ -624,6 +631,14 @@ let pendingSession = null;
 let feedbackHappiness = null;
 let feedbackReplay = null;
 let logoPressTimer = null;
+let appMode = 'free';
+let zenStartTime = 0;
+let zenDuration = 60000;
+let zenProgress = 0;
+let zenFinished = false;
+let zenTouchCount = 0;
+let zenRipples = [];
+let zenAudio = null;
 
 const STORAGE_KEY = 'mindful_canvas_sessions';
 
@@ -649,7 +664,8 @@ const OLLAMA_SCENE_MAP = {
   metta: '慈、祝福他人、願你快樂',
   karuna: '悲、陪伴受苦的人、願你離苦',
   mudita: '喜、為他人歡喜、分享快樂',
-  upekkha: '捨、放下執著、接納無常'
+  upekkha: '捨、放下執著、接納無常',
+  zen: '禪繞唐卡、靜心跟隨、輕觸感受、一分鐘完成'
 };
 
 function checkSafety() {
@@ -707,7 +723,8 @@ const SCENE_GUIDANCE = {
   anxious: '你選擇了「焦慮」。深呼吸……這張白紙是一片安靜的雪地。你的畫筆只是輕輕劃過表面，不需要急著定義它。現在，隨意畫一條線，或點一個點。允許第一筆是不完美的。',
   chaotic: '你選擇了「混亂」。腦袋裝了很多東西，像一團打結的線條。沒關係，不需要強迫它停下來。把注意力帶回呼吸，把混亂透過畫筆引導到紙上。不需要畫出具體形狀。',
   stuck: '你選擇了「停頓」。停滯是創作中自然的一部分，像音樂裡的休止符。不需要急著突破。當你準備好時，不要想「我要畫什麼」，而是感受「我的手想怎麼動」。',
-  free: '你選擇了「自由」。沒有規則，沒有對錯。讓手帶領你，讓色彩在畫布上流動。這一刻，你只需要與色彩同在。',
+  free: '你選擇了「自由畫報」。沒有規則，沒有對錯。讓手帶領你，讓色彩在畫布上流動。這一刻，你只需要與色彩同在。',
+  zen: '你選擇了「禪繞唐卡」。不需要畫得好，只需要跟著節奏。輕觸畫面，感受光暈，讓圖案與音樂帶你進入當下。',
   metta: '你選擇了「慈」。想想一個你想祝福的人——家人、朋友、甚至自己。讓你的畫筆帶著善意流動，不需要完美，只需要真心。每一筆都是一句無聲的祝福：願你快樂。',
   karuna: '你選擇了「悲」。想想一個正在受苦的人。你不需要解決他的問題，只需要在畫布上畫出你的陪伴。有時候，靜靜地同在，就是最大的慈悲。',
   mudita: '你選擇了「喜」。想想一個讓你由衷高興的人——他的成就、他的笑容、他的幸福。讓你的色彩變得明亮，為他人的快樂畫出喜悅。為他歡喜，就是修行。',
@@ -758,6 +775,29 @@ let strokeCount = 0;
 let silenceStart = Date.now();
 let totalSilence = 0;
 let canvasW = 0, canvasH = 0;
+
+class ZenRipple {
+  constructor(x, y) {
+    this.x = x; this.y = y;
+    this.r = 4;
+    this.maxR = 50 + Math.random() * 50;
+    this.life = 1;
+  }
+  update() {
+    this.r += 1.8;
+    this.life -= 0.018;
+  }
+  draw() {
+    ctx.save();
+    ctx.strokeStyle = '#e2b55a';
+    ctx.globalAlpha = this.life * 0.45;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
 
 class Particle {
   constructor(x, y, color) {
@@ -820,6 +860,15 @@ function redrawWithFade() {
 }
 
 function animate() {
+  if (appMode === 'zen') {
+    animateZenFrame();
+  } else {
+    animateFreeFrame();
+  }
+  animFrameId = requestAnimationFrame(animate);
+}
+
+function animateFreeFrame() {
   ctx.clearRect(0, 0, canvasW, canvasH);
   redrawWithFade();
   if (drawing && currentStroke.length > 1) {
@@ -835,15 +884,185 @@ function animate() {
     ctx.stroke();
     ctx.restore();
   }
-  if (particlesEnabled) {
-    for (let i = particles.length - 1; i >= 0; i--) {
-      particles[i].update();
-      if (particles[i].life <= 0) particles.splice(i, 1);
-      else particles[i].draw();
-    }
-    if (particles.length > 200) particles.splice(0, particles.length - 200);
+  drawParticles();
+}
+
+function animateZenFrame() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, canvasW, canvasH);
+
+  const elapsed = Date.now() - zenStartTime;
+  zenProgress = Math.min(1, elapsed / zenDuration);
+  drawZenMandala(zenProgress);
+
+  for (let i = zenRipples.length - 1; i >= 0; i--) {
+    zenRipples[i].update();
+    if (zenRipples[i].life <= 0) zenRipples.splice(i, 1);
+    else zenRipples[i].draw();
   }
-  animFrameId = requestAnimationFrame(animate);
+  drawParticles();
+
+  const remain = Math.max(0, Math.ceil((zenDuration - elapsed) / 1000));
+  const m = Math.floor(remain / 60);
+  const s = remain % 60;
+  document.getElementById('zenTimer').textContent = m + ':' + String(s).padStart(2, '0');
+
+  if (zenProgress >= 1 && !zenFinished) {
+    finishZenSession();
+  }
+}
+
+function drawParticles() {
+  if (!particlesEnabled && appMode !== 'zen') return;
+  for (let i = particles.length - 1; i >= 0; i--) {
+    particles[i].update();
+    if (particles[i].life <= 0) particles.splice(i, 1);
+    else particles[i].draw();
+  }
+  if (particles.length > 200) particles.splice(0, particles.length - 200);
+}
+
+function drawZenPetal(cx, cy, dist, angle, color, alpha, scale) {
+  ctx.save();
+  ctx.translate(cx + Math.cos(angle) * dist, cy + Math.sin(angle) * dist);
+  ctx.rotate(angle + Math.PI / 2);
+  ctx.fillStyle = color;
+  ctx.globalAlpha = alpha;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 8 * scale, 22 * scale, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawZenMandala(progress) {
+  const cx = canvasW / 2;
+  const cy = canvasH / 2;
+  const r = Math.min(canvasW, canvasH) * 0.36;
+
+  const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.3);
+  glow.addColorStop(0, 'rgba(226,181,90,' + (0.12 * progress) + ')');
+  glow.addColorStop(1, 'rgba(26,26,46,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, canvasW, canvasH);
+
+  const layer = (start, end, fn) => {
+    if (progress < start) return;
+    fn(Math.min(1, (progress - start) / (end - start)));
+  };
+
+  layer(0, 0.1, (t) => {
+    ctx.save();
+    ctx.strokeStyle = '#2c5f7c';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = t * 0.7;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2 * t);
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  layer(0.1, 0.3, (t) => {
+    const petals = 16;
+    const count = Math.floor(petals * t);
+    for (let i = 0; i < count; i++) {
+      const angle = (i / petals) * Math.PI * 2 - Math.PI / 2;
+      drawZenPetal(cx, cy, r * 0.78, angle, '#8b5e83', 0.55, 1);
+    }
+  });
+
+  layer(0.3, 0.5, (t) => {
+    ctx.save();
+    ctx.strokeStyle = '#e2b55a';
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = t * 0.6;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.55, 0, Math.PI * 2 * t);
+    ctx.stroke();
+    ctx.restore();
+    const inner = 8;
+    for (let i = 0; i < Math.floor(inner * t); i++) {
+      const angle = (i / inner) * Math.PI * 2;
+      drawZenPetal(cx, cy, r * 0.42, angle, '#5a7a5a', 0.5, 0.85);
+    }
+  });
+
+  layer(0.5, 0.72, (t) => {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(Math.PI / 4 * t);
+    ctx.strokeStyle = '#a0826d';
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = t * 0.65;
+    const s = r * 0.32;
+    ctx.strokeRect(-s, -s, s * 2, s * 2);
+    ctx.restore();
+  });
+
+  layer(0.72, 0.88, (t) => {
+    ctx.save();
+    ctx.strokeStyle = '#e2b55a';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = t * 0.8;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.18, 0, Math.PI * 2 * t);
+    ctx.stroke();
+    ctx.fillStyle = '#e2b55a';
+    ctx.globalAlpha = t * 0.9;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 4 * t, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  layer(0.88, 1, (t) => {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(212,208,200,0.5)';
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = t;
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(a) * r * 0.9 * t, cy + Math.sin(a) * r * 0.9 * t);
+      ctx.stroke();
+    }
+    ctx.restore();
+  });
+}
+
+function startZenAmbience() {
+  stopZenAmbience();
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const master = ac.createGain();
+    master.gain.value = 0.05;
+    master.connect(ac.destination);
+    [110, 164.81, 220].forEach((freq, i) => {
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      g.gain.value = 0.25 / (i + 1);
+      osc.connect(g);
+      g.connect(master);
+      osc.start();
+    });
+    zenAudio = ac;
+  } catch (e) {}
+}
+
+function stopZenAmbience() {
+  if (zenAudio) {
+    try { zenAudio.close(); } catch (e) {}
+    zenAudio = null;
+  }
+}
+
+function setCanvasModeUI(isFree) {
+  document.getElementById('freeModeUI').style.display = isFree ? 'block' : 'none';
+  document.getElementById('zenOverlay').style.display = isFree ? 'none' : 'block';
+  document.getElementById('canvasTitle').textContent = isFree ? '自由畫報' : '禪繞唐卡';
+  document.getElementById('completeBtn').style.display = isFree ? '' : 'none';
 }
 
 function startCanvasLoop() {
@@ -862,10 +1081,24 @@ function getPos(e) {
   return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
 }
 
+function zenTouchAt(pos) {
+  zenRipples.push(new ZenRipple(pos.x, pos.y));
+  for (let i = 0; i < 6; i++) {
+    particles.push(new Particle(pos.x, pos.y, '#e2b55a'));
+  }
+  zenTouchCount++;
+}
+
 function startDraw(e) {
   e.preventDefault();
-  drawing = true;
   const pos = getPos(e);
+  if (appMode === 'zen') {
+    if (zenFinished) return;
+    drawing = true;
+    zenTouchAt(pos);
+    return;
+  }
+  drawing = true;
   currentStroke = [{ x: pos.x, y: pos.y }];
   silenceStart = Date.now();
 }
@@ -874,6 +1107,11 @@ function draw(e) {
   if (!drawing) return;
   e.preventDefault();
   const pos = getPos(e);
+  if (appMode === 'zen') {
+    if (zenFinished) return;
+    if (Math.random() < 0.35) zenTouchAt(pos);
+    return;
+  }
   currentStroke.push({ x: pos.x, y: pos.y });
   if (particlesEnabled && Math.random() < 0.6) {
     particles.push(new Particle(pos.x, pos.y, currentColor));
@@ -982,26 +1220,64 @@ function showScreen(id) {
   document.getElementById(id).classList.add('active');
 }
 
-function startCanvas(scene) {
-  currentScene = scene;
+function resetCanvasState() {
   stopCanvasLoop();
+  stopZenAmbience();
   fadePhase = 0;
   strokeHistory = [];
   strokeCount = 0;
   totalSilence = 0;
   particles = [];
+  zenRipples = [];
+  zenTouchCount = 0;
+  zenProgress = 0;
+  zenFinished = false;
+  zenStartTime = 0;
   drawing = false;
   currentStroke = [];
+}
+
+function startFreeMode() {
+  appMode = 'free';
+  currentScene = 'free';
+  resetCanvasState();
+  setCanvasModeUI(true);
   showScreen('canvasScreen');
   setTimeout(() => {
     resizeCanvas();
-    showToast(SCENE_GUIDANCE[scene]);
+    showToast(SCENE_GUIDANCE.free);
     startFadeEffect();
   }, 100);
 }
 
+function startZenMode() {
+  appMode = 'zen';
+  currentScene = 'zen';
+  resetCanvasState();
+  setCanvasModeUI(false);
+  showScreen('canvasScreen');
+  setTimeout(() => {
+    resizeCanvas();
+    zenStartTime = Date.now();
+    startZenAmbience();
+    showToast(SCENE_GUIDANCE.zen);
+    startCanvasLoop();
+  }, 100);
+}
+
+function finishZenSession() {
+  zenFinished = true;
+  stopZenAmbience();
+  strokeCount = Math.max(zenTouchCount, 1);
+  document.getElementById('zenHint').textContent = '完成了，正在為你生成心靈卡片…';
+  setTimeout(() => generateCard(true), 800);
+}
+
 function goHome() {
   stopCanvasLoop();
+  stopZenAmbience();
+  appMode = 'free';
+  setCanvasModeUI(true);
   stopRecording();
   fadePhase = 0;
   strokeHistory = [];
@@ -1018,12 +1294,14 @@ function goHome() {
   document.getElementById('replayYes').classList.remove('active');
   document.getElementById('replayNo').classList.remove('active');
   restoreCardUI('normal');
+  zenFinished = false;
+  document.getElementById('zenHint').textContent = '輕觸畫面，感受指尖的光';
   showScreen('welcome');
 }
 
 // ===== CARD GENERATION =====
-function generateCard() {
-  if (strokeCount === 0 && !voiceText) {
+function generateCard(force) {
+  if (!force && strokeCount === 0 && !voiceText) {
     showToast('先畫一些東西或說些什麼吧');
     return;
   }
@@ -1070,10 +1348,11 @@ function generateCard() {
 
     pendingSession = {
       date: new Date().toISOString(),
+      mode: appMode,
       scene: currentScene,
       strokes: strokeCount,
       silence: Math.round(totalSilence),
-      dominantColor: getDominantColor(),
+      dominantColor: appMode === 'zen' ? '#e2b55a' : getDominantColor(),
       voiceUsed: !!voiceText,
       source: interpretation.source || 'template'
     };
@@ -1187,6 +1466,18 @@ function generateInterpretation() {
       '放下不是放棄。是「我看見了，我接受了，我繼續前行」。',
       '你在畫布上練習了最重要的一課：不執著。',
       '捨是四無量心的根基。沒有捨，就沒有真正的慈、悲、喜。你剛才做到了。'
+    ],
+    zen: [
+      '你跟隨節奏，讓唐卡在眼前慢慢綻放。這份耐心，本身就是修行。',
+      '你不需要畫得好，只需要在場。剛才那一分鐘，你已經做到了。',
+      '輕觸之間，光暈散開。你與畫面同在，這就是覺知。',
+      '音樂與圖案帶著你走，你的手只是回應。這份放鬆，值得被看見。',
+      '一分鐘很短，但足夠讓心靜下來。你剛才給了自己一份禮物。',
+      '唐卡的圓滿，不在於完美，而在於你願意跟隨。',
+      '你讓圖案自己出現，讓手指輕輕回應。這就是禪繞的意義。',
+      '剛才那一刻，你沒有追趕，沒有著急。很好。',
+      '光暈散開的瞬間，你已經與當下合一。',
+      '你完成了一幅禪意之畫。帶走這份平靜，回到日常吧。'
     ]
   };
 
@@ -1244,9 +1535,18 @@ function generateInterpretation() {
     metta: '你剛才為一個人送上了一份無聲的祝福。善意已經完成，不需要更多。帶住這份溫暖，回到你的日常。',
     karuna: '你剛才為一個人的痛苦騰出了一個空間。這份陪伴，就是你能做的最好的事。帶住這份慈悲，繼續前行。',
     mudita: '你剛才為他人的快樂畫了一幅畫。為他人歡喜，你自己也變得更豐盛。帶住這份喜悅，繼續前行。',
-    upekkha: '你剛才在畫布上練習了放下。每一筆都會消失，而你平靜地接受了這件事。這就是最大的自由。'
+    upekkha: '你剛才在畫布上練習了放下。每一筆都會消失，而你平靜地接受了這件事。這就是最大的自由。',
+    zen: '你剛才跟隨禪繞唐卡，完成了一次靜心的旅程。圖案已綻放，你的心也安定了。帶走這份感受，繼續前行。'
   };
   let endingPart = sceneEndings[currentScene] || sceneEndings.free;
+
+  if (currentScene === 'zen') {
+    strokePart = zenTouchCount > 0
+      ? `你在禪繞過程中輕觸了 ${zenTouchCount} 次，每一次都是與畫面的對話`
+      : '你安靜地跟隨圖案綻放，讓節奏帶領你完成這幅畫';
+    silencePart = '這一分鐘裡，你與音樂和圖案同在';
+    colorPart = '金色的光暈貫穿整幅唐卡，象徵內心的溫暖與覺醒。';
+  }
 
   // Assemble reflection
   const reflection = `${strokePart}，${silencePart}。${colorPart}${colorPart ? '。' : ''}${endingPart}`;
