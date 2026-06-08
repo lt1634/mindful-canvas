@@ -36,6 +36,14 @@ body {
 .screen { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
 .screen.active { display: flex; flex-direction: column; }
 
+#termsScreen {
+  background: var(--bg);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 24px;
+  z-index: 20;
+}
+
 /* ===== WELCOME SCREEN ===== */
 #welcome {
   align-items: center;
@@ -580,7 +588,7 @@ body {
 <div class="toast" id="toast"></div>
 
 <!-- TERMS OF USE -->
-<div id="termsScreen" class="screen" style="overflow-y:auto; padding:24px;">
+<div id="termsScreen" class="screen">
   <div style="max-width:480px; margin:0 auto;">
     <button class="btn-text" onclick="closeTerms()" style="margin-bottom:16px;">← 返回</button>
     <h2 style="font-size:20px; color:var(--accent); margin-bottom:16px;">使用條款 Terms of Use</h2>
@@ -1400,15 +1408,18 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
 }
 
 // ===== TERMS =====
+let termsReturnScreen = 'cardScreen';
+
 function showTerms() {
-  document.getElementById('termsScreen').classList.add('active');
-}
-function closeTerms() {
-  document.getElementById('termsScreen').classList.remove('active');
-  // Return to whichever screen was active before
-  if (document.getElementById('cardScreen').classList.contains('active')) {
-    document.getElementById('cardScreen').classList.add('active');
+  const active = document.querySelector('.screen.active');
+  if (active && active.id !== 'termsScreen') {
+    termsReturnScreen = active.id;
   }
+  showScreen('termsScreen');
+}
+
+function closeTerms() {
+  showScreen(termsReturnScreen || 'cardScreen');
 }
 
 // ===== TOAST =====
