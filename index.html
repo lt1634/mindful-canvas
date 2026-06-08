@@ -498,7 +498,7 @@ body {
   <div class="mode-cards">
     <div class="mode-card" onclick="startFreeMode()">
       <div class="mode-emoji">🎨</div>
-      <div class="mode-title">自由畫報</div>
+      <div class="mode-title">自由畫布</div>
       <div class="mode-desc">冇規則、冇對錯。用手指自由塗抹，每一筆都會慢慢消失，讓情緒自然流走。</div>
       <div class="mode-meta">約 5 分鐘 · 自己決定幾時完成</div>
     </div>
@@ -515,7 +515,7 @@ body {
 <div id="canvasScreen" class="screen">
   <div class="canvas-header">
     <button class="btn-text" onclick="goHome()">← 返回</button>
-    <span class="title" id="canvasTitle">自由畫報</span>
+    <span class="title" id="canvasTitle">自由畫布</span>
     <button class="btn-text" id="completeBtn" onclick="generateCard()">完成 →</button>
   </div>
   <div class="canvas-area">
@@ -723,7 +723,7 @@ const SCENE_GUIDANCE = {
   anxious: '你選擇了「焦慮」。深呼吸……這張白紙是一片安靜的雪地。你的畫筆只是輕輕劃過表面，不需要急著定義它。現在，隨意畫一條線，或點一個點。允許第一筆是不完美的。',
   chaotic: '你選擇了「混亂」。腦袋裝了很多東西，像一團打結的線條。沒關係，不需要強迫它停下來。把注意力帶回呼吸，把混亂透過畫筆引導到紙上。不需要畫出具體形狀。',
   stuck: '你選擇了「停頓」。停滯是創作中自然的一部分，像音樂裡的休止符。不需要急著突破。當你準備好時，不要想「我要畫什麼」，而是感受「我的手想怎麼動」。',
-  free: '你選擇了「自由畫報」。沒有規則，沒有對錯。讓手帶領你，讓色彩在畫布上流動。這一刻，你只需要與色彩同在。',
+  free: '你選擇了「自由畫布」。沒有規則，沒有對錯。讓手帶領你，讓色彩在畫布上流動。這一刻，你只需要與色彩同在。',
   zen: '你選擇了「禪繞唐卡」。不需要畫得好，只需要跟著節奏。輕觸畫面，感受光暈，讓圖案與音樂帶你進入當下。',
   metta: '你選擇了「慈」。想想一個你想祝福的人——家人、朋友、甚至自己。讓你的畫筆帶著善意流動，不需要完美，只需要真心。每一筆都是一句無聲的祝福：願你快樂。',
   karuna: '你選擇了「悲」。想想一個正在受苦的人。你不需要解決他的問題，只需要在畫布上畫出你的陪伴。有時候，靜靜地同在，就是最大的慈悲。',
@@ -1061,7 +1061,7 @@ function stopZenAmbience() {
 function setCanvasModeUI(isFree) {
   document.getElementById('freeModeUI').style.display = isFree ? 'block' : 'none';
   document.getElementById('zenOverlay').style.display = isFree ? 'none' : 'block';
-  document.getElementById('canvasTitle').textContent = isFree ? '自由畫報' : '禪繞唐卡';
+  document.getElementById('canvasTitle').textContent = isFree ? '自由畫布' : '禪繞唐卡';
   document.getElementById('completeBtn').style.display = isFree ? '' : 'none';
 }
 
