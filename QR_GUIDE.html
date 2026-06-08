@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mindful Canvas 校內測試指引</title>
+<style>
+  @page { size: A4; margin: 15mm; }
+  body {
+    font-family: -apple-system, 'PingFang HK', sans-serif;
+    color: #1a1a2e;
+    line-height: 1.6;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .header {
+    text-align: center;
+    border-bottom: 3px solid #e2b55a;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+  }
+  .header h1 {
+    font-size: 28px;
+    color: #1a1a2e;
+    margin: 0;
+  }
+  .header .subtitle {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+  }
+  .qr-section {
+    text-align: center;
+    margin: 20px 0;
+    padding: 20px;
+    background: #f8f6f0;
+    border-radius: 12px;
+  }
+  .qr-placeholder {
+    width: 200px;
+    height: 200px;
+    border: 2px dashed #ccc;
+    margin: 0 auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #999;
+    background: white;
+    border-radius: 8px;
+  }
+  .qr-url {
+    font-size: 12px;
+    color: #666;
+    word-break: break-all;
+  }
+  .steps {
+    margin: 20px 0;
+  }
+  .step {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding: 12px;
+    background: #fafafa;
+    border-radius: 8px;
+    border-left: 4px solid #e2b55a;
+  }
+  .step-num {
+    font-size: 24px;
+    font-weight: bold;
+    color: #e2b55a;
+    min-width: 35px;
+  }
+  .step-content h3 {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+  }
+  .step-content p {
+    margin: 0;
+    font-size: 14px;
+    color: #555;
+  }
+  .scenes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 15px 0;
+  }
+  .scene-item {
+    padding: 8px 12px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    font-size: 13px;
+  }
+  .footer {
+    text-align: center;
+    font-size: 11px;
+    color: #999;
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+  }
+  .important {
+    background: #fff3cd;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin: 15px 0;
+    border-left: 4px solid #ffc107;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎨 覺知畫布 Mindful Canvas™</h1>
+  <div class="subtitle">用色彩釋放情緒 · 每一筆都會慢慢消失</div>
+</div>
+
+<div class="qr-section">
+  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXIAAAFyAQAAAADAX2ykAAACyElEQVR4nO2bXW6kMAzHbYPUR+YGPQq9wR6p2pvBUeYAK8HjSDPyynYyH7RKwsNS2Pj/QBnye7Bk2XEcFxnWaKRVOIDzaVFmfSnn06LM+lLOp0WZ9aWcT4sy60s5XwOPQS3AeALAj7kFgLmVt7j2saE95aIVbI08sAh6/TM1DP2knxsG6MK3J2TYm/3kfBE/xwiV+GXmCzKfEXXNAvuVLxU5vy++Z2bEU8OI78whK/+gPRlRDliodp6HGRH6s+6/iD9uT06UJV5VK9/J5iov4zuzJmnoZTsWMfN1a3tKRcVk1fyoJbKUzp8SuqHIUt2sfN63/cWiyvhWn89Nyu6C+mAAidqOd20/Ob/ufCTSTM1Dx/KzscRtpyQ/Hx2Mh+A3OfAGJ8u36eHkq6Vr9+8h+Ta+3JBhlrKqu7b6QOgmce3tJUnvzX5yviw/X++RrPEbw3nQwlo7WR6/x/UvdOLf2JoMPp+0Xen9yf+Bn9/MySq9VeDfp5ucim7SuNS3Le0pFRWTdfIQ8q7Fb6yV9edgWVl9HoLY4/fo+y9oa8Mq6e+2473ZT86nxQ9pf9JaV7GqAvOqx++xeUTda3X/tU607LqzdCXl4vBz0k14O3vKRSvYmutniGlYpel60D3Zqmuvnw/Kg3nQ7oq0qtJO1n3D5Xg+8vx8/PpqireC8vNxXHqqudy/B66vRDGItf/cWBCHSSyR+/fg85P8tAlPUnPFScpN7SkXrWAr5nuNzuk+adddQR+WpHuWO+Et7SkWlaNV8/N9wjnmZ5MMdti4zrb2lIqKSZPz0ISpyVGmYq2qmt/iJOUB7E+KKuPbL1/0Enhugcdff1oe8X47vIk95Pw/np88ySWDNjTOeqcUhnQ8fo8cv6OFaQPYTyeZ5ECJ34u9qTx+D8mj/393UpRe/iLn06LM+lLOp0WZ9aWcT4sy60s5nxZl1qFy/i8WYAISFJgE4AAAAABJRU5ErkJggg==" style="width:200px;height:200px;border-radius:8px;" alt="QR Code">
+  <div class="qr-url">https://timyuen.github.io/mindful-canvas/</div>
+  <p style="font-size:13px; color:#666; margin-top:8px;">用手機掃描上方 QR Code</p>
+</div>
+
+<div class="steps">
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <h3>掃碼進入</h3>
+      <p>用手機相機掃描 QR Code，選擇一個你現在的感受</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <h3>自由繪畫（5 分鐘）</h3>
+      <p>用手指在畫布上自由塗抹，不需要畫得好，只需要畫出來</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <h3>可以說話（可選）</h3>
+      <p>按一下🎙️按鈕，說出你現在的感受，系統會記錄你的文字</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <h3>完成 & 儲存</h3>
+      <p>畫完之後按「完成 →」，系統會為你生成一張心靈卡片，可以儲存做手機壁紙</p>
+    </div>
+  </div>
+</div>
+
+<div class="important">
+  ⚠️ <strong>注意：</strong>你嘅畫作和文字不會被上傳或儲存到任何伺服器。所有資料只留在你嘅手機上。
+</div>
+
+<h3 style="margin-top:20px;">可以選擇的感受：</h3>
+<div class="scenes">
+  <div class="scene-item">😰 焦慮、壓力大</div>
+  <div class="scene-item">🌀 腦袋很亂</div>
+  <div class="scene-item">⏸️ 創作卡住了</div>
+  <div class="scene-item">🎨 自由書寫</div>
+  <div class="scene-item">💚 想祝福一個人</div>
+  <div class="scene-item">💧 為他人感到難過</div>
+  <div class="scene-item">✨ 為他人感到高興</div>
+  <div class="scene-item">🌊 想放下一切</div>
+</div>
+
+<div class="footer">
+  <p>Mindful Canvas™ 覺知畫布 · ZenArt Lab © 2026</p>
+  <p>本工具並非醫療或心理治療工具。如有需要，請聯絡專業人士。</p>
+  <p>香港 24 小時生命熱線：2382 0000</p>
+</div>
+
+</body>
+</html>

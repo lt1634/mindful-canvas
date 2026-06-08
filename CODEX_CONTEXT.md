@@ -72,3 +72,9 @@ Key: `mindful_canvas_sessions`（JSON 陣列）
 
 - 水墨暈染 / 光尾 / 呼吸節奏（PLAN §9.2 A/B/D）
 - 模組化拆分 `js/`（見 PLAN v5，觸發條件：>1500 行或 A/B 測試）
+
+## 專案盤點 Skill
+
+- 路徑：`.cursor/skills/mindful-canvas-ops/SKILL.md`
+- 觸發：盤點、未做、更新、refine、research、automations、Hermes 交接
+- 機械檢查：`bash .cursor/skills/mindful-canvas-ops/scripts/audit.sh`
