@@ -1,0 +1,21 @@
+{
+  "name": "覺知畫布 Mindful Canvas",
+  "short_name": "覺知畫布",
+  "description": "用色彩釋放情緒，每一筆都會慢慢消失",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Mindful Canvas 覺知畫布</title>
+<meta name="copyright" content="© 2026 Tim Yuen / ZenArt Lab. All rights reserved.">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #1a1a2e;
+  --surface: #16213e;
+  --text: #e8e8e8;
+  --text-muted: #a0a0b0;
+  --accent: #e2b55a;
+  --accent-soft: rgba(226,181,90,0.15);
+}
+
+body {
+  font-family: -apple-system, 'PingFang HK', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ===== SCREENS ===== */
+.screen { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ===== WELCOME SCREEN ===== */
+#welcome {
+  align-items: center;
+  justify-content: flex-start;
+  gap: 24px;
+  padding: 40px 40px 60px;
+  text-align: center;
+  background: radial-gradient(ellipse at center, #16213e 0%, #1a1a2e 70%);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#welcome h1 {
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: 4px;
+  color: var(--accent);
+}
+#welcome p {
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.8;
+  max-width: 300px;
+}
+#welcome .scene-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+  margin-top: 16px;
+}
+.scene-card {
+  background: var(--surface);
+  border: 1px solid rgba(226,181,90,0.2);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.scene-card:active { transform: scale(0.97); border-color: var(--accent); }
+.scene-card .emoji { font-size: 20px; margin-bottom: 6px; }
+.scene-card .title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.scene-card .desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+/* ===== CANVAS SCREEN ===== */
+#canvasScreen { background: var(--bg); }
+
+.canvas-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  z-index: 10;
+}
+.canvas-header .title { font-size: 14px; color: var(--text-muted); }
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 14px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.btn-text:active { background: var(--accent-soft); }
+
+.canvas-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+#drawCanvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+/* Color palette */
+.color-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.color-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.color-dot.active { border-color: #fff; transform: scale(1.2); }
+
+/* Brush size */
+.size-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 8px 16px 12px;
+  background: var(--surface);
+}
+.size-dot {
+  border-radius: 50%;
+  background: var(--text);
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.2s;
+}
+.size-dot.active { opacity: 1; }
+
+/* Voice button */
+.voice-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 16px 20px;
+  background: var(--surface);
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.voice-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 22px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.voice-btn.recording {
+  background: rgba(220,60,60,0.2);
+  border-color: #dc3c3c;
+  color: #dc3c3c;
+  animation: pulse 1.2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220,60,60,0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(220,60,60,0); }
+}
+.voice-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 200px;
+  text-align: center;
+  line-height: 1.4;
+}
+.voice-text {
+  font-size: 13px;
+  color: var(--accent);
+  max-width: 240px;
+  text-align: center;
+  line-height: 1.5;
+  min-height: 20px;
+}
+
+/* ===== CARD SCREEN ===== */
+#cardScreen {
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: radial-gradient(ellipse at center, #16213e 0%, #1a1a2e 70%);
+  overflow-y: auto;
+}
+
+.card-container {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.card {
+  width: 100%;
+  background: var(--surface);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(226,181,90,0.15);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.card-drawing {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: #0d1117;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card-drawing img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.card-affirmation {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--accent);
+  line-height: 1.6;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.card-reflection {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.8;
+  text-align: center;
+}
+
+.card-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+}
+.card-actions button {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #1a1a2e;
+}
+.btn-primary:active { opacity: 0.8; }
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.1) !important;
+}
+.btn-secondary:active { opacity: 0.7; }
+
+/* Loading overlay */
+.loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,26,46,0.9);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+.loading-overlay.active { display: flex; }
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--surface);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  color: var(--text);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 200;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* ===== FEEDBACK SCREEN ===== */
+#feedbackScreen {
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: radial-gradient(ellipse at center, #16213e 0%, #1a1a2e 70%);
+  overflow-y: auto;
+}
+.feedback-container {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.feedback-container h2 {
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--accent);
+  text-align: center;
+}
+.feedback-q {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.feedback-q label {
+  font-size: 14px;
+  color: var(--text);
+}
+.happiness-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.happiness-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(226,181,90,0.3);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+.happiness-btn.active {
+  background: var(--accent);
+  color: #1a1a2e;
+  border-color: var(--accent);
+}
+.replay-btns {
+  display: flex;
+  gap: 12px;
+}
+.replay-btns button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+}
+.replay-btns button.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.feedback-comment {
+  width: 100%;
+  min-height: 72px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+}
+.feedback-actions {
+  display: flex;
+  gap: 12px;
+}
+.feedback-actions button { flex: 1; padding: 14px; border-radius: 12px; border: none; font-size: 14px; cursor: pointer; }
+
+/* Particle toggle */
+.particle-toggle {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px 8px;
+  background: var(--surface);
+  justify-content: center;
+}
+.particle-toggle input { accent-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- WELCOME -->
+<div id="welcome" class="screen active">
+  <h1 id="welcomeLogo">覺知畫布</h1>
+  <p style="font-size:11px; color:#555; margin-top:-8px;">Mindful Canvas™</p>
+  <p>用色彩釋放情緒<br>每一筆都會慢慢消失<br>一切終將過去</p>
+
+  <div style="width:100%; max-width:320px; margin-top:20px;">
+    <div style="font-size:11px; color:#555; text-align:center; margin-bottom:8px; letter-spacing:2px;">情緒出口</div>
+    <div class="scene-cards" style="margin-top:0;">
+      <div class="scene-card" onclick="startCanvas('anxious')">
+        <div class="emoji">😰</div>
+        <div class="title">面對空白感到焦慮</div>
+        <div class="desc">深呼吸，白紙只是一片安靜的雪地</div>
+      </div>
+      <div class="scene-card" onclick="startCanvas('chaotic')">
+        <div class="emoji">🌀</div>
+        <div class="title">腦袋很亂</div>
+        <div class="desc">把混亂的思緒，透過畫筆引導到紙上</div>
+      </div>
+      <div class="scene-card" onclick="startCanvas('stuck')">
+        <div class="emoji">⏸️</div>
+        <div class="title">創作卡住了</div>
+        <div class="desc">停頓是休止符，與此刻共處</div>
+      </div>
+      <div class="scene-card" onclick="startCanvas('free')">
+        <div class="emoji">🎨</div>
+        <div class="title">自由書寫</div>
+        <div class="desc">隨心所欲，讓過程成為目的</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="width:100%; max-width:320px; margin-top:16px;">
+    <div style="font-size:11px; color:#555; text-align:center; margin-bottom:8px; letter-spacing:2px;">四無量心</div>
+    <div class="scene-cards" style="margin-top:0;">
+      <div class="scene-card" onclick="startCanvas('metta')" style="border-color:rgba(90,122,90,0.3);">
+        <div class="emoji">💚</div>
+        <div class="title">慈 — 願你快樂</div>
+        <div class="desc">為你想祝福的人，用色彩送上善意</div>
+      </div>
+      <div class="scene-card" onclick="startCanvas('karuna')" style="border-color:rgba(44,95,124,0.3);">
+        <div class="emoji">💧</div>
+        <div class="title">悲 — 願你離苦</div>
+        <div class="desc">為正在受苦的人，畫出你的陪伴</div>
+      </div>
+      <div class="scene-card" onclick="startCanvas('mudita')" style="border-color:rgba(226,181,90,0.3);">
+        <div class="emoji">✨</div>
+        <div class="title">喜 — 為你歡喜</div>
+        <div class="desc">為他人的快樂，畫出由衷的喜悅</div>
+      </div>
+      <div class="scene-card" onclick="startCanvas('upekkha')" style="border-color:rgba(139,94,131,0.3);">
+        <div class="emoji">🌊</div>
+        <div class="title">捨 — 平等放下</div>
+        <div class="desc">接納無常，平靜地與不完美共處</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CANVAS -->
+<div id="canvasScreen" class="screen">
+  <div class="canvas-header">
+    <button class="btn-text" onclick="goHome()">← 返回</button>
+    <span class="title">自由繪畫</span>
+    <button class="btn-text" onclick="generateCard()">完成 →</button>
+  </div>
+  <div class="canvas-area">
+    <canvas id="drawCanvas"></canvas>
+  </div>
+  <div class="color-bar" id="colorBar"></div>
+  <div class="size-bar" id="sizeBar"></div>
+  <div class="voice-bar">
+    <div class="voice-text" id="voiceText"></div>
+    <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎙️</button>
+    <div class="voice-hint" id="voiceHint">按一下開始，再按一下停止</div>
+  </div>
+  <label class="particle-toggle">
+    <input type="checkbox" id="particleToggle" checked> 禪意粒子
+  </label>
+</div>
+
+<!-- CARD -->
+<div id="cardScreen" class="screen">
+  <div class="card-container">
+    <div class="card">
+      <div class="card-drawing">
+        <img id="cardImage" src="">
+      </div>
+      <div class="card-body">
+        <div class="card-affirmation" id="cardAffirmation"></div>
+        <div class="card-reflection" id="cardReflection"></div>
+      </div>
+    </div>
+    <div class="card-actions" id="cardActions">
+      <button class="btn-secondary" onclick="showTerms()">使用條款</button>
+      <button class="btn-secondary" onclick="saveCard()">儲存卡片</button>
+      <button class="btn-primary" onclick="showFeedback()">下一步 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- FEEDBACK -->
+<div id="feedbackScreen" class="screen">
+  <div class="feedback-container">
+    <h2>簡單問你幾條</h2>
+    <div class="feedback-q">
+      <label>畫的過程開心指數（1–10）</label>
+      <div class="happiness-bar" id="happinessBar"></div>
+    </div>
+    <div class="feedback-q">
+      <label>會唔會想再玩？</label>
+      <div class="replay-btns">
+        <button type="button" id="replayYes" onclick="selectReplay(true)">會</button>
+        <button type="button" id="replayNo" onclick="selectReplay(false)">唔會</button>
+      </div>
+    </div>
+    <div class="feedback-q">
+      <label>有乜嘢想改進？（可選）</label>
+      <textarea class="feedback-comment" id="feedbackComment" placeholder="例如：想多啲顏色…"></textarea>
+    </div>
+    <div class="feedback-actions">
+      <button class="btn-secondary" onclick="skipFeedback()">跳過</button>
+      <button class="btn-primary" onclick="submitFeedback()">提交</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">正在為你生成心靈解讀...</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- TERMS OF USE -->
+<div id="termsScreen" class="screen" style="overflow-y:auto; padding:24px;">
+  <div style="max-width:480px; margin:0 auto;">
+    <button class="btn-text" onclick="closeTerms()" style="margin-bottom:16px;">← 返回</button>
+    <h2 style="font-size:20px; color:var(--accent); margin-bottom:16px;">使用條款 Terms of Use</h2>
+    <div style="font-size:13px; color:var(--text-muted); line-height:1.8;">
+      <p style="margin-bottom:12px;"><strong style="color:var(--text);">© 2026 Tim Yuen / ZenArt Lab</strong><br>All rights reserved.</p>
+      <p style="margin-bottom:12px;"><strong style="color:var(--text);">1. 使用授權</strong><br>本工具僅供學校教學及個人正念練習用途。未經書面許可，不得用於商業目的、再分發或改作。</p>
+      <p style="margin-bottom:12px;"><strong style="color:var(--text);">2. 知識產權</strong><br>本應用程式之程式碼、UI 設計、禪意題字、心境解讀算法、場景引導腳本及品牌標識，均為 Tim Yuen / ZenArt Lab 之知識產權。版權所有，保留一切權利。</p>
+      <p style="margin-bottom:12px;"><strong style="color:var(--text);">3. 用戶內容</strong><br>你在畫布上創作的繪畫及語音文字，版權歸你所有。本應用不會收集、儲存或上傳你的個人創作至任何伺服器。</p>
+      <p style="margin-bottom:12px;"><strong style="color:var(--text);">4. 免責聲明</strong><br>本工具並非醫療或心理治療工具。如你正在經歷嚴重的情緒困擾，請聯絡專業人士。<br>香港 24 小時生命熱線：2382 0000</p>
+      <p style="margin-bottom:12px;"><strong style="color:var(--text);">5. 隱私</strong><br>v1 版本完全在你的設備上運行，不收集任何個人資料。本地儲存的匿名使用數據僅用於改善體驗。</p>
+      <p style="margin-bottom:12px;"><strong style="color:var(--text);">6. 品牌</strong><br>Mindful Canvas™ 與 覺知畫布™ 為 ZenArt Lab 之商標。使用本工具即表示你同意以上條款。</p>
+      <p style="margin-top:24px; font-size:11px; color:#555;">Mindful Canvas v1.4 · Built by Tim Yuen with ❤️</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+let currentScene = 'free';
+let currentColor = '#e2b55a';
+let currentSize = 4;
+let isRecording = false;
+let recognition = null;
+let voiceText = '';
+let strokeHistory = [];
+let currentStroke = [];
+let fadeTimer = null;
+let animFrameId = null;
+let particles = [];
+let fadePhase = 0;
+let particlesEnabled = true;
+let pendingSession = null;
+let feedbackHappiness = null;
+let feedbackReplay = null;
+let logoPressTimer = null;
+
+const STORAGE_KEY = 'mindful_canvas_sessions';
+
+const DANGER_KEYWORDS = [
+  '想死','自殺','死咗','死掉','結束生命','活著冇意思','活著沒有意思',
+  '唔想活','不想活','冇人要','沒人要','消失','割','跳落','跳下',
+  '食藥','吃藥','自殘','自伤','了結','了结','冇意義','沒有意義',
+  '好痛苦','好辛苦','頂唔順','撐唔住','頂不住','撐不住',
+  'out of hope','give up','no point','kill myself','suicide','want to die','end my life'
+];
+
+const SAFETY_RESPONSE = {
+  affirmation: '我聽到你了。你不是一個人。',
+  reflection: '如果你正在經歷困難的時刻，請記得有人在乎你。香港 24 小時生命熱線：2382 0000（東華三院）或 2389 2222（撒瑪利亞）。你願意撥一個電話嗎？',
+  isSafe: false
+};
+
+const OLLAMA_SCENE_MAP = {
+  anxious: '焦慮、壓力、擔心',
+  chaotic: '混亂、思緒紛飛、腦袋很亂',
+  stuck: '卡住、停滯、不知道怎麼開始',
+  free: '自由書寫、隨心所欲、沒有特定情緒',
+  metta: '慈、祝福他人、願你快樂',
+  karuna: '悲、陪伴受苦的人、願你離苦',
+  mudita: '喜、為他人歡喜、分享快樂',
+  upekkha: '捨、放下執著、接納無常'
+};
+
+function checkSafety() {
+  const allText = (voiceText || '').toLowerCase() + ' ' + (currentScene || '');
+  const dangerHit = DANGER_KEYWORDS.some(kw => allText.includes(kw));
+  const highStress = (currentScene === 'anxious' || currentScene === 'chaotic') &&
+                     strokeCount > 200 && totalSilence < 3;
+  if (dangerHit || highStress) return { ...SAFETY_RESPONSE };
+  return null;
+}
+
+function getDominantColor() {
+  if (!strokeHistory.length) return currentColor;
+  const counts = {};
+  strokeHistory.forEach(s => { counts[s.color] = (counts[s.color] || 0) + 1; });
+  let max = 0, dominant = currentColor;
+  for (const [hex, n] of Object.entries(counts)) {
+    if (n > max) { max = n; dominant = hex; }
+  }
+  return dominant;
+}
+
+function restoreCardUI(mode) {
+  const drawing = document.querySelector('.card-drawing');
+  const actions = document.getElementById('cardActions');
+  if (mode === 'safety') {
+    drawing.style.display = 'none';
+    actions.innerHTML = '<button class="btn-primary" onclick="goHome()" style="width:100%">返回首頁</button>';
+  } else {
+    drawing.style.display = 'flex';
+    actions.innerHTML = `
+      <button class="btn-secondary" onclick="showTerms()">使用條款</button>
+      <button class="btn-secondary" onclick="saveCard()">儲存卡片</button>
+      <button class="btn-primary" onclick="showFeedback()">下一步 →</button>
+    `;
+  }
+}
+
+// Colors — 禪意調色盤
+const COLORS = [
+  { name: '金光', hex: '#e2b55a' },
+  { name: '深海', hex: '#2c5f7c' },
+  { name: '暮色', hex: '#8b5e83' },
+  { name: '枯葉', hex: '#a0826d' },
+  { name: '霧白', hex: '#d4d0c8' },
+  { name: '翠竹', hex: '#5a7a5a' },
+  { name: '晚霞', hex: '#c46b4a' },
+  { name: '墨色', hex: '#3a3a4a' },
+];
+
+const SIZES = [2, 4, 8, 14];
+
+// ===== SCENE GUIDANCE =====
+const SCENE_GUIDANCE = {
+  anxious: '你選擇了「焦慮」。深呼吸……這張白紙是一片安靜的雪地。你的畫筆只是輕輕劃過表面，不需要急著定義它。現在，隨意畫一條線，或點一個點。允許第一筆是不完美的。',
+  chaotic: '你選擇了「混亂」。腦袋裝了很多東西，像一團打結的線條。沒關係，不需要強迫它停下來。把注意力帶回呼吸，把混亂透過畫筆引導到紙上。不需要畫出具體形狀。',
+  stuck: '你選擇了「停頓」。停滯是創作中自然的一部分，像音樂裡的休止符。不需要急著突破。當你準備好時，不要想「我要畫什麼」，而是感受「我的手想怎麼動」。',
+  free: '你選擇了「自由」。沒有規則，沒有對錯。讓手帶領你，讓色彩在畫布上流動。這一刻，你只需要與色彩同在。',
+  metta: '你選擇了「慈」。想想一個你想祝福的人——家人、朋友、甚至自己。讓你的畫筆帶著善意流動，不需要完美，只需要真心。每一筆都是一句無聲的祝福：願你快樂。',
+  karuna: '你選擇了「悲」。想想一個正在受苦的人。你不需要解決他的問題，只需要在畫布上畫出你的陪伴。有時候，靜靜地同在，就是最大的慈悲。',
+  mudita: '你選擇了「喜」。想想一個讓你由衷高興的人——他的成就、他的笑容、他的幸福。讓你的色彩變得明亮，為他人的快樂畫出喜悅。為他歡喜，就是修行。',
+  upekkha: '你選擇了「捨」。放下好壞、得失、對錯。讓畫筆隨意流動，不追趕、不執著。接受每一筆都會消失，就像生命中的一切。平靜地與不完美共處，就是最大的自由。'
+};
+
+// ===== INIT =====
+function initColors() {
+  const bar = document.getElementById('colorBar');
+  COLORS.forEach((c, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'color-dot' + (i === 0 ? ' active' : '');
+    dot.style.background = c.hex;
+    dot.onclick = () => selectColor(c.hex, dot);
+    bar.appendChild(dot);
+  });
+}
+
+function initSizes() {
+  const bar = document.getElementById('sizeBar');
+  SIZES.forEach((s, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'size-dot' + (i === 1 ? ' active' : '');
+    dot.style.width = s + 'px';
+    dot.style.height = s + 'px';
+    dot.onclick = () => selectSize(s, dot);
+    bar.appendChild(dot);
+  });
+}
+
+function selectColor(hex, el) {
+  currentColor = hex;
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function selectSize(s, el) {
+  currentSize = s;
+  document.querySelectorAll('.size-dot').forEach(d => d.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ===== CANVAS (rAF + 粒子 + 無常淡化) =====
+const canvas = document.getElementById('drawCanvas');
+const ctx = canvas.getContext('2d', { alpha: true });
+let drawing = false;
+let strokeCount = 0;
+let silenceStart = Date.now();
+let totalSilence = 0;
+let canvasW = 0, canvasH = 0;
+
+class Particle {
+  constructor(x, y, color) {
+    this.x = x; this.y = y;
+    this.vx = (Math.random() - 0.5) * 2.5;
+    this.vy = (Math.random() - 0.5) * 2.5 - 0.5;
+    this.life = 30 + Math.random() * 20;
+    this.maxLife = this.life;
+    this.color = color;
+    this.size = Math.random() * 3 + 1.5;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    this.vy += 0.08; this.life--; this.size *= 0.97;
+  }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = (this.life / this.maxLife) * 0.8;
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x, this.y, this.size, this.size);
+    ctx.restore();
+  }
+}
+
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvasW = rect.width;
+  canvasH = rect.height;
+  canvas.width = canvasW * dpr;
+  canvas.height = canvasH * dpr;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(dpr, dpr);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+}
+
+function drawStroke(stroke, alpha) {
+  if (stroke.points.length < 2) return;
+  ctx.save();
+  ctx.strokeStyle = stroke.color;
+  ctx.lineWidth = stroke.size;
+  ctx.globalAlpha = alpha;
+  ctx.beginPath();
+  ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+  for (let i = 1; i < stroke.points.length; i++) {
+    ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function redrawWithFade() {
+  fadePhase += 0.05;
+  strokeHistory.forEach((stroke, idx) => {
+    const age = strokeHistory.length > 1 ? (strokeHistory.length - idx) / strokeHistory.length : 1;
+    const fadeAmount = Math.max(0.15, 1 - (fadePhase * 0.005 * age));
+    drawStroke(stroke, fadeAmount);
+  });
+}
+
+function animate() {
+  ctx.clearRect(0, 0, canvasW, canvasH);
+  redrawWithFade();
+  if (drawing && currentStroke.length > 1) {
+    ctx.save();
+    ctx.strokeStyle = currentColor;
+    ctx.lineWidth = currentSize;
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.moveTo(currentStroke[0].x, currentStroke[0].y);
+    for (let i = 1; i < currentStroke.length; i++) {
+      ctx.lineTo(currentStroke[i].x, currentStroke[i].y);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+  if (particlesEnabled) {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      particles[i].update();
+      if (particles[i].life <= 0) particles.splice(i, 1);
+      else particles[i].draw();
+    }
+    if (particles.length > 200) particles.splice(0, particles.length - 200);
+  }
+  animFrameId = requestAnimationFrame(animate);
+}
+
+function startCanvasLoop() {
+  if (animFrameId) cancelAnimationFrame(animFrameId);
+  animate();
+}
+
+function stopCanvasLoop() {
+  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+  if (fadeTimer) { clearInterval(fadeTimer); fadeTimer = null; }
+}
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches ? e.touches[0] : e;
+  return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+}
+
+function startDraw(e) {
+  e.preventDefault();
+  drawing = true;
+  const pos = getPos(e);
+  currentStroke = [{ x: pos.x, y: pos.y }];
+  silenceStart = Date.now();
+}
+
+function draw(e) {
+  if (!drawing) return;
+  e.preventDefault();
+  const pos = getPos(e);
+  currentStroke.push({ x: pos.x, y: pos.y });
+  if (particlesEnabled && Math.random() < 0.6) {
+    particles.push(new Particle(pos.x, pos.y, currentColor));
+  }
+}
+
+function endDraw(e) {
+  if (!drawing) return;
+  drawing = false;
+  if (currentStroke.length > 1) {
+    strokeHistory.push({ points: [...currentStroke], color: currentColor, size: currentSize, alpha: 1 });
+    strokeCount++;
+  }
+  currentStroke = [];
+  const silenceDur = (Date.now() - silenceStart) / 1000;
+  if (silenceDur > 3) totalSilence += silenceDur;
+}
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', endDraw);
+canvas.addEventListener('mouseleave', endDraw);
+canvas.addEventListener('touchstart', startDraw, { passive: false });
+canvas.addEventListener('touchmove', draw, { passive: false });
+canvas.addEventListener('touchend', endDraw);
+
+function startFadeEffect() {
+  stopCanvasLoop();
+  fadePhase = 0;
+  particles = [];
+  startCanvasLoop();
+}
+
+// ===== VOICE INPUT =====
+function initSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    document.getElementById('voiceHint').textContent = '你的瀏覽器不支持語音輸入';
+    return;
+  }
+  recognition = new SpeechRecognition();
+  recognition.lang = 'zh-HK';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onresult = (event) => {
+    let final = '';
+    let interim = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        final += transcript;
+      } else {
+        interim += transcript;
+      }
+    }
+    voiceText = final || interim;
+    document.getElementById('voiceText').textContent = voiceText;
+  };
+
+  recognition.onerror = (event) => {
+    console.log('Speech error:', event.error);
+    stopRecording();
+  };
+
+  recognition.onend = () => {
+    if (isRecording) {
+      // Auto restart if still recording
+      try { recognition.start(); } catch(e) {}
+    }
+  };
+}
+
+function toggleVoice() {
+  if (isRecording) {
+    stopRecording();
+  } else {
+    startRecording();
+  }
+}
+
+function startRecording() {
+  if (!recognition) {
+    initSpeechRecognition();
+    if (!recognition) return;
+  }
+  isRecording = true;
+  document.getElementById('voiceBtn').classList.add('recording');
+  document.getElementById('voiceHint').textContent = '正在聆聽...說完後按一下停止';
+  voiceText = '';
+  try { recognition.start(); } catch(e) {}
+}
+
+function stopRecording() {
+  isRecording = false;
+  document.getElementById('voiceBtn').classList.remove('recording');
+  document.getElementById('voiceHint').textContent = voiceText ? '已記錄你的感受' : '按一下開始，再按一下停止';
+  if (recognition) {
+    try { recognition.stop(); } catch(e) {}
+  }
+}
+
+// ===== SCREEN NAVIGATION =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startCanvas(scene) {
+  currentScene = scene;
+  stopCanvasLoop();
+  fadePhase = 0;
+  strokeHistory = [];
+  strokeCount = 0;
+  totalSilence = 0;
+  particles = [];
+  drawing = false;
+  currentStroke = [];
+  showScreen('canvasScreen');
+  setTimeout(() => {
+    resizeCanvas();
+    showToast(SCENE_GUIDANCE[scene]);
+    startFadeEffect();
+  }, 100);
+}
+
+function goHome() {
+  stopCanvasLoop();
+  stopRecording();
+  fadePhase = 0;
+  strokeHistory = [];
+  strokeCount = 0;
+  totalSilence = 0;
+  particles = [];
+  voiceText = '';
+  pendingSession = null;
+  feedbackHappiness = null;
+  feedbackReplay = null;
+  document.getElementById('voiceText').textContent = '';
+  document.getElementById('feedbackComment').value = '';
+  document.querySelectorAll('.happiness-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('replayYes').classList.remove('active');
+  document.getElementById('replayNo').classList.remove('active');
+  restoreCardUI('normal');
+  showScreen('welcome');
+}
+
+// ===== CARD GENERATION =====
+function generateCard() {
+  if (strokeCount === 0 && !voiceText) {
+    showToast('先畫一些東西或說些什麼吧');
+    return;
+  }
+
+  stopCanvasLoop();
+
+  // Show loading
+  document.getElementById('loading').classList.add('active');
+
+  // Get canvas image
+  const tempCanvas = document.createElement('canvas');
+  const dpr = window.devicePixelRatio || 1;
+  tempCanvas.width = canvas.width;
+  tempCanvas.height = canvas.height;
+  const tempCtx = tempCanvas.getContext('2d');
+  tempCtx.fillStyle = '#0d1117';
+  tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+  tempCtx.drawImage(canvas, 0, 0);
+
+  const imageData = tempCanvas.toDataURL('image/png');
+  document.getElementById('cardImage').src = imageData;
+
+  // Generate interpretation (try AI first, fallback to template)
+  setTimeout(async () => {
+    // Show AI loading if Ollama might be available
+    try {
+      await fetch('http://localhost:11434/api/tags', { method: 'GET', signal: AbortSignal.timeout(2000) });
+      document.getElementById('loadingText').textContent = 'AI 正在為你撰寫專屬解讀...';
+    } catch(e) {
+      document.getElementById('loadingText').textContent = '正在為你生成心靈解讀...';
+    }
+
+    const interpretation = await generateInterpretationAI();
+
+    if (!interpretation.isSafe) {
+      document.getElementById('loading').classList.remove('active');
+      document.getElementById('cardAffirmation').textContent = interpretation.affirmation;
+      document.getElementById('cardReflection').textContent = interpretation.reflection;
+      document.getElementById('cardImage').src = '';
+      restoreCardUI('safety');
+      showScreen('cardScreen');
+      return;
+    }
+
+    pendingSession = {
+      date: new Date().toISOString(),
+      scene: currentScene,
+      strokes: strokeCount,
+      silence: Math.round(totalSilence),
+      dominantColor: getDominantColor(),
+      voiceUsed: !!voiceText,
+      source: interpretation.source || 'template'
+    };
+
+    document.getElementById('cardAffirmation').textContent = interpretation.affirmation;
+    document.getElementById('cardReflection').textContent = interpretation.reflection;
+    restoreCardUI('normal');
+    document.getElementById('loading').classList.remove('active');
+    showScreen('cardScreen');
+  }, 1500);
+}
+
+function generateInterpretation() {
+  const safety = checkSafety();
+  if (safety) return safety;
+
+  // ===== 2. AFFIRMATION POOL (10 per scene, 80 total) =====
+  const affirmations = {
+    anxious: [
+      '你將未知的焦慮，溫柔地化作了色彩的流動。緊繃的背後，是你對生命的敬畏。',
+      '每一筆不完美的線條，都是你勇敢面對空白的證明。',
+      '你沒有逃避這張白紙，你選擇了與它對話。這份勇氣，本身就是平靜的開始。',
+      '焦慮不是你的敵人，它是身體在提醒你：這件事對你很重要。',
+      '你把看不見的壓力，變成了看得見的色彩。這份轉化，本身就是力量。',
+      '白紙曾經讓你害怕，但你動筆了。這就夠了。',
+      '你的手在顫抖，但你依然在畫。這份堅持，比任何一幅完美作品都珍貴。',
+      '不需要平靜才能開始。帶著焦慮動筆，焦慮會在色彩中慢慢融化。',
+      '你選擇面對，而不是逃避。這一步，已經比昨天更勇敢。',
+      '深呼吸。你現在在這裡，在色彩裡，在安全的地方。'
+    ],
+    chaotic: [
+      '混亂不是錯誤，是創造力正在湧動的跡象。',
+      '你把腦中的風暴，輕輕地釋放在畫布上。紙承載得起你所有的思緒。',
+      '思緒如雲，飄過就飄過了。你剛才做的，是讓它們有了一个温柔的出口。',
+      '腦袋很亂的時候，不需要整理。畫出來，就是一種整理。',
+      '混亂的線條是情緒最誠實的模樣。不需要美化，不需要解釋。',
+      '你的思緒像一條湍急的河流。畫布是河岸，讓它流過。',
+      '不需要想清楚才能畫。有時候，畫了才會想清楚。',
+      '那些糾纏在一起的念頭，現在出現在紙上了。它們不再只困在你的腦袋裡。',
+      '混亂代表你正在處理很多東西。這不是弱點，這是韌性。',
+      '讓線條自己找到出路。你不需要為它們規劃路線。'
+    ],
+    stuck: [
+      '停頓不是停滯，是土壤在安靜地準備下一次綻放。',
+      '你選擇了與此刻的自己共處，不催促、不批判。這本身就是最深的覺知。',
+      '留白也是創作的一部分。不落一筆，也是一種圓滿。',
+      '停下來不是放棄。有時候，停下來才是最勇敢的選擇。',
+      '你的手停住了，但你的心依然在感受。這份感受，比任何筆觸都重要。',
+      '音樂最美的部分，往往是休止符。你的停頓，也是。',
+      '不需要一直前進。在原地站一會兒，也是一種移動。',
+      '你給了自己一個喘息的空間。這份溫柔，你值得擁有。',
+      '空白不是空虛。它是可能性，是安靜，是你給自己的禮物。',
+      '當你準備好，下一步自然會來。不急。'
+    ],
+    free: [
+      '你讓手自由地舞動，讓色彩自己說話。這一刻，你與創作合為一體。',
+      '不追求結果的創作，才是最純粹的表達。你做得很好。',
+      '每一筆都在消失，每一筆都是全新的開始。享受這個流動的當下。',
+      '沒有規則，沒有對錯。你的手知道要去哪裡。',
+      '讓顏色帶領你。你不需要為它們做決定。',
+      '這是你和色彩之間的對話。不需要旁觀者，不需要評分。',
+      '你在這裡，在畫布前，在呼吸裡。這就是全部。',
+      '你的手指是畫筆，你的心是顏料。這幅畫，是你此刻最真實的樣子。',
+      '不需要畫出什麼。拿起筆，就是創作的開始。',
+      '線條會消失，但體驗不會。你剛才那一刻的專注，已經留在你身體裡。'
+    ],
+    metta: [
+      '你的每一筆，都是一句無聲的祝福。善意不需要言語，色彩就是它的語言。',
+      '你在為一個人畫畫。這份心意，比任何一幅杰作都珍貴。',
+      '慈是：我希望你快樂。你剛才用色彩說了這句話。',
+      '不需要見到對方，善意就能穿越距離。你剛才做的事情，比你想像的更有力量。',
+      '為他人畫畫的時候，你自己的心也會變得柔軟。',
+      '你選擇了「慈」。這個選擇本身，就是一種修行。',
+      '讓你的畫筆帶著溫暖流動。每一個顏色都是一份善意。',
+      '不需要完美，只需要真心。你剛才畫的每一筆，都充滿了祝福。',
+      '慈不求回報。你畫完了，善意就已經完成了。',
+      '你為他人送上祝福，而祝福首先溫暖的是你自己。'
+    ],
+    karuna: [
+      '你為一個人的痛苦畫了一幅畫。這份陪伴，比任何安慰都深沉。',
+      '悲不是同情，是「我願意和你一起承受」。你剛才做的事情，就是這樣。',
+      '你不需要解決任何問題。靜靜地陪伴，就是最大的慈悲。',
+      '為受苦的人畫畫，是一種無聲的擁抱。',
+      '你選擇了「悲」。這代表你的心是柔軟的、打開的。',
+      '每一筆都在說：「你在這裡，你不孤單。」',
+      '悲是：願你離苦。你剛才用色彩表達了這個願望。',
+      '你為他人的痛苦騰出了一個空間。這份空間，就是慈悲。',
+      '不需要做什麼。你的畫筆已經替你說了最溫柔的話。',
+      '你選擇了陪伴而不是逃避。這份勇氣，本身就是慈悲。'
+    ],
+    mudita: [
+      '你為他人的快樂而畫。這份喜悅，是雙倍的。',
+      '為別人的成就感到高興，是一種稀缺的能力。你剛才做到了。',
+      '你的色彩變得明亮了。因為你在為一個人的幸福畫畫。',
+      '喜是：你的快樂就是我的快樂。你剛才用畫筆說了這句話。',
+      '不需要比較。為他人歡喜，你自己也會變得更豐盛。',
+      '你選擇了「喜」。這個選擇，讓你的心變得更寬廣。',
+      '每一筆明亮的色彩，都是你為他人點亮的一盞燈。',
+      '嫉妒消耗能量，隨喜創造能量。你剛才做了一件很有力量的事。',
+      '為他人的幸福真心高興，是世界上最難也最美的修行。',
+      '你剛才畫的這幅畫，是為一個人的笑容而存在的。'
+    ],
+    upekkha: [
+      '你選擇了放下。讓畫筆隨意流動，不追趕、不執著。',
+      '每一筆都會消失，就像生命中的一切。你接受這件事，就是自由。',
+      '不追好、不避壞。你剛才在畫布上練習了平等心。',
+      '捨是：我接受一切如其所是。你剛才用色彩表達了這份接受。',
+      '不需要完美。不需要結果。你只需要在這裡，和畫布在一起。',
+      '你選擇了「捨」。這代表你願意與無常和平共處。',
+      '線條來了又走，色彩亮了又暗。你只是靜靜地看著。這就是修行。',
+      '放下不是放棄。是「我看見了，我接受了，我繼續前行」。',
+      '你在畫布上練習了最重要的一課：不執著。',
+      '捨是四無量心的根基。沒有捨，就沒有真正的慈、悲、喜。你剛才做到了。'
+    ]
+  };
+
+  // ===== 3. COLOR DESCRIPTIONS (now connected) =====
+  const colorDescriptions = {
+    '#e2b55a': { name: '金光', meaning: '你選擇了金色，代表你內心正在尋找溫暖與智慧。', phrase: '金色的光芒' },
+    '#2c5f7c': { name: '深海', meaning: '你選擇了深藍，代表你內心雖然澎湃，但依舊尋求平靜。', phrase: '深海的沉澱' },
+    '#8b5e83': { name: '暮色', meaning: '你選擇了紫色，代表你正在經歷一次內在的轉化。', phrase: '暮色的直覺' },
+    '#a0826d': { name: '枯葉', meaning: '你選擇了大地色，代表你需要穩定與根基。', phrase: '大地的穩定' },
+    '#d4d0c8': { name: '霧白', meaning: '你選擇了白色，代表你在留白中尋找可能性。', phrase: '霧白的留白' },
+    '#5a7a5a': { name: '翠竹', meaning: '你選擇了綠色，代表你內心渴望成長與療癒。', phrase: '翠竹的生長' },
+    '#c46b4a': { name: '晚霞', meaning: '你選擇了橘色，代表你內心有強烈的生命力正在湧動。', phrase: '晚霞的熱情' },
+    '#3a3a4a': { name: '墨色', meaning: '你選擇了墨色，代表你正在向內探索深處。', phrase: '墨色的內省' },
+  };
+
+  // ===== 4. REFLECTION ENGINE (modular, color-aware) =====
+  const dominantColor = getDominantColor();
+  const colorInfo = colorDescriptions[dominantColor] || colorDescriptions[currentColor] || { meaning: '', phrase: '' };
+
+  // Module A: stroke count
+  let strokePart = '';
+  if (strokeCount < 5) {
+    strokePart = `你用寥寥幾筆 ${strokeCount} 筆完成了這幅畫，留出了大量空間`;
+  } else if (strokeCount < 30) {
+    strokePart = `你用 ${strokeCount} 筆勾勒了你此刻的心境`;
+  } else if (strokeCount < 100) {
+    strokePart = `你用 ${strokeCount} 筆層層疊疊地表達了自己`;
+  } else if (strokeCount < 500) {
+    strokePart = `你用超過 ${strokeCount} 筆進行了一次大規模的情緒釋放`;
+  } else {
+    strokePart = `你用 ${strokeCount} 筆完成了一次極致的釋放，畫布完全承接得起你所有的力量`;
+  }
+
+  // Module B: silence
+  let silencePart = '';
+  if (totalSilence > 60) {
+    silencePart = `其中有一段超過一分鐘的深層寂靜，那是你與自己最深的對話`;
+  } else if (totalSilence > 30) {
+    silencePart = `其中有 ${Math.round(totalSilence)} 秒的深度停頓，那是你進入心流的證明`;
+  } else if (totalSilence > 5) {
+    silencePart = `其中有 ${Math.round(totalSilence)} 秒的寂靜，那是你與自己對話的時刻`;
+  } else {
+    silencePart = '節奏流暢，你的手一直帶著你前進';
+  }
+
+  // Module C: color
+  let colorPart = colorInfo.meaning || '';
+
+  // Module D: scene-specific ending
+  const sceneEndings = {
+    anxious: '焦慮終將過去，而你依然在這裡。帶住這份覺察，回到你的日常吧。',
+    chaotic: '混亂的線條是你此刻最真實的樣子——不需要整理，不需要美化。每一筆的消逝，都帶走了一小部分重量。你做得很好。',
+    stuck: '創作中的停頓像音樂的休止符，不是空白，而是蓄力。當你準備好時，下一步自然會來。',
+    free: '這就是當下的力量——不追憶過去，不預期未來，只是純粹地創作。你做得很好。',
+    metta: '你剛才為一個人送上了一份無聲的祝福。善意已經完成，不需要更多。帶住這份溫暖，回到你的日常。',
+    karuna: '你剛才為一個人的痛苦騰出了一個空間。這份陪伴，就是你能做的最好的事。帶住這份慈悲，繼續前行。',
+    mudita: '你剛才為他人的快樂畫了一幅畫。為他人歡喜，你自己也變得更豐盛。帶住這份喜悅，繼續前行。',
+    upekkha: '你剛才在畫布上練習了放下。每一筆都會消失，而你平靜地接受了這件事。這就是最大的自由。'
+  };
+  let endingPart = sceneEndings[currentScene] || sceneEndings.free;
+
+  // Assemble reflection
+  const reflection = `${strokePart}，${silencePart}。${colorPart}${colorPart ? '。' : ''}${endingPart}`;
+
+  // ===== 5. PICK AFFIRMATION =====
+  const sceneAffirmations = affirmations[currentScene] || affirmations.free;
+  const affirmation = sceneAffirmations[Math.floor(Math.random() * sceneAffirmations.length)];
+
+  return { affirmation, reflection, isSafe: true };
+}
+
+// ===== 6. OLLAMA AI INTEGRATION (v2 - when available) =====
+const OLLAMA_URL = 'http://localhost:11434/api/generate';
+const OLLAMA_MODEL = 'gemma4:12b';
+
+async function generateInterpretationAI() {
+  const safety = checkSafety();
+  if (safety) return safety;
+
+  // Check if Ollama is running
+  try {
+    const healthCheck = await fetch('http://localhost:11434/api/tags', { method: 'GET' });
+    if (!healthCheck.ok) throw new Error('Ollama not available');
+  } catch (e) {
+    // Fallback to template engine
+    return generateInterpretation();
+  }
+
+  const dominantColor = getDominantColor();
+
+  const colorNames = {
+    '#e2b55a': '金色',
+    '#2c5f7c': '深藍',
+    '#8b5e83': '紫色',
+    '#a0826d': '大地色',
+    '#d4d0c8': '白色',
+    '#5a7a5a': '綠色',
+    '#c46b4a': '橘色',
+    '#3a3a4a': '墨色'
+  };
+
+  const prompt = `你是一位擁有 10 年以上資深經驗的視藝教育家、藝術評論家，同時也是一位深諳東方佛學與表達藝術治療的靈魂導師。
+
+你的語氣溫和、包容、充滿藝術氣息與詩意。
+【絕對避免】使用任何宗教教條、陳腔濫調的說教，或過於商業化的療癒系口吻。
+你說話的目的是給予用戶深度的陪伴、澄清與溫柔的轉念。
+請用繁體中文/粵語混合的港式文風輸出。
+
+用戶情緒狀態：${OLLAMA_SCENE_MAP[currentScene] || '自由書寫'}
+用戶情緒文字：${voiceText || '（未提供）'}
+繪畫統計：共 ${strokeCount} 筆，停頓 ${Math.round(totalSilence)} 秒，主要色彩 ${colorNames[dominantColor] || colorNames[currentColor] || '未指定'}
+
+請生成：
+1. 【禪意題字】（1-2 句話）：將用戶的焦慮或壓力文字提煉為充滿力量的禪意題句
+2. 【心境解讀】（150-200 字）：結合繪畫統計進行客製化解讀，結構：點出筆數 → 解讀停頓意義 → 色彩與情感連結 → 將線條消失引導至無常與放低執著 → 一句溫柔讚賞
+
+格式要求：
+題字：
+（你的題字）
+
+解讀：
+（你的解讀）`;
+
+  try {
+    const response = await fetch(OLLAMA_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: OLLAMA_MODEL,
+        prompt: prompt,
+        stream: false,
+        options: { temperature: 0.8, num_predict: 500 }
+      })
+    });
+
+    const data = await response.json();
+    const output = data.response || '';
+
+    // Parse AI output
+    const affirmationMatch = output.match(/題字[：:]\s*\n?(.*?)(?=\n\n|解讀)/s);
+    const reflectionMatch = output.match(/解讀[：:]\s*\n?(.*)/s);
+
+    return {
+      affirmation: affirmationMatch ? affirmationMatch[1].trim() : output.split('\n\n')[0],
+      reflection: reflectionMatch ? reflectionMatch[1].trim() : output.split('\n\n')[1] || output,
+      isSafe: true,
+      source: 'ollama'
+    };
+  } catch (e) {
+    // Fallback to template engine
+    console.log('Ollama failed, using template:', e);
+    return generateInterpretation();
+  }
+}
+
+// ===== SAVE CARD =====
+function saveCard() {
+  // Create a composite image
+  const saveCanvas = document.createElement('canvas');
+  const w = 1080;
+  const h = 1440;
+  saveCanvas.width = w;
+  saveCanvas.height = h;
+  const sctx = saveCanvas.getContext('2d');
+
+  // Background
+  sctx.fillStyle = '#1a1a2e';
+  sctx.fillRect(0, 0, w, h);
+
+  // Drawing
+  const img = new Image();
+  img.onload = () => {
+    // Drawing area
+    const drawH = 720;
+    sctx.drawImage(img, 0, 80, w, drawH);
+
+    // Affirmation
+    sctx.fillStyle = '#e2b55a';
+    sctx.font = '500 36px -apple-system, PingFang HK, sans-serif';
+    sctx.textAlign = 'center';
+    wrapText(sctx, document.getElementById('cardAffirmation').textContent, w/2, 860, w-120, 48);
+
+    // Reflection
+    sctx.fillStyle = '#a0a0b0';
+    sctx.font = '300 26px -apple-system, PingFang HK, sans-serif';
+    wrapText(sctx, document.getElementById('cardReflection').textContent, w/2, 1100, w-120, 38);
+
+    // Footer
+    sctx.fillStyle = '#555';
+    sctx.font = '300 20px -apple-system, PingFang HK, sans-serif';
+    sctx.fillText('覺知畫布 Mindful Canvas', w/2, 1380);
+
+    // Download
+    const link = document.createElement('a');
+    link.download = 'mindful-canvas-card.png';
+    link.href = saveCanvas.toDataURL('image/png');
+    link.click();
+    showToast('卡片已儲存');
+  };
+  img.src = document.getElementById('cardImage').src;
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const chars = text.split('');
+  let line = '';
+  let currentY = y;
+  for (let i = 0; i < chars.length; i++) {
+    const testLine = line + chars[i];
+    const metrics = ctx.measureText(testLine);
+    if (metrics.width > maxWidth && line.length > 0) {
+      ctx.fillText(line, x, currentY);
+      line = chars[i];
+      currentY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, x, currentY);
+}
+
+// ===== TERMS =====
+function showTerms() {
+  document.getElementById('termsScreen').classList.add('active');
+}
+function closeTerms() {
+  document.getElementById('termsScreen').classList.remove('active');
+  // Return to whichever screen was active before
+  if (document.getElementById('cardScreen').classList.contains('active')) {
+    document.getElementById('cardScreen').classList.add('active');
+  }
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ===== FEEDBACK & STORAGE =====
+function showFeedback() {
+  feedbackHappiness = null;
+  feedbackReplay = null;
+  document.getElementById('feedbackComment').value = '';
+  document.querySelectorAll('.happiness-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('replayYes').classList.remove('active');
+  document.getElementById('replayNo').classList.remove('active');
+  showScreen('feedbackScreen');
+}
+
+function selectHappiness(n) {
+  feedbackHappiness = n;
+  document.querySelectorAll('.happiness-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.n, 10) === n);
+  });
+}
+
+function selectReplay(val) {
+  feedbackReplay = val;
+  document.getElementById('replayYes').classList.toggle('active', val === true);
+  document.getElementById('replayNo').classList.toggle('active', val === false);
+}
+
+function getSessions() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch (e) { return []; }
+}
+
+function saveSession(record) {
+  const sessions = getSessions();
+  sessions.push(record);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+}
+
+function submitFeedback() {
+  if (feedbackHappiness === null) {
+    showToast('請選擇開心指數');
+    return;
+  }
+  if (feedbackReplay === null) {
+    showToast('請選擇會否再玩');
+    return;
+  }
+  if (pendingSession) {
+    saveSession({
+      ...pendingSession,
+      happiness: feedbackHappiness,
+      replay: feedbackReplay,
+      comment: document.getElementById('feedbackComment').value.trim() || null
+    });
+    showToast('多謝你的反饋');
+  }
+  goHome();
+}
+
+function skipFeedback() {
+  if (pendingSession) {
+    saveSession({ ...pendingSession, happiness: null, replay: null, comment: null, skipped: true });
+  }
+  goHome();
+}
+
+function exportSessions() {
+  const data = JSON.stringify(getSessions(), null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.download = 'mindful-canvas-sessions.json';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
+  showToast('已匯出反饋數據');
+}
+
+function initHappinessBar() {
+  const bar = document.getElementById('happinessBar');
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'happiness-btn';
+    btn.dataset.n = i;
+    btn.textContent = i;
+    btn.onclick = () => selectHappiness(i);
+    bar.appendChild(btn);
+  }
+}
+
+function initTeacherExport() {
+  const logo = document.getElementById('welcomeLogo');
+  const start = () => {
+    logoPressTimer = setTimeout(() => {
+      exportSessions();
+      logoPressTimer = null;
+    }, 3000);
+  };
+  const cancel = () => {
+    if (logoPressTimer) { clearTimeout(logoPressTimer); logoPressTimer = null; }
+  };
+  logo.addEventListener('mousedown', start);
+  logo.addEventListener('mouseup', cancel);
+  logo.addEventListener('mouseleave', cancel);
+  logo.addEventListener('touchstart', start, { passive: true });
+  logo.addEventListener('touchend', cancel);
+  logo.addEventListener('touchcancel', cancel);
+}
+
+function initParticleToggle() {
+  const toggle = document.getElementById('particleToggle');
+  if (!toggle) return;
+  particlesEnabled = toggle.checked;
+  toggle.addEventListener('change', () => { particlesEnabled = toggle.checked; });
+}
+
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+}
+
+// ===== INIT =====
+initColors();
+initSizes();
+initSpeechRecognition();
+initHappinessBar();
+initTeacherExport();
+initParticleToggle();
+registerServiceWorker();
+window.addEventListener('resize', () => {
+  if (document.getElementById('canvasScreen').classList.contains('active')) {
+    resizeCanvas();
+  }
+});
+</script>
+</body>
+</html>
