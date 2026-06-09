@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.min.js
+coverage/
+.playwright/
+playwright-report/
+test-results/
+.husky/

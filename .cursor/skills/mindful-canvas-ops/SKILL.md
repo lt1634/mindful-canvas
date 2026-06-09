@@ -45,14 +45,14 @@ bash .cursor/skills/mindful-canvas-ops/scripts/audit.sh
 
 對照 [`audit-checklist.md`](audit-checklist.md) 每一項標 ✅ / ⚠️ / ❌：
 
-| 類別 | 必查 |
-|------|------|
-| 畫面流程 | welcome→canvas→card→feedback→welcome |
-| 安全網 | `checkSafety()` 模板+AI 一致 |
-| 數據 | `mindful_canvas_sessions`、教師匯出 |
-| PWA | manifest、icons、sw.js |
-| v2 待定 | PLAN §9.2 A/B/D 水墨/光尾/呼吸 |
-| 文件 | CHANGELOG、FEEDBACK、CODEX_CONTEXT、DEPLOY |
+| 類別     | 必查                                       |
+| -------- | ------------------------------------------ |
+| 畫面流程 | welcome→canvas→card→feedback→welcome       |
+| 安全網   | `checkSafety()` 模板+AI 一致               |
+| 數據     | `mindful_canvas_sessions`、教師匯出        |
+| PWA      | manifest、icons、sw.js                     |
+| v2 待定  | PLAN §9.2 A/B/D 水墨/光尾/呼吸             |
+| 文件     | CHANGELOG、FEEDBACK、CODEX_CONTEXT、DEPLOY |
 
 **不可改**：品牌™、主色、安全網、非醫療免責（見 CODEX_CONTEXT）。
 
@@ -66,12 +66,12 @@ bash .cursor/skills/mindful-canvas-ops/scripts/audit.sh
 
 從 [`HABITS.md`](../../../HABITS.md) §十讀 90 日 KPI，用 FEEDBACK.md 條目數 / 匯出 JSON 估算進度：
 
-| KPI | 目標 |
-|-----|------|
-| 學生體驗次數 | ≥3 |
-| FEEDBACK 筆數 | ≥10 |
-| MVP 改版 | ≥2 |
-| 小紅書 | ≥4 |
+| KPI           | 目標 |
+| ------------- | ---- |
+| 學生體驗次數  | ≥3   |
+| FEEDBACK 筆數 | ≥10  |
+| MVP 改版      | ≥2   |
+| 小紅書        | ≥4   |
 
 ### Step 5 — 產出報告
 
@@ -81,27 +81,34 @@ bash .cursor/skills/mindful-canvas-ops/scripts/audit.sh
 # Mindful Canvas 盤點報告 — [日期]
 
 ## 現況一句話
+
 [版本 + 可唔可以校內測試]
 
 ## 已完成（自上次以來）
+
 - …
 
 ## 未完成 / 落差
+
 | 項目 | 規格 | 現況 | 優先 |
-|------|------|------|------|
+| ---- | ---- | ---- | ---- |
 
 ## 建議下一步（排序）
+
 1. …
 2. …
 
 ## Refine（可改進，非阻塞）
+
 - …
 
 ## Automations 建議
+
 - [每日] …
 - [每週五] …
 
 ## 給 Hermes 的第一條指令
+
 > 「…」
 ```
 
@@ -109,12 +116,12 @@ bash .cursor/skills/mindful-canvas-ops/scripts/audit.sh
 
 用戶要設 Cursor Automation 時，讀 [`automate` skill](file:///Users/newmac/.cursor/skills-cursor/automate/SKILL.md) 並用 plain language 起草。
 
-| 節奏 | 觸發 | Agent 做乜 |
-|------|------|------------|
+| 節奏       | 觸發                | Agent 做乜                                  |
+| ---------- | ------------------- | ------------------------------------------- |
 | 每日放學後 | cron 週一至五 17:00 | 跑本 Skill 精簡版 → 提醒 Tim 填「今日觀察」 |
-| 週五復盤 | cron 週五 18:00 | 讀 FEEDBACK + 建議更新 FEEDBACK.md 條目 |
-| push 後 | git push main | 檢查 index.html 有冇破壞安全網 / manifest |
-| 校內測試後 | 手動 / webhook | 從 sessions JSON 生成週報 |
+| 週五復盤   | cron 週五 18:00     | 讀 FEEDBACK + 建議更新 FEEDBACK.md 條目     |
+| push 後    | git push main       | 檢查 index.html 有冇破壞安全網 / manifest   |
+| 校內測試後 | 手動 / webhook      | 從 sessions JSON 生成週報                   |
 
 ## Research 模式
 

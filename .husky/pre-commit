@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+echo "🔍 Running pre-commit checks..."
+
+npx lint-staged
+
+echo "🧪 Running unit tests..."
+npx vitest run --reporter=dot
+
+echo "✅ Pre-commit checks passed"
