@@ -120,16 +120,16 @@ describe("getBreathValue", () => {
 // ===== getBreathLineMultiplier =====
 
 describe("getBreathLineMultiplier", () => {
-  it("returns values between 0.6 and 1.6", () => {
+  it("returns values between 0.85 and 1.15 (±15%)", () => {
     for (let t = 0; t < 16000; t += 100) {
       const mult = getBreathLineMultiplier(t);
-      expect(mult).toBeGreaterThanOrEqual(0.6);
-      expect(mult).toBeLessThanOrEqual(1.6);
+      expect(mult).toBeGreaterThanOrEqual(0.85);
+      expect(mult).toBeLessThanOrEqual(1.15);
     }
   });
 
-  it("is 1.1 at t=0 (breath=0.5)", () => {
-    expect(getBreathLineMultiplier(0)).toBeCloseTo(1.1, 1);
+  it("is 1.0 at t=0 (breath=0.5)", () => {
+    expect(getBreathLineMultiplier(0)).toBeCloseTo(1.0, 1);
   });
 });
 

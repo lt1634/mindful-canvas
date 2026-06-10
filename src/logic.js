@@ -139,14 +139,14 @@ export function getBreathValue(ts, cycleMs = BREATH_CYCLE_MS) {
 }
 
 /**
- * Get breath-based line width multiplier
+ * Get breath-based line width multiplier (matches index.html ±15%)
  * @param {number} ts - Timestamp in ms
  * @param {number} cycleMs - Breath cycle duration in ms
- * @returns {number} Multiplier between 0.6 and 1.6
+ * @returns {number} Multiplier between 0.85 and 1.15
  */
 export function getBreathLineMultiplier(ts, cycleMs = BREATH_CYCLE_MS) {
   const b = getBreathValue(ts, cycleMs);
-  return 0.6 + b * 1.0;
+  return 1 + 0.3 * (b - 0.5);
 }
 
 // ===== BRUSH =====
