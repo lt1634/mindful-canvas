@@ -1,8 +1,8 @@
 // ===== CANVAS SYSTEM（已修正版）=====
 // 修正：redrawAll 定義、globalAlpha reset、渲染順序、shadowBlur 效能、粒子生命週期
 
-const canvas = document.getElementById('drawCanvas');
-const ctx = canvas.getContext('2d', { alpha: true });
+const canvas = document.getElementById("drawCanvas");
+const ctx = canvas.getContext("2d", { alpha: true });
 
 let drawing = false;
 let lastX, lastY;
@@ -21,15 +21,15 @@ function resizeCanvas() {
   canvas.width = rect.width * dpr;
   canvas.height = rect.height * dpr;
   ctx.scale(dpr, dpr);
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
   redrawAll();
 }
 
 // ===== 修正 1：redrawAll 已定義 =====
 function redrawAll() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  strokeHistory.forEach(stroke => drawStroke(stroke, false));
+  strokeHistory.forEach((stroke) => drawStroke(stroke, false));
 }
 
 // ===== 修正 5：shadowBlur 只用於完成後渲染 =====
@@ -126,7 +126,7 @@ function redrawWithFade() {
     if (stroke.points.length < 2) return;
     // 新筆觸唔淡化，舊筆觸隨時間淡化
     const age = (strokeHistory.length - idx) / strokeHistory.length;
-    const fadeAmount = Math.max(0.15, 1 - (fadePhase * 0.005 * age));
+    const fadeAmount = Math.max(0.15, 1 - fadePhase * 0.005 * age);
     ctx.save();
     ctx.strokeStyle = stroke.color;
     ctx.lineWidth = stroke.size;
@@ -147,7 +147,7 @@ function getPos(e) {
   const touch = e.touches ? e.touches[0] : e;
   return {
     x: touch.clientX - rect.left,
-    y: touch.clientY - rect.top
+    y: touch.clientY - rect.top,
   };
 }
 
@@ -155,7 +155,8 @@ function startDraw(e) {
   e.preventDefault();
   drawing = true;
   const pos = getPos(e);
-  lastX = pos.x; lastY = pos.y;
+  lastX = pos.x;
+  lastY = pos.y;
   currentStroke = [{ x: pos.x, y: pos.y }];
   silenceStart = Date.now();
 }
@@ -171,7 +172,8 @@ function draw(e) {
     particles.push(new Particle(pos.x, pos.y, currentColor));
   }
 
-  lastX = pos.x; lastY = pos.y;
+  lastX = pos.x;
+  lastY = pos.y;
 }
 
 function endDraw(e) {
@@ -182,7 +184,7 @@ function endDraw(e) {
       points: [...currentStroke],
       color: currentColor,
       size: currentSize,
-      alpha: 1
+      alpha: 1,
     });
     strokeCount++;
     // 記錄停頓時間
@@ -193,20 +195,20 @@ function endDraw(e) {
 }
 
 // ===== 事件綁定 =====
-canvas.addEventListener('mousedown', startDraw);
-canvas.addEventListener('mousemove', draw);
-canvas.addEventListener('mouseup', endDraw);
-canvas.addEventListener('mouseleave', endDraw);
-canvas.addEventListener('touchstart', startDraw, { passive: false });
-canvas.addEventListener('touchmove', draw, { passive: false });
-canvas.addEventListener('touchend', endDraw);
+canvas.addEventListener("mousedown", startDraw);
+canvas.addEventListener("mousemove", draw);
+canvas.addEventListener("mouseup", endDraw);
+canvas.addEventListener("mouseleave", endDraw);
+canvas.addEventListener("touchstart", startDraw, { passive: false });
+canvas.addEventListener("touchmove", draw, { passive: false });
+canvas.addEventListener("touchend", endDraw);
 
 // ===== INIT =====
-window.addEventListener('load', () => {
+window.addEventListener("load", () => {
   resizeCanvas();
   animate();
 });
 
-window.addEventListener('resize', () => {
+window.addEventListener("resize", () => {
   resizeCanvas();
 });
