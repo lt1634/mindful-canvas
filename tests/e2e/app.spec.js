@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 async function enterFreeMode(page) {
-  await page.locator(".mode-card").first().click();
+  await page.locator(".mode-card.free-secondary").click();
   await expect(page.locator("#drawCanvas")).toBeVisible({ timeout: 5000 });
 }
 
@@ -18,14 +18,25 @@ test.describe("Mindful Canvas", () => {
     await expect(page.locator("#welcome")).toBeVisible();
     await expect(page.getByRole("heading", { name: "覺知畫布" })).toBeVisible();
     await expect(page.locator(".mode-card")).toHaveCount(2);
-    await expect(page.locator("#welcomeContent .mode-title").first()).toHaveText("自由畫布");
-    await expect(page.locator("#welcomeContent .mode-title").nth(1)).toHaveText("禪繞唐卡");
+    await expect(page.locator("#welcomeContent .mode-title").first()).toHaveText("禪繞唐卡");
+    await expect(page.locator("#welcomeContent .mode-title").nth(1)).toHaveText("自由畫布");
   });
 
   test("shows canvas after selecting free draw mode", async ({ page }) => {
     await enterFreeMode(page);
     await expect(page.locator("#canvasScreen")).toHaveClass(/active/);
     await expect(page.locator("#canvasTitle")).toHaveText("自由畫布");
+  });
+
+  test("opens zen template picker and starts guided zen mode", async ({ page }) => {
+    await page.locator(".mode-card.zen").click();
+    await expect(page.locator("#zenPickerScreen")).toHaveClass(/active/);
+    await expect(page.getByRole("heading", { name: "選一個圖案跟住畫" })).toBeVisible();
+    await page.locator(".zen-tpl-card").first().click();
+    await expect(page.locator("#canvasScreen")).toHaveClass(/active/);
+    await expect(page.locator("#zenOverlay")).toBeVisible();
+    await expect(page.locator("#zenStepLabel")).toHaveText("步驟 1 / 4");
+    await expect(page.locator("#zenNextBtn")).toHaveText("跟好了 →");
   });
 
   test("can draw on canvas after entering draw mode", async ({ page }) => {

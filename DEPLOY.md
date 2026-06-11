@@ -67,3 +67,22 @@ python3 -m http.server 8080 --bind 0.0.0.0
 - [ ] 長按標題 3 秒可匯出 JSON
 - [ ] 離線第二次開啟仍可用（Service Worker）
 - [ ] 圖示正常顯示
+
+## 校內小規模實機測試（教師用）
+
+建議：**1 部 iPhone + 1 部 Android**，各測自由畫布約 2 分鐘、禪繞唐卡 3 次。
+
+| 項目                       | iPhone | Android | 備註                           |
+| -------------------------- | ------ | ------- | ------------------------------ |
+| 手機型號 / 系統版本        |        |         |                                |
+| QR 掃碼能否開啟 Pages      |        |         | 若唔得，改用內網 `http.server` |
+| 自由畫布：斷筆 / lag       |        |         |                                |
+| 禪繞：第二筆留痕正常       |        |         | 重點測多筆觸控                 |
+| 禪繞：pointercancel 異常   |        |         |                                |
+| 卡片可儲存 PNG             |        |         |                                |
+| 反饋問卷可提交             |        |         |                                |
+| 學生掃碼前最擔心咩（一句） |        |         | 教師觀察                       |
+
+測試後：長按歡迎頁「覺知畫布」3 秒 → 匯出 `mindful-canvas-sessions.json` → 更新 [`FEEDBACK.md`](FEEDBACK.md)。
+
+**Git remote 安全：** 正常應為 `https://github.com/<用戶名>/mindful-canvas.git`（唔含 `ghp_`）。Cloud agent 有時誤報 token，以本機 `git remote get-url origin` 為準。

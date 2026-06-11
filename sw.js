@@ -1,4 +1,4 @@
-const CACHE = "mindful-canvas-v2-phase3-breath";
+const CACHE = "mindful-canvas-v2-zen-templates";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
