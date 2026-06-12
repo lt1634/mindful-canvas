@@ -222,6 +222,18 @@
       .mode-card.zen.featured .mode-title {
         font-size: 19px;
       }
+      .mode-card.sumi {
+        border-color: rgba(44, 95, 124, 0.45);
+        background: rgba(28, 38, 52, 0.55);
+      }
+      @media (hover: hover) {
+        .mode-card.sumi:hover {
+          border-color: rgba(44, 95, 124, 0.7);
+          box-shadow:
+            0 0 32px rgba(44, 95, 124, 0.2),
+            0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+      }
       .mode-card.free-secondary {
         padding: 18px 80px 18px 18px;
         opacity: 0.88;
@@ -383,6 +395,68 @@
           transform 0.15s ease-out,
           opacity 0.15s ease-out;
         transform-origin: center top;
+      }
+
+      /* ===== SUMI (墨流) UI ===== */
+      #sumiUI {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 6;
+        padding: 10px 16px calc(14px + env(safe-area-inset-bottom));
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        pointer-events: none;
+      }
+      .sumi-hint {
+        font-size: 12px;
+        color: rgba(90, 80, 72, 0.75);
+        letter-spacing: 1px;
+        text-shadow: 0 1px 2px rgba(255, 250, 240, 0.6);
+      }
+      .sumi-bar {
+        pointer-events: auto;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: rgba(250, 246, 238, 0.82);
+        border: 1px solid rgba(120, 100, 70, 0.18);
+        border-radius: 999px;
+        padding: 8px 18px;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        box-shadow: 0 4px 18px rgba(60, 45, 30, 0.12);
+      }
+      .sumi-dot {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        cursor: pointer;
+        padding: 0;
+        transition:
+          transform 0.2s,
+          border-color 0.2s;
+      }
+      .sumi-dot.active {
+        border-color: rgba(60, 45, 30, 0.55);
+        transform: scale(1.18);
+      }
+      .sumi-clear {
+        border: none;
+        background: none;
+        font-family: inherit;
+        font-size: 12.5px;
+        color: #6b5a44;
+        cursor: pointer;
+        padding: 4px 6px;
+        letter-spacing: 1px;
+      }
+      .sumi-clear:active {
+        opacity: 0.6;
       }
 
       /* ===== CANVAS SCREEN ===== */
@@ -560,10 +634,11 @@
       .card-drawing {
         width: 100%;
         aspect-ratio: 4/3;
-        background: #0d1117;
+        background: #ebe4d6;
         display: flex;
         align-items: center;
         justify-content: center;
+        box-shadow: inset 0 0 48px rgba(80, 60, 40, 0.08);
       }
       .card-drawing img {
         width: 100%;
@@ -878,6 +953,15 @@
             </div>
             <div class="mode-meta">約 1 分鐘 · 分步跟畫 · 3 款圖案</div>
           </div>
+          <div class="mode-card sumi" onclick="startSumiMode()">
+            <canvas class="mode-card-preview" id="previewSumi" aria-hidden="true"></canvas>
+            <div class="mode-emoji">🌊</div>
+            <div class="mode-title">墨流畫布</div>
+            <div class="mode-desc">
+              日式墨流（Suminagashi）。輕點滴墨，墨色喺水面慢慢暈開；拖曳攪水，拉出流線與漩渦。
+            </div>
+            <div class="mode-meta">約 3 分鐘 · 滴墨 + 攪水 · 自己決定幾時完成</div>
+          </div>
           <div class="mode-card free-secondary" onclick="startFreeMode()">
             <canvas class="mode-card-preview" id="previewFree" aria-hidden="true"></canvas>
             <div class="mode-emoji">🎨</div>
@@ -935,6 +1019,12 @@
             跟好了 →
           </button>
           <div class="zen-timer" id="zenTimer" aria-hidden="true">2:00</div>
+        </div>
+        <div id="sumiUI" style="display: none">
+          <div class="sumi-hint">輕點滴墨 · 拖曳攪水</div>
+          <div class="sumi-bar" id="sumiBar">
+            <button type="button" class="sumi-clear" onclick="clearSumiCanvas()">洗い流す</button>
+          </div>
         </div>
       </div>
       <div id="freeModeUI">
@@ -1110,10 +1200,29 @@
       let breathLastTs = 0;
       let toolsCollapsed = false;
       let toolsIdleTimer = null;
+      let sumiDrops = [];
+      let sumiColorIndex = 0;
+      let sumiLastPos = null;
+      let sumiDragDist = 0;
+      let sumiLastInteraction = 0;
+      let sumiLastAutoDrop = 0;
 
       const BREATH_CYCLE_MS = 8000;
       const TOOLS_IDLE_MS = 3000;
       const ZEN_TRACE_COLORS = ["#f0c674", "#e8a87c", "#f5e6d3", "#d4a5ff", "#7ec8b8"];
+
+      // 墨流調色（沿用禪意調色盤色碼，解讀引擎可直接識別）
+      const SUMI_COLORS = [
+        { hex: "#3a3a4a", name: "墨色" },
+        { hex: "#2c5f7c", name: "深海" },
+        { hex: "#c46b4a", name: "晚霞" },
+        { hex: "#5a7a5a", name: "翠竹" },
+        { hex: "#8b5e83", name: "暮色" },
+      ];
+      const SUMI_MAX_DROPS = 64;
+      const SUMI_DROP_VERTS = 72;
+      const SUMI_MAX_VERTS = 240;
+      const SUMI_AUTO_DROP_MS = 9000;
 
       const ZEN_TEMPLATES = {
         circle: {
@@ -1346,6 +1455,7 @@
         mudita: "喜、為他人歡喜、分享快樂",
         upekkha: "捨、放下執著、接納無常",
         zen: "禪繞唐卡、靜心跟隨、輕觸感受、一分鐘完成",
+        sumi: "墨流畫布、滴墨攪水、觀察流動、放下控制",
       };
 
       function checkSafety() {
@@ -1360,6 +1470,7 @@
       }
 
       function getDominantColor() {
+        if (appMode === "sumi") return sumiDominantColor();
         const painted = strokeHistory.filter((s) => !s.eraser);
         if (!painted.length) return currentColor;
         const counts = {};
@@ -1418,6 +1529,7 @@
           "你選擇了「停頓」。停滯是創作中自然的一部分，像音樂裡的休止符。不需要急著突破。當你準備好時，不要想「我要畫什麼」，而是感受「我的手想怎麼動」。",
         free: "你選擇了「自由畫布」。沒有規則，沒有對錯。讓手帶領你，讓色彩在畫布上流動。這一刻，你只需要與色彩同在。",
         zen: "你選擇了「禪繞唐卡」。不需要畫得好，只需要跟著節奏。輕觸畫面，感受光暈，讓圖案與音樂帶你進入當下。",
+        sumi: "你選擇了「墨流畫布」。想像面前係一盆靜水。輕點一下，滴一滴墨，睇住佢慢慢暈開；用手指攪一攪水，墨色會跟住流動。唔使控制結果，水自然會幫你完成。",
         metta:
           "你選擇了「慈」。想想一個你想祝福的人——家人、朋友、甚至自己。讓你的畫筆帶著善意流動，不需要完美，只需要真心。每一筆都是一句無聲的祝福：願你快樂。",
         karuna:
@@ -1642,6 +1754,7 @@
       let lastInkStampX = 0;
       let lastInkStampY = 0;
       let paperTexture = null;
+      let washiTexture = null;
 
       function hexToRgb(hex) {
         const h = (hex || "#e2b55a").replace("#", "");
@@ -1765,6 +1878,67 @@
         c.fillRect(0, 0, pw, ph);
       }
 
+      function ensureWashiTexture() {
+        if (washiTexture) return washiTexture;
+        const c = document.createElement("canvas");
+        c.width = 256;
+        c.height = 256;
+        const tctx = c.getContext("2d");
+        tctx.fillStyle = "#ebe4d6";
+        tctx.fillRect(0, 0, 256, 256);
+        const img = tctx.getImageData(0, 0, 256, 256);
+        for (let y = 0; y < 256; y++) {
+          for (let x = 0; x < 256; x++) {
+            const i = (y * 256 + x) * 4;
+            const fiber = Math.sin(x * 0.19 + y * 0.07) * 4 + Math.sin(y * 0.13) * 3;
+            const grain = (Math.random() - 0.5) * 14;
+            const v = 228 + fiber + grain;
+            img.data[i] = Math.min(248, Math.max(218, v));
+            img.data[i + 1] = Math.min(242, Math.max(210, v - 6));
+            img.data[i + 2] = Math.min(228, Math.max(188, v - 22));
+            img.data[i + 3] = 255;
+          }
+        }
+        tctx.putImageData(img, 0, 0);
+        tctx.strokeStyle = "rgba(140, 118, 88, 0.07)";
+        tctx.lineWidth = 1;
+        for (let i = 0; i < 18; i++) {
+          const y = (i / 18) * 256 + (Math.random() - 0.5) * 8;
+          tctx.beginPath();
+          tctx.moveTo(0, y);
+          tctx.lineTo(256, y + (Math.random() - 0.5) * 6);
+          tctx.stroke();
+        }
+        washiTexture = c;
+        return washiTexture;
+      }
+
+      function drawWashiBackground(targetCtx, w, h) {
+        const c = targetCtx || ctx;
+        const pw = w || canvasW;
+        const ph = h || canvasH;
+        c.fillStyle = "#ebe4d6";
+        c.fillRect(0, 0, pw, ph);
+        const tex = ensureWashiTexture();
+        c.save();
+        c.globalAlpha = 0.92;
+        c.fillStyle = c.createPattern(tex, "repeat");
+        c.fillRect(0, 0, pw, ph);
+        c.restore();
+        const vg = c.createRadialGradient(
+          pw / 2,
+          ph / 2,
+          Math.min(pw, ph) * 0.12,
+          pw / 2,
+          ph / 2,
+          Math.max(pw, ph) * 0.78
+        );
+        vg.addColorStop(0, "rgba(255,255,255,0)");
+        vg.addColorStop(1, "rgba(72, 52, 32, 0.14)");
+        c.fillStyle = vg;
+        c.fillRect(0, 0, pw, ph);
+      }
+
       function resizeCanvas() {
         const rect = canvas.parentElement.getBoundingClientRect();
         const dpr = window.devicePixelRatio || 1;
@@ -1870,6 +2044,8 @@
         updateBreath(ts || performance.now());
         if (appMode === "zen") {
           animateZenFrame();
+        } else if (appMode === "sumi") {
+          animateSumiFrame();
         } else {
           animateFreeFrame();
         }
@@ -2032,6 +2208,164 @@
 
       function openZenPicker() {
         showScreen("zenPickerScreen");
+      }
+
+      // ===== SUMI ENGINE（數學墨流，Lu & Jaffer 2012）=====
+      // 滴墨：保面積徑向推開 P' = C + (P−C)·√(1 + r²/|P−C|²)
+      function sumiDisplaceByDrop(cx, cy, r) {
+        const r2 = r * r;
+        for (const drop of sumiDrops) {
+          const verts = drop.verts;
+          for (let i = 0; i < verts.length; i++) {
+            const dx = verts[i].x - cx;
+            const dy = verts[i].y - cy;
+            const dist2 = dx * dx + dy * dy;
+            if (dist2 < 0.0001) {
+              verts[i].x = cx + r;
+              continue;
+            }
+            const scale = Math.sqrt(1 + r2 / dist2);
+            verts[i].x = cx + dx * scale;
+            verts[i].y = cy + dy * scale;
+          }
+        }
+      }
+
+      function sumiAddDrop(cx, cy, r, color) {
+        sumiDisplaceByDrop(cx, cy, r);
+        const verts = [];
+        for (let i = 0; i < SUMI_DROP_VERTS; i++) {
+          const a = (i / SUMI_DROP_VERTS) * Math.PI * 2;
+          verts.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
+        }
+        sumiDrops.push({ color, verts });
+        if (sumiDrops.length > SUMI_MAX_DROPS) sumiDrops.shift();
+      }
+
+      // 攪水（tine line）：P' = P + z·u^d·M（d = 點到拖曳線距離）
+      function sumiTine(bx, by, mx, my, z, u) {
+        const len = Math.hypot(mx, my);
+        if (len < 0.001) return;
+        const ux = mx / len;
+        const uy = my / len;
+        const nx = -uy;
+        const ny = ux;
+        for (const drop of sumiDrops) {
+          const verts = drop.verts;
+          for (let i = 0; i < verts.length; i++) {
+            const d = Math.abs((verts[i].x - bx) * nx + (verts[i].y - by) * ny);
+            const shift = z * Math.pow(u, d);
+            if (shift < 0.05) continue;
+            verts[i].x += ux * shift;
+            verts[i].y += uy * shift;
+          }
+        }
+      }
+
+      // 變換後邊過長就插中點，保持多邊形平滑
+      function sumiResample() {
+        const maxSeg = 14;
+        for (const drop of sumiDrops) {
+          if (drop.verts.length >= SUMI_MAX_VERTS) continue;
+          const out = [];
+          const verts = drop.verts;
+          for (let i = 0; i < verts.length; i++) {
+            const a = verts[i];
+            const b = verts[(i + 1) % verts.length];
+            out.push(a);
+            if (out.length < SUMI_MAX_VERTS && Math.hypot(b.x - a.x, b.y - a.y) > maxSeg) {
+              out.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+            }
+          }
+          drop.verts = out;
+        }
+      }
+
+      function drawSumiDrops(targetCtx) {
+        const c = targetCtx || ctx;
+        c.save();
+        c.globalCompositeOperation = "multiply";
+        for (const drop of sumiDrops) {
+          const verts = drop.verts;
+          if (verts.length < 3) continue;
+          c.beginPath();
+          c.moveTo(verts[0].x, verts[0].y);
+          for (let i = 1; i < verts.length; i++) c.lineTo(verts[i].x, verts[i].y);
+          c.closePath();
+          c.globalAlpha = 0.82;
+          c.fillStyle = drop.color;
+          c.fill();
+          c.globalAlpha = 0.3;
+          c.strokeStyle = drop.color;
+          c.lineWidth = 1;
+          c.stroke();
+        }
+        c.restore();
+      }
+
+      function animateSumiFrame() {
+        drawWashiBackground();
+        drawSumiDrops();
+
+        // 閒置時跟呼吸慢滴小墨，畫面唔會完全靜止
+        const now = Date.now();
+        if (
+          sumiDrops.length &&
+          now - sumiLastInteraction > 6000 &&
+          now - sumiLastAutoDrop > SUMI_AUTO_DROP_MS
+        ) {
+          sumiLastAutoDrop = now;
+          const x = canvasW * (0.3 + Math.random() * 0.4);
+          const y = canvasH * (0.3 + Math.random() * 0.4);
+          sumiAddDrop(x, y, 5 + Math.random() * 9, SUMI_COLORS[sumiColorIndex].hex);
+          sumiResample();
+        }
+      }
+
+      function sumiDominantColor() {
+        if (!sumiDrops.length) return SUMI_COLORS[0].hex;
+        const counts = {};
+        sumiDrops.forEach((d) => {
+          counts[d.color] = (counts[d.color] || 0) + 1;
+        });
+        let max = 0;
+        let dominant = SUMI_COLORS[0].hex;
+        for (const [hex, n] of Object.entries(counts)) {
+          if (n > max) {
+            max = n;
+            dominant = hex;
+          }
+        }
+        return dominant;
+      }
+
+      function selectSumiColor(idx) {
+        sumiColorIndex = idx;
+        document
+          .querySelectorAll(".sumi-dot")
+          .forEach((b, i) => b.classList.toggle("active", i === idx));
+      }
+
+      function initSumiBar() {
+        const bar = document.getElementById("sumiBar");
+        if (!bar || bar.querySelector(".sumi-dot")) return;
+        const clearBtn = bar.querySelector(".sumi-clear");
+        SUMI_COLORS.forEach((c, i) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "sumi-dot" + (i === 0 ? " active" : "");
+          b.style.background = c.hex;
+          b.title = c.name;
+          b.setAttribute("aria-label", c.name);
+          b.onclick = () => selectSumiColor(i);
+          bar.insertBefore(b, clearBtn);
+        });
+      }
+
+      function clearSumiCanvas() {
+        sumiDrops = [];
+        strokeCount = 0;
+        showToast("水面已洗淨，重新開始");
       }
 
       function drawZenMandala(progress) {
@@ -2362,11 +2696,15 @@
         }
       }
 
-      function setCanvasModeUI(isFree) {
-        document.getElementById("freeModeUI").style.display = isFree ? "block" : "none";
-        document.getElementById("zenOverlay").style.display = isFree ? "none" : "block";
-        document.getElementById("canvasTitle").textContent = isFree ? "自由畫布" : "禪繞唐卡";
-        document.getElementById("completeBtn").style.display = isFree ? "" : "none";
+      function setCanvasModeUI(mode) {
+        if (mode === true) mode = "free";
+        if (mode === false) mode = "zen";
+        document.getElementById("freeModeUI").style.display = mode === "free" ? "block" : "none";
+        document.getElementById("zenOverlay").style.display = mode === "zen" ? "block" : "none";
+        document.getElementById("sumiUI").style.display = mode === "sumi" ? "flex" : "none";
+        document.getElementById("canvasTitle").textContent =
+          mode === "zen" ? "禪繞唐卡" : mode === "sumi" ? "墨流畫布" : "自由畫布";
+        document.getElementById("completeBtn").style.display = mode === "zen" ? "none" : "";
       }
 
       function startCanvasLoop() {
@@ -2404,39 +2742,60 @@
         }
       }
 
-      function drawZenTraceStroke(stroke, targetCtx) {
-        const c = targetCtx || ctx;
-        const pts = stroke.points;
-        if (!pts.length) return;
+      function traceZenStrokePath(c, pts, stroke, lineW, alpha, withBleed) {
         c.save();
         c.globalCompositeOperation = "source-over";
-        drawInkAlongPoints(c, pts, stroke.color, stroke.size, 0.88, 6);
         c.strokeStyle = stroke.color;
-        c.lineWidth = Math.max(2, stroke.size * 0.35);
+        c.lineWidth = lineW;
         c.lineCap = "round";
         c.lineJoin = "round";
-        c.globalAlpha = 0.45;
+        c.globalAlpha = alpha;
+        if (withBleed) {
+          c.shadowColor = stroke.color;
+          c.shadowBlur = stroke.size * 2.2;
+        }
         if (pts.length === 1) {
           c.beginPath();
-          c.arc(pts[0].x, pts[0].y, stroke.size * 0.2, 0, Math.PI * 2);
+          c.arc(
+            pts[0].x,
+            pts[0].y,
+            Math.max(2, stroke.size * (withBleed ? 0.55 : 0.2)),
+            0,
+            Math.PI * 2
+          );
           c.fillStyle = stroke.color;
           c.fill();
         } else {
           c.beginPath();
           c.moveTo(pts[0].x, pts[0].y);
-          for (let i = 1; i < pts.length; i++) {
-            c.lineTo(pts[i].x, pts[i].y);
-          }
+          for (let i = 1; i < pts.length; i++) c.lineTo(pts[i].x, pts[i].y);
           c.stroke();
         }
         c.restore();
       }
 
+      function drawZenTraceStroke(stroke, targetCtx) {
+        const c = targetCtx || ctx;
+        const pts = stroke.points;
+        if (!pts.length) return;
+
+        traceZenStrokePath(c, pts, stroke, Math.max(4, stroke.size * 1.1), 0.2, true);
+        drawInkAlongPoints(c, pts, stroke.color, stroke.size * 1.25, 0.28, 5);
+        drawInkAlongPoints(c, pts, stroke.color, stroke.size, 0.88, 6);
+        traceZenStrokePath(c, pts, stroke, Math.max(2, stroke.size * 0.35), 0.5, false);
+      }
+
       function renderPureArtwork(targetCtx, w, h) {
-        drawPaperBackground(targetCtx, w, h);
+        if (currentScene === "zen" || currentScene === "sumi") {
+          drawWashiBackground(targetCtx, w, h);
+        } else {
+          drawPaperBackground(targetCtx, w, h);
+        }
         targetCtx.lineCap = "round";
         targetCtx.lineJoin = "round";
-        if (currentScene === "zen") {
+        if (currentScene === "sumi") {
+          drawSumiDrops(targetCtx);
+        } else if (currentScene === "zen") {
           zenTouchStrokes.forEach((s) => drawZenTraceStroke(s, targetCtx));
         } else {
           strokeHistory.forEach((s) => {
@@ -2473,6 +2832,10 @@
           currentZenStrokeColor =
             ZEN_TRACE_COLORS[zenTouchStrokes.length % ZEN_TRACE_COLORS.length];
           zenTouchSparkle(pos);
+        } else if (appMode === "sumi") {
+          sumiLastPos = pos;
+          sumiDragDist = 0;
+          sumiLastInteraction = Date.now();
         } else {
           silenceStart = Date.now();
         }
@@ -2487,6 +2850,25 @@
         if (appMode === "zen") {
           if (Math.random() < 0.22) zenTouchSparkle(pos);
           stampInkIfMoved(pos.x, pos.y, currentZenStrokeColor, 12, 0.75, 5);
+        } else if (appMode === "sumi") {
+          if (sumiLastPos) {
+            const dx = pos.x - sumiLastPos.x;
+            const dy = pos.y - sumiLastPos.y;
+            const segLen = Math.hypot(dx, dy);
+            if (segLen > 4) {
+              sumiDragDist += segLen;
+              sumiTine(
+                (pos.x + sumiLastPos.x) / 2,
+                (pos.y + sumiLastPos.y) / 2,
+                dx,
+                dy,
+                Math.min(26, segLen * 0.9),
+                0.94
+              );
+              sumiLastPos = pos;
+              sumiLastInteraction = Date.now();
+            }
+          }
         } else if (!isEraser) {
           stampInkIfMoved(pos.x, pos.y, currentColor, getBrushSize(false), 0.7, 5);
         }
@@ -2499,6 +2881,20 @@
       function commitStroke() {
         if (!drawing) return;
         drawing = false;
+        if (appMode === "sumi") {
+          if (sumiDragDist < 8 && currentStroke.length) {
+            const p = currentStroke[0];
+            sumiAddDrop(p.x, p.y, 16 + Math.random() * 26, SUMI_COLORS[sumiColorIndex].hex);
+          }
+          sumiResample();
+          strokeCount++;
+          sumiLastPos = null;
+          sumiDragDist = 0;
+          sumiLastInteraction = Date.now();
+          currentStroke = [];
+          strokeTrail.reset();
+          return;
+        }
         if (appMode === "zen") {
           if (currentStroke.length) {
             const saved = {
@@ -2728,11 +3124,44 @@
         }
       }
 
+      function drawSumiPreview() {
+        const c = document.getElementById("previewSumi");
+        if (!c) return;
+        const size = 64;
+        setupPreviewCanvas(c, size);
+        const pctx = c.getContext("2d");
+        pctx.clearRect(0, 0, size, size);
+        const cx = size / 2;
+        const cy = size / 2;
+        const flow = (Math.sin(previewPhase * 0.5) + 1) / 2;
+        const inks = ["#3a3a4a", "#2c5f7c", "#c46b4a"];
+        inks.forEach((color, k) => {
+          const baseR = size * (0.12 + k * 0.09) * (0.7 + flow * 0.4);
+          pctx.strokeStyle = color;
+          pctx.globalAlpha = 0.35 + flow * 0.25;
+          pctx.lineWidth = 2.2 - k * 0.5;
+          pctx.beginPath();
+          for (let i = 0; i <= 40; i++) {
+            const a = (i / 40) * Math.PI * 2;
+            const wobble = Math.sin(a * 3 + previewPhase * (0.8 + k * 0.3)) * size * 0.05;
+            const r = baseR + wobble;
+            const x = cx + Math.cos(a) * r;
+            const y = cy + Math.sin(a) * r * 0.9;
+            if (i === 0) pctx.moveTo(x, y);
+            else pctx.lineTo(x, y);
+          }
+          pctx.closePath();
+          pctx.stroke();
+        });
+        pctx.globalAlpha = 1;
+      }
+
       function animateModePreviews() {
         if (!document.getElementById("welcome").classList.contains("active")) return;
         previewPhase += 0.025;
         drawFreePreview();
         drawZenPreview();
+        drawSumiPreview();
         previewAnimId = requestAnimationFrame(animateModePreviews);
       }
 
@@ -2832,6 +3261,12 @@
         zenStepIndex = 0;
         zenFinished = false;
         zenStartTime = 0;
+        sumiDrops = [];
+        sumiColorIndex = 0;
+        sumiLastPos = null;
+        sumiDragDist = 0;
+        sumiLastInteraction = 0;
+        sumiLastAutoDrop = 0;
         drawing = false;
         activePointerId = null;
         currentStroke = [];
@@ -2853,6 +3288,22 @@
           showToast(SCENE_GUIDANCE.free);
           startFadeEffect();
           touchToolsActivity();
+        }, 100);
+      }
+
+      function startSumiMode() {
+        appMode = "sumi";
+        currentScene = "sumi";
+        resetCanvasState();
+        setCanvasModeUI("sumi");
+        initSumiBar();
+        selectSumiColor(0);
+        enterCanvasScreen();
+        setTimeout(() => {
+          resizeCanvas();
+          startFreeAmbience();
+          showToast(SCENE_GUIDANCE.sumi);
+          startCanvasLoop();
         }, 100);
       }
 
@@ -2883,7 +3334,7 @@
         stopZenAmbience();
         strokeCount = Math.max(zenTouchStrokes.length, 1);
         document.getElementById("zenHint").textContent = "完成了，正在為你生成心靈卡片…";
-        setTimeout(() => generateCard(true), 800);
+        setTimeout(() => generateCard(true), 200);
       }
 
       function goHome() {
@@ -2935,19 +3386,8 @@
         lastArtworkDataUrl = createArtworkDataURL();
         document.getElementById("cardImage").src = lastArtworkDataUrl;
 
-        // Generate interpretation (try AI first, fallback to template)
-        setTimeout(async () => {
-          // Show AI loading if Ollama might be available
-          try {
-            await fetch("http://localhost:11434/api/tags", {
-              method: "GET",
-              signal: AbortSignal.timeout(2000),
-            });
-            document.getElementById("loadingText").textContent = "AI 正在為你撰寫專屬解讀...";
-          } catch (e) {
-            document.getElementById("loadingText").textContent = "正在為你生成心靈解讀...";
-          }
-
+        document.getElementById("loadingText").textContent = "正在為你生成心靈解讀...";
+        (async () => {
           const interpretation = await generateInterpretationAI();
 
           if (!interpretation.isSafe) {
@@ -2966,7 +3406,12 @@
             scene: currentScene,
             strokes: strokeCount,
             silence: Math.round(totalSilence),
-            dominantColor: appMode === "zen" ? "#e2b55a" : getDominantColor(),
+            dominantColor:
+              appMode === "zen"
+                ? "#e2b55a"
+                : appMode === "sumi"
+                  ? sumiDominantColor()
+                  : getDominantColor(),
             source: interpretation.source || "template",
           };
 
@@ -2975,7 +3420,7 @@
           restoreCardUI("normal");
           document.getElementById("loading").classList.remove("active");
           showCardScreen();
-        }, 1500);
+        })();
       }
 
       function generateInterpretation() {
@@ -3091,6 +3536,18 @@
             "剛才那一刻，你沒有追趕，沒有著急。很好。",
             "光暈散開的瞬間，你已經與當下合一。",
             "你完成了一幅禪意之畫。帶走這份平靜，回到日常吧。",
+          ],
+          sumi: [
+            "墨滴落水，自己會找到形狀。你只需要放手，讓它流動。",
+            "你攪動的水流，每一道紋路都係獨一無二。呢一刻，唔會再重複。",
+            "墨色喺水面慢慢暈開，就好似情緒慢慢散開一樣。唔使捉緊。",
+            "你冇控制結果，但結果好美。有時候，放下控制就係答案。",
+            "水面承載得起所有墨色，就好似呢一刻承載得起你所有思緒。",
+            "一滴墨改變唔到大海，但改變到成幅畫。你嘅每個小行動都有意思。",
+            "墨流嘅美，在於佢從來唔重複。你嘅每一日，都係新嘅一幅畫。",
+            "你睇住墨色流動嗰陣，心都靜咗落嚟。呢份觀察，就係正念。",
+            "水唔會急，墨唔會趕。你都可以慢慢嚟。",
+            "呢幅墨流畫係水同你合作嘅作品。學識同唔確定共處，係好大嘅成長。",
           ],
         };
 
@@ -3210,21 +3667,38 @@
         return { affirmation, reflection, isSafe: true };
       }
 
-      // ===== 6. OLLAMA AI INTEGRATION (v2 - when available) =====
+      // ===== 6. OLLAMA AI INTEGRATION (v2 - opt-in only) =====
       const OLLAMA_URL = "http://localhost:11434/api/generate";
       const OLLAMA_MODEL = "gemma4:12b";
+      const OLLAMA_HEALTH_MS = 1500;
+      const OLLAMA_GENERATE_MS = 8000;
+
+      function shouldUseOllama() {
+        return new URLSearchParams(location.search).get("ai") === "1";
+      }
+
+      function templateInterpretation() {
+        return { ...generateInterpretation(), source: "template" };
+      }
 
       async function generateInterpretationAI() {
         const safety = checkSafety();
         if (safety) return safety;
 
-        // Check if Ollama is running
+        if (!shouldUseOllama()) {
+          return templateInterpretation();
+        }
+
+        document.getElementById("loadingText").textContent = "AI 正在為你撰寫專屬解讀...";
+
         try {
-          const healthCheck = await fetch("http://localhost:11434/api/tags", { method: "GET" });
+          const healthCheck = await fetch("http://localhost:11434/api/tags", {
+            method: "GET",
+            signal: AbortSignal.timeout(OLLAMA_HEALTH_MS),
+          });
           if (!healthCheck.ok) throw new Error("Ollama not available");
         } catch (e) {
-          // Fallback to template engine
-          return generateInterpretation();
+          return templateInterpretation();
         }
 
         const dominantColor = getDominantColor();
@@ -3265,18 +3739,18 @@
           const response = await fetch(OLLAMA_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(OLLAMA_GENERATE_MS),
             body: JSON.stringify({
               model: OLLAMA_MODEL,
               prompt: prompt,
               stream: false,
-              options: { temperature: 0.8, num_predict: 500 },
+              options: { temperature: 0.8, num_predict: 280 },
             }),
           });
 
           const data = await response.json();
           const output = data.response || "";
 
-          // Parse AI output
           const affirmationMatch = output.match(/題字[：:]\s*\n?(.*?)(?=\n\n|解讀)/s);
           const reflectionMatch = output.match(/解讀[：:]\s*\n?(.*)/s);
 
@@ -3289,9 +3763,8 @@
             source: "ollama",
           };
         } catch (e) {
-          // Fallback to template engine
-          console.log("Ollama failed, using template:", e);
-          return generateInterpretation();
+          console.log("Ollama failed or timed out, using template:", e);
+          return templateInterpretation();
         }
       }
 
@@ -3305,19 +3778,26 @@
         saveCanvas.height = h;
         const sctx = saveCanvas.getContext("2d");
 
-        // Background
-        sctx.fillStyle = "#1a1a2e";
+        const cardMode = pendingSession?.mode || appMode;
+        const isZenCard = cardMode === "zen" || cardMode === "sumi";
+        sctx.fillStyle = isZenCard ? "#ebe4d6" : "#1a1a2e";
         sctx.fillRect(0, 0, w, h);
+        if (isZenCard) {
+          const tex = ensureWashiTexture();
+          sctx.save();
+          sctx.globalAlpha = 0.55;
+          sctx.fillStyle = sctx.createPattern(tex, "repeat");
+          sctx.fillRect(0, 0, w, h);
+          sctx.restore();
+        }
 
-        // Drawing
         const img = new Image();
         img.onload = () => {
-          // Drawing area
           const drawH = 720;
-          sctx.drawImage(img, 0, 80, w, drawH);
+          const pad = isZenCard ? 36 : 0;
+          sctx.drawImage(img, pad, 80 + pad * 0.5, w - pad * 2, drawH - pad);
 
-          // Affirmation
-          sctx.fillStyle = "#e2b55a";
+          sctx.fillStyle = isZenCard ? "#6b4f2a" : "#e2b55a";
           sctx.font = "500 36px -apple-system, PingFang HK, sans-serif";
           sctx.textAlign = "center";
           wrapText(
@@ -3329,8 +3809,7 @@
             48
           );
 
-          // Reflection
-          sctx.fillStyle = "#a0a0b0";
+          sctx.fillStyle = isZenCard ? "#5a5048" : "#a0a0b0";
           sctx.font = "300 26px -apple-system, PingFang HK, sans-serif";
           wrapText(
             sctx,
@@ -3341,8 +3820,7 @@
             38
           );
 
-          // Footer
-          sctx.fillStyle = "#555";
+          sctx.fillStyle = isZenCard ? "#8a7a68" : "#555";
           sctx.font = "300 20px -apple-system, PingFang HK, sans-serif";
           sctx.fillText("覺知畫布 Mindful Canvas", w / 2, 1380);
 

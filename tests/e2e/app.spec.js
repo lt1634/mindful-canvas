@@ -17,9 +17,10 @@ test.describe("Mindful Canvas", () => {
   test("shows welcome screen with mode cards", async ({ page }) => {
     await expect(page.locator("#welcome")).toBeVisible();
     await expect(page.getByRole("heading", { name: "覺知畫布" })).toBeVisible();
-    await expect(page.locator(".mode-card")).toHaveCount(2);
+    await expect(page.locator(".mode-card")).toHaveCount(3);
     await expect(page.locator("#welcomeContent .mode-title").first()).toHaveText("禪繞唐卡");
-    await expect(page.locator("#welcomeContent .mode-title").nth(1)).toHaveText("自由畫布");
+    await expect(page.locator("#welcomeContent .mode-title").nth(1)).toHaveText("墨流畫布");
+    await expect(page.locator("#welcomeContent .mode-title").nth(2)).toHaveText("自由畫布");
   });
 
   test("shows canvas after selecting free draw mode", async ({ page }) => {
@@ -37,6 +38,18 @@ test.describe("Mindful Canvas", () => {
     await expect(page.locator("#zenOverlay")).toBeVisible();
     await expect(page.locator("#zenStepLabel")).toHaveText("步驟 1 / 4");
     await expect(page.locator("#zenNextBtn")).toHaveText("跟好了 →");
+  });
+
+  test("starts sumi marbling mode and can drop ink", async ({ page }) => {
+    await page.locator(".mode-card.sumi").click();
+    await expect(page.locator("#canvasScreen")).toHaveClass(/active/);
+    await expect(page.locator("#canvasTitle")).toHaveText("墨流畫布");
+    await expect(page.locator("#sumiUI")).toBeVisible();
+    await expect(page.locator(".sumi-dot")).toHaveCount(5);
+    const canvas = page.locator("#drawCanvas");
+    const box = await canvas.boundingBox();
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(page.locator("#completeBtn")).toBeVisible();
   });
 
   test("can draw on canvas after entering draw mode", async ({ page }) => {
