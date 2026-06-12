@@ -80,7 +80,7 @@ const SUMI_MAX_DROPS = 64;
 const SUMI_DROP_VERTS = 96;
 const SUMI_MAX_VERTS = 320;
 const SUMI_AUTO_DROP_MS = 9000;
-const SUMI_TINE_U = 0.978;
+const SUMI_TINE_U = 0.975; // 越大暈開越柔（0.94 太尖）
 const SUMI_FLOW_MIN = 0.35;
 const SUMI_MAX_FLOW = 12;
 const SUMI_FLOW_STORAGE = "mindful-sumi-flow";
@@ -1101,27 +1101,18 @@ function sumiApplyFlows() {
 function sumiAddDrop(cx, cy, r, color) {
   sumiDisplaceByDrop(cx, cy, r);
   const verts = [];
-  const wobble = 0.06 + Math.random() * 0.05;
+  const phase = Math.random() * Math.PI * 2;
+  const wobble = 0.04 + Math.random() * 0.04;
   for (let i = 0; i < SUMI_DROP_VERTS; i++) {
     const a = (i / SUMI_DROP_VERTS) * Math.PI * 2;
-    const rr = r * (1 + Math.sin(a * 2.5 + cx * 0.01) * wobble);
+    // 單頻微起伏：有機水感，唔會似 sin(a×2.5) 咁起五角星
+    const rr = r * (1 + Math.sin(a + phase) * wobble);
     verts.push({ x: cx + Math.cos(a) * rr, y: cy + Math.sin(a) * rr });
   }
   sumiDrops.push({ color, verts });
   if (sumiDrops.length > SUMI_MAX_DROPS) sumiDrops.shift();
   sumiSmoothAll(1);
   sumiSpawnRipples(cx, cy, color, r);
-  const p = getSumiFlowPreset();
-  for (let i = 0; i < p.dropFlows; i++) {
-    const a = (i / p.dropFlows) * Math.PI * 2 + Math.random() * 0.3;
-    sumiPushFlow(
-      cx,
-      cy,
-      Math.cos(a) * p.dropFlowDist,
-      Math.sin(a) * p.dropFlowDist,
-      r * p.dropFlowStr
-    );
-  }
 }
 
 // 攪水（tine line）：P' = P + z·u^d·M（d = 點到拖曳線距離）
@@ -1238,15 +1229,14 @@ function sumiTineAlong(x0, y0, x1, y1) {
   const len = Math.hypot(dx, dy);
   if (len < 0.5) return;
   const p = getSumiFlowPreset();
-  const steps = Math.max(1, Math.ceil(len / 2.5));
-  const segStr = Math.min(28 * p.tineMult, (len / steps) * 1.2 * p.tineMult);
+  const steps = Math.max(1, Math.ceil(len / 3));
+  const segStr = Math.min(18, (len / steps) * 1.1) * p.tineMult;
   for (let s = 1; s <= steps; s++) {
     const t = s / steps;
     const bx = x0 + dx * t;
     const by = y0 + dy * t;
     sumiTine(bx, by, dx, dy, segStr, SUMI_TINE_U);
   }
-  sumiPushFlow(x1, y1, dx, dy, Math.min(28, len * 0.72) * p.tineMult);
   sumiSmoothAll(1);
 }
 
