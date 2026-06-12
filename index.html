@@ -108,6 +108,13 @@
         <div id="sumiUI" style="display: none">
           <div class="sumi-hint">輕點滴墨 · 拖曳攪水</div>
           <div class="sumi-bar" id="sumiBar">
+            <div class="sumi-flow" id="sumiFlowCtrl" role="group" aria-label="流動強度">
+              <span class="sumi-flow-label">流動</span>
+              <button type="button" class="sumi-flow-btn active" aria-pressed="true">細</button>
+              <button type="button" class="sumi-flow-btn" aria-pressed="false">中</button>
+              <button type="button" class="sumi-flow-btn" aria-pressed="false">大</button>
+            </div>
+            <span class="sumi-bar-sep" aria-hidden="true"></span>
             <button type="button" class="sumi-clear" onclick="clearSumiCanvas()">洗い流す</button>
           </div>
         </div>

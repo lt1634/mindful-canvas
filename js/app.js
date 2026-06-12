@@ -57,6 +57,15 @@ let sumiLastFlowDy = 0;
 
 const BREATH_CYCLE_MS = 8000;
 const TOOLS_IDLE_MS = 3000;
+const AMBIENCE_SONGS = [
+  "Songs/Zen Flow.mp3",
+  "Songs/Paper Lantern Focus.mp3",
+  "Songs/Paper Lantern Focus (1).mp3",
+  "Songs/Quiet Current.mp3",
+  "Songs/Quiet Current (1).mp3",
+].map((path) => encodeURI(path));
+const SONG_FADE_IN_SEC = 2.8;
+const SONG_FADE_OUT_SEC = 2.8;
 const ZEN_TRACE_COLORS = ["#f0c674", "#e8a87c", "#f5e6d3", "#d4a5ff", "#7ec8b8"];
 
 // 墨流調色（沿用禪意調色盤色碼，解讀引擎可直接識別）
@@ -72,9 +81,59 @@ const SUMI_DROP_VERTS = 96;
 const SUMI_MAX_VERTS = 320;
 const SUMI_AUTO_DROP_MS = 9000;
 const SUMI_TINE_U = 0.978;
-const SUMI_FLOW_DECAY = 0.972; // 愈接近 1 流動停得愈慢
 const SUMI_FLOW_MIN = 0.35;
 const SUMI_MAX_FLOW = 12;
+const SUMI_FLOW_STORAGE = "mindful-sumi-flow";
+// 流動強度：細（預設）／中／大——教師可調
+const SUMI_FLOW_PRESETS = [
+  {
+    label: "細",
+    decay: 0.91,
+    mult: 0.42,
+    rippleRings: 2,
+    rippleGrow: 1.35,
+    rippleMax: 1.65,
+    dropFlows: 5,
+    dropFlowStr: 0.3,
+    dropFlowDist: 8,
+    tineMult: 0.55,
+    inertiaMult: 0.35,
+    inertiaVec: 20,
+  },
+  {
+    label: "中",
+    decay: 0.945,
+    mult: 0.68,
+    rippleRings: 2,
+    rippleGrow: 1.7,
+    rippleMax: 2.0,
+    dropFlows: 6,
+    dropFlowStr: 0.42,
+    dropFlowDist: 11,
+    tineMult: 0.78,
+    inertiaMult: 0.6,
+    inertiaVec: 30,
+  },
+  {
+    label: "大",
+    decay: 0.965,
+    mult: 1.0,
+    rippleRings: 3,
+    rippleGrow: 2.0,
+    rippleMax: 2.5,
+    dropFlows: 7,
+    dropFlowStr: 0.5,
+    dropFlowDist: 13,
+    tineMult: 1.0,
+    inertiaMult: 0.85,
+    inertiaVec: 36,
+  },
+];
+let sumiFlowLevel = 0;
+
+function getSumiFlowPreset() {
+  return SUMI_FLOW_PRESETS[sumiFlowLevel] || SUMI_FLOW_PRESETS[0];
+}
 
 const ZEN_TEMPLATES = {
   circle: {
@@ -398,11 +457,11 @@ function drawBreathOverlay(targetCtx, w, h) {
 }
 
 function syncBreathAudio() {
-  const ac = zenAudio || freeAudio;
-  if (!ac || !ac._masterGain || ac._baseGain == null) return;
-  const vol = ac._baseGain * (1 + 0.1 * (breathSmoothed - 0.5));
+  const player = zenAudio || freeAudio;
+  if (!player || !player._masterGain || player._baseGain == null || player.fadeScheduled) return;
+  const vol = player._baseGain * (1 + 0.08 * (breathSmoothed - 0.5));
   try {
-    ac._masterGain.gain.setTargetAtTime(vol, ac.currentTime, 0.15);
+    player._masterGain.gain.setTargetAtTime(vol, player.ctx.currentTime, 0.15);
   } catch (e) {}
 }
 
@@ -1004,12 +1063,13 @@ function sumiDisplaceByDrop(cx, cy, r) {
 }
 
 function sumiSpawnRipples(cx, cy, color, r) {
-  for (let i = 0; i < 3; i++) {
+  const p = getSumiFlowPreset();
+  for (let i = 0; i < p.rippleRings; i++) {
     sumiRipples.push({
       x: cx,
       y: cy,
       color,
-      maxR: r * (2.4 + i * 0.35),
+      maxR: r * (p.rippleMax + i * 0.28),
       born: Date.now() + i * 130,
       r: 2,
       life: 1,
@@ -1018,18 +1078,20 @@ function sumiSpawnRipples(cx, cy, color, r) {
 }
 
 function sumiPushFlow(bx, by, mx, my, strength) {
-  if (strength < 0.5) return;
-  sumiFlowImpulses.push({ bx, by, mx, my, str: strength });
+  const scaled = strength * getSumiFlowPreset().mult;
+  if (scaled < 0.5) return;
+  sumiFlowImpulses.push({ bx, by, mx, my, str: scaled });
   if (sumiFlowImpulses.length > SUMI_MAX_FLOW) sumiFlowImpulses.shift();
 }
 
 function sumiApplyFlows() {
   if (!sumiFlowImpulses.length) return;
+  const decay = getSumiFlowPreset().decay;
   let moved = false;
   for (let i = sumiFlowImpulses.length - 1; i >= 0; i--) {
     const f = sumiFlowImpulses[i];
     sumiTine(f.bx, f.by, f.mx, f.my, f.str, SUMI_TINE_U);
-    f.str *= SUMI_FLOW_DECAY;
+    f.str *= decay;
     moved = true;
     if (f.str < SUMI_FLOW_MIN) sumiFlowImpulses.splice(i, 1);
   }
@@ -1049,10 +1111,16 @@ function sumiAddDrop(cx, cy, r, color) {
   if (sumiDrops.length > SUMI_MAX_DROPS) sumiDrops.shift();
   sumiSmoothAll(1);
   sumiSpawnRipples(cx, cy, color, r);
-  // 滴墨漣漪推開水面——多方向弱流，持續數秒
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2 + Math.random() * 0.3;
-    sumiPushFlow(cx, cy, Math.cos(a) * 14, Math.sin(a) * 14, r * 0.55);
+  const p = getSumiFlowPreset();
+  for (let i = 0; i < p.dropFlows; i++) {
+    const a = (i / p.dropFlows) * Math.PI * 2 + Math.random() * 0.3;
+    sumiPushFlow(
+      cx,
+      cy,
+      Math.cos(a) * p.dropFlowDist,
+      Math.sin(a) * p.dropFlowDist,
+      r * p.dropFlowStr
+    );
   }
 }
 
@@ -1169,15 +1237,16 @@ function sumiTineAlong(x0, y0, x1, y1) {
   const dy = y1 - y0;
   const len = Math.hypot(dx, dy);
   if (len < 0.5) return;
+  const p = getSumiFlowPreset();
   const steps = Math.max(1, Math.ceil(len / 2.5));
-  const segStr = Math.min(32, (len / steps) * 1.35);
+  const segStr = Math.min(28 * p.tineMult, (len / steps) * 1.2 * p.tineMult);
   for (let s = 1; s <= steps; s++) {
     const t = s / steps;
     const bx = x0 + dx * t;
     const by = y0 + dy * t;
     sumiTine(bx, by, dx, dy, segStr, SUMI_TINE_U);
   }
-  sumiPushFlow(x1, y1, dx, dy, Math.min(34, len * 0.85));
+  sumiPushFlow(x1, y1, dx, dy, Math.min(28, len * 0.72) * p.tineMult);
   sumiSmoothAll(1);
 }
 
@@ -1188,13 +1257,14 @@ function drawSumiRipples(targetCtx) {
   for (let i = sumiRipples.length - 1; i >= 0; i--) {
     const rip = sumiRipples[i];
     if (now < rip.born) continue;
-    rip.r += 2.1;
-    rip.life -= 0.011;
+    const p = getSumiFlowPreset();
+    rip.r += p.rippleGrow;
+    rip.life -= 0.013;
     if (rip.life <= 0 || rip.r > rip.maxR) {
       sumiRipples.splice(i, 1);
       continue;
     }
-    for (let ring = 0; ring < 3; ring++) {
+    for (let ring = 0; ring < p.rippleRings; ring++) {
       const rr = rip.r - ring * 10;
       if (rr < 3) continue;
       c.beginPath();
@@ -1251,7 +1321,38 @@ function selectSumiColor(idx) {
   document.querySelectorAll(".sumi-dot").forEach((b, i) => b.classList.toggle("active", i === idx));
 }
 
+function updateSumiFlowUI() {
+  document.querySelectorAll(".sumi-flow-btn").forEach((b, i) => {
+    const on = i === sumiFlowLevel;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+}
+
+function setSumiFlowLevel(level) {
+  sumiFlowLevel = Math.max(0, Math.min(SUMI_FLOW_PRESETS.length - 1, level));
+  try {
+    localStorage.setItem(SUMI_FLOW_STORAGE, String(sumiFlowLevel));
+  } catch (_) {}
+  updateSumiFlowUI();
+}
+
+function initSumiFlowCtrl() {
+  const ctrl = document.getElementById("sumiFlowCtrl");
+  if (!ctrl || ctrl.dataset.ready) return;
+  ctrl.dataset.ready = "1";
+  try {
+    const saved = localStorage.getItem(SUMI_FLOW_STORAGE);
+    if (saved !== null) sumiFlowLevel = Math.max(0, Math.min(SUMI_FLOW_PRESETS.length - 1, +saved));
+  } catch (_) {}
+  ctrl.querySelectorAll(".sumi-flow-btn").forEach((b, i) => {
+    b.onclick = () => setSumiFlowLevel(i);
+  });
+  updateSumiFlowUI();
+}
+
 function initSumiBar() {
+  initSumiFlowCtrl();
   const bar = document.getElementById("sumiBar");
   if (!bar || bar.querySelector(".sumi-dot")) return;
   const clearBtn = bar.querySelector(".sumi-clear");
@@ -1371,82 +1472,90 @@ function drawZenMandala(progress) {
   });
 }
 
-function createMeditationMusic(type) {
-  const ac = new (window.AudioContext || window.webkitAudioContext)();
-  const t = ac.currentTime;
-
-  const master = ac.createGain();
-  master.gain.setValueAtTime(0, t);
-  master.gain.linearRampToValueAtTime(type === "zen" ? 0.14 : 0.12, t + 3);
-
-  const warmth = ac.createBiquadFilter();
-  warmth.type = "lowpass";
-  warmth.frequency.value = type === "zen" ? 720 : 580;
-  warmth.Q.value = 0.4;
-  warmth.connect(master);
-  master.connect(ac.destination);
-
-  const droneFreqs = type === "zen" ? [136.1, 204.15, 272.2, 340.25] : [110, 146.83, 164.81, 220];
-
-  droneFreqs.forEach((freq, i) => {
-    const osc = ac.createOscillator();
-    osc.type = i === 0 ? "sine" : "triangle";
-    osc.frequency.value = freq;
-
-    const voice = ac.createGain();
-    voice.gain.value = 0.14 - i * 0.025;
-
-    const breath = ac.createOscillator();
-    breath.frequency.value = 0.05 + i * 0.008;
-    const breathDepth = ac.createGain();
-    breathDepth.gain.value = 0.035;
-    breath.connect(breathDepth);
-    breathDepth.connect(voice.gain);
-
-    osc.connect(voice);
-    voice.connect(warmth);
-    osc.start();
-    breath.start();
-  });
-
-  const bufLen = 2 * ac.sampleRate;
-  const buf = ac.createBuffer(1, bufLen, ac.sampleRate);
-  const ch = buf.getChannelData(0);
-  let pink = 0;
-  for (let i = 0; i < bufLen; i++) {
-    pink = (pink + 0.02 * (Math.random() * 2 - 1)) / 1.02;
-    ch[i] = pink * 3.2;
+function shuffleSongList() {
+  const list = [...AMBIENCE_SONGS];
+  for (let i = list.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [list[i], list[j]] = [list[j], list[i]];
   }
-  const air = ac.createBufferSource();
-  air.buffer = buf;
-  air.loop = true;
-  const airFilter = ac.createBiquadFilter();
-  airFilter.type = "lowpass";
-  airFilter.frequency.value = 320;
-  const airGain = ac.createGain();
-  airGain.gain.value = 0.018;
-  air.connect(airFilter);
-  airFilter.connect(airGain);
-  airGain.connect(warmth);
-  air.start();
+  return list;
+}
 
-  if (type === "zen") {
-    const bowl = ac.createOscillator();
-    const bowlGain = ac.createGain();
-    bowl.type = "sine";
-    bowl.frequency.value = 528;
-    bowlGain.gain.setValueAtTime(0, t + 8);
-    bowlGain.gain.linearRampToValueAtTime(0.04, t + 10);
-    bowlGain.gain.exponentialRampToValueAtTime(0.001, t + 22);
-    bowl.connect(bowlGain);
-    bowlGain.connect(warmth);
-    bowl.start(t + 8);
-    bowl.stop(t + 23);
+function songAmbienceFadeTo(player, target, sec) {
+  const t = player.ctx.currentTime;
+  player.master.gain.cancelScheduledValues(t);
+  player.master.gain.setValueAtTime(player.master.gain.value, t);
+  player.master.gain.linearRampToValueAtTime(target, t + sec);
+}
+
+function songAmbiencePlayTrack(player) {
+  if (player.stopped) return;
+  player.advancing = false;
+  player.fadeScheduled = false;
+  const url = player.playlist[player.trackIdx];
+  player.el.src = url;
+  player.el.load();
+  const playPromise = player.el.play();
+  if (playPromise) playPromise.catch(() => {});
+  songAmbienceFadeTo(player, player._baseGain, SONG_FADE_IN_SEC);
+}
+
+function songAmbienceTimeUpdate(player) {
+  if (player.stopped || player.fadeScheduled || player.advancing) return;
+  const dur = player.el.duration;
+  if (!dur || !isFinite(dur)) return;
+  const left = dur - player.el.currentTime;
+  if (left <= SONG_FADE_OUT_SEC) {
+    player.fadeScheduled = true;
+    songAmbienceFadeTo(player, 0, Math.min(left, SONG_FADE_OUT_SEC));
   }
+}
 
-  ac._masterGain = master;
-  ac._baseGain = type === "zen" ? 0.14 : 0.12;
-  return ac;
+function songAmbienceAdvance(player) {
+  if (player.stopped || player.advancing) return;
+  player.advancing = true;
+  player.trackIdx += 1;
+  if (player.trackIdx >= player.playlist.length) {
+    player.playlist = shuffleSongList();
+    player.trackIdx = 0;
+  }
+  setTimeout(() => {
+    if (!player.stopped) songAmbiencePlayTrack(player);
+  }, 280);
+}
+
+function createSongAmbience(type) {
+  const baseGain = type === "zen" ? 0.42 : 0.38;
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const master = ctx.createGain();
+  master.gain.value = 0;
+  master.connect(ctx.destination);
+
+  const el = new Audio();
+  el.preload = "auto";
+  const source = ctx.createMediaElementSource(el);
+  source.connect(master);
+
+  const player = {
+    ctx,
+    el,
+    master,
+    _masterGain: master,
+    _baseGain: baseGain,
+    playlist: shuffleSongList(),
+    trackIdx: 0,
+    stopped: false,
+    advancing: false,
+    fadeScheduled: false,
+    onTimeUpdate: () => songAmbienceTimeUpdate(player),
+    onEnded: () => songAmbienceAdvance(player),
+  };
+
+  el.addEventListener("timeupdate", player.onTimeUpdate);
+  el.addEventListener("ended", player.onEnded);
+  el.addEventListener("error", () => songAmbienceAdvance(player));
+  songAmbiencePlayTrack(player);
+  return player;
 }
 
 function ensureSfxAudio() {
@@ -1459,9 +1568,12 @@ function ensureSfxAudio() {
 }
 
 function resumeAllAudio() {
-  [zenAudio, freeAudio, sfxAudio].forEach((ac) => {
-    if (ac && ac.state === "suspended") ac.resume().catch(() => {});
+  [zenAudio, freeAudio].forEach((player) => {
+    if (!player) return;
+    if (player.ctx?.state === "suspended") player.ctx.resume().catch(() => {});
+    if (player.el?.paused && !player.stopped) player.el.play().catch(() => {});
   });
+  if (sfxAudio?.state === "suspended") sfxAudio.resume().catch(() => {});
 }
 
 function playBrushNoise(ac, t, opts) {
@@ -1554,30 +1666,29 @@ function playDrawSfx(isStart) {
   } catch (e) {}
 }
 
-function fadeOutAndClose(ac) {
-  if (!ac) return;
+function fadeOutAndClose(player) {
+  if (!player) return;
+  player.stopped = true;
   try {
-    const mg = ac._masterGain;
-    const t = ac.currentTime;
-    if (mg) {
-      mg.gain.cancelScheduledValues(t);
-      mg.gain.setValueAtTime(mg.gain.value, t);
-      mg.gain.linearRampToValueAtTime(0, t + 1.2);
-      setTimeout(() => {
-        try {
-          ac.close();
-        } catch (e) {}
-      }, 1300);
-    } else {
-      ac.close();
+    if (player.el) {
+      player.el.removeEventListener("timeupdate", player.onTimeUpdate);
+      player.el.removeEventListener("ended", player.onEnded);
     }
+    songAmbienceFadeTo(player, 0, 1.2);
+    setTimeout(() => {
+      try {
+        player.el?.pause();
+        if (player.el) player.el.src = "";
+        player.ctx?.close();
+      } catch (e) {}
+    }, 1300);
   } catch (e) {}
 }
 
 function startZenAmbience() {
   stopZenAmbience();
   try {
-    zenAudio = createMeditationMusic("zen");
+    zenAudio = createSongAmbience("zen");
   } catch (e) {}
 }
 
@@ -1591,7 +1702,7 @@ function stopZenAmbience() {
 function startFreeAmbience() {
   stopFreeAmbience();
   try {
-    freeAudio = createMeditationMusic("free");
+    freeAudio = createSongAmbience("free");
   } catch (e) {}
 }
 
@@ -1781,12 +1892,13 @@ function commitStroke() {
       sumiAddDrop(p.x, p.y, 16 + Math.random() * 26, SUMI_COLORS[sumiColorIndex].hex);
     } else if (sumiDragDist >= 8) {
       // 放手後水面仍隨慣性流一陣
+      const fp = getSumiFlowPreset();
       sumiPushFlow(
         currentStroke[currentStroke.length - 1]?.x || sumiLastPos?.x || canvasW / 2,
         currentStroke[currentStroke.length - 1]?.y || sumiLastPos?.y || canvasH / 2,
-        sumiLastFlowDx * 40,
-        sumiLastFlowDy * 40,
-        28
+        sumiLastFlowDx * fp.inertiaVec,
+        sumiLastFlowDy * fp.inertiaVec,
+        22 * fp.inertiaMult
       );
     }
     sumiResample();

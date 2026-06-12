@@ -45,6 +45,8 @@ test.describe("Mindful Canvas", () => {
     await expect(page.locator("#canvasScreen")).toHaveClass(/active/);
     await expect(page.locator("#canvasTitle")).toHaveText("墨流畫布");
     await expect(page.locator("#sumiUI")).toBeVisible();
+    await expect(page.locator(".sumi-flow-btn")).toHaveCount(3);
+    await expect(page.locator(".sumi-flow-btn").first()).toHaveClass(/active/);
     await expect(page.locator(".sumi-dot")).toHaveCount(5);
     const canvas = page.locator("#drawCanvas");
     const box = await canvas.boundingBox();
