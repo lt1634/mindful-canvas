@@ -1,4 +1,12 @@
 // ===== STATE =====
+import {
+  DANGER_KEYWORDS,
+  SAFETY_RESPONSE,
+  OLLAMA_SCENE_MAP,
+  STORAGE_KEY,
+  checkSafety,
+} from "../src/logic.js";
+
 let currentScene = "free";
 let currentColor = "#e2b55a";
 let currentSize = 4;
@@ -232,78 +240,6 @@ const ZEN_TEMPLATES = {
     ],
   },
 };
-
-const STORAGE_KEY = "mindful_canvas_sessions";
-
-const DANGER_KEYWORDS = [
-  "想死",
-  "自殺",
-  "死咗",
-  "死掉",
-  "結束生命",
-  "活著冇意思",
-  "活著沒有意思",
-  "唔想活",
-  "不想活",
-  "冇人要",
-  "沒人要",
-  "消失",
-  "割",
-  "跳落",
-  "跳下",
-  "食藥",
-  "吃藥",
-  "自殘",
-  "自伤",
-  "了結",
-  "了结",
-  "冇意義",
-  "沒有意義",
-  "好痛苦",
-  "好辛苦",
-  "頂唔順",
-  "撐唔住",
-  "頂不住",
-  "撐不住",
-  "out of hope",
-  "give up",
-  "no point",
-  "kill myself",
-  "suicide",
-  "want to die",
-  "end my life",
-];
-
-const SAFETY_RESPONSE = {
-  affirmation: "我聽到你了。你不是一個人。",
-  reflection:
-    "如果你正在經歷困難的時刻，請記得有人在乎你。香港 24 小時生命熱線：2382 0000（東華三院）或 2389 2222（撒瑪利亞）。你願意撥一個電話嗎？",
-  isSafe: false,
-};
-
-const OLLAMA_SCENE_MAP = {
-  anxious: "焦慮、壓力、擔心",
-  chaotic: "混亂、思緒紛飛、腦袋很亂",
-  stuck: "卡住、停滯、不知道怎麼開始",
-  free: "自由書寫、隨心所欲、沒有特定情緒",
-  metta: "慈、祝福他人、願你快樂",
-  karuna: "悲、陪伴受苦的人、願你離苦",
-  mudita: "喜、為他人歡喜、分享快樂",
-  upekkha: "捨、放下執著、接納無常",
-  zen: "禪繞唐卡、靜心跟隨、輕觸感受、一分鐘完成",
-  sumi: "墨流畫布、滴墨攪水、觀察流動、放下控制",
-};
-
-function checkSafety() {
-  const allText = (currentScene || "").toLowerCase();
-  const dangerHit = DANGER_KEYWORDS.some((kw) => allText.includes(kw));
-  const highStress =
-    (currentScene === "anxious" || currentScene === "chaotic") &&
-    strokeCount > 200 &&
-    totalSilence < 3;
-  if (dangerHit || highStress) return { ...SAFETY_RESPONSE };
-  return null;
-}
 
 function getDominantColor() {
   if (appMode === "sumi") return sumiDominantColor();
@@ -2242,7 +2178,7 @@ function generateCard(force) {
 }
 
 function generateInterpretation() {
-  const safety = checkSafety();
+  const safety = checkSafety(currentScene, strokeCount, totalSilence);
   if (safety) return safety;
 
   // ===== 2. AFFIRMATION POOL (10 per scene, 80 total) =====
@@ -2499,7 +2435,7 @@ function templateInterpretation() {
 }
 
 async function generateInterpretationAI() {
-  const safety = checkSafety();
+  const safety = checkSafety(currentScene, strokeCount, totalSilence);
   if (safety) return safety;
 
   if (!shouldUseOllama()) {
