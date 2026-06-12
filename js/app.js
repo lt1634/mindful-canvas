@@ -50,6 +50,10 @@ let sumiLastPos = null;
 let sumiDragDist = 0;
 let sumiLastInteraction = 0;
 let sumiLastAutoDrop = 0;
+let sumiFlowImpulses = [];
+let sumiRipples = [];
+let sumiLastFlowDx = 0;
+let sumiLastFlowDy = 0;
 
 const BREATH_CYCLE_MS = 8000;
 const TOOLS_IDLE_MS = 3000;
@@ -67,7 +71,10 @@ const SUMI_MAX_DROPS = 64;
 const SUMI_DROP_VERTS = 96;
 const SUMI_MAX_VERTS = 320;
 const SUMI_AUTO_DROP_MS = 9000;
-const SUMI_TINE_U = 0.975; // 越大暈開越柔（0.94 太尖）
+const SUMI_TINE_U = 0.978;
+const SUMI_FLOW_DECAY = 0.972; // 愈接近 1 流動停得愈慢
+const SUMI_FLOW_MIN = 0.35;
+const SUMI_MAX_FLOW = 12;
 
 const ZEN_TEMPLATES = {
   circle: {
@@ -996,6 +1003,39 @@ function sumiDisplaceByDrop(cx, cy, r) {
   }
 }
 
+function sumiSpawnRipples(cx, cy, color, r) {
+  for (let i = 0; i < 3; i++) {
+    sumiRipples.push({
+      x: cx,
+      y: cy,
+      color,
+      maxR: r * (2.4 + i * 0.35),
+      born: Date.now() + i * 130,
+      r: 2,
+      life: 1,
+    });
+  }
+}
+
+function sumiPushFlow(bx, by, mx, my, strength) {
+  if (strength < 0.5) return;
+  sumiFlowImpulses.push({ bx, by, mx, my, str: strength });
+  if (sumiFlowImpulses.length > SUMI_MAX_FLOW) sumiFlowImpulses.shift();
+}
+
+function sumiApplyFlows() {
+  if (!sumiFlowImpulses.length) return;
+  let moved = false;
+  for (let i = sumiFlowImpulses.length - 1; i >= 0; i--) {
+    const f = sumiFlowImpulses[i];
+    sumiTine(f.bx, f.by, f.mx, f.my, f.str, SUMI_TINE_U);
+    f.str *= SUMI_FLOW_DECAY;
+    moved = true;
+    if (f.str < SUMI_FLOW_MIN) sumiFlowImpulses.splice(i, 1);
+  }
+  if (moved) sumiSmoothAll(1);
+}
+
 function sumiAddDrop(cx, cy, r, color) {
   sumiDisplaceByDrop(cx, cy, r);
   const verts = [];
@@ -1008,6 +1048,12 @@ function sumiAddDrop(cx, cy, r, color) {
   sumiDrops.push({ color, verts });
   if (sumiDrops.length > SUMI_MAX_DROPS) sumiDrops.shift();
   sumiSmoothAll(1);
+  sumiSpawnRipples(cx, cy, color, r);
+  // 滴墨漣漪推開水面——多方向弱流，持續數秒
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2 + Math.random() * 0.3;
+    sumiPushFlow(cx, cy, Math.cos(a) * 14, Math.sin(a) * 14, r * 0.55);
+  }
 }
 
 // 攪水（tine line）：P' = P + z·u^d·M（d = 點到拖曳線距離）
@@ -1123,19 +1169,50 @@ function sumiTineAlong(x0, y0, x1, y1) {
   const dy = y1 - y0;
   const len = Math.hypot(dx, dy);
   if (len < 0.5) return;
-  const steps = Math.max(1, Math.ceil(len / 3));
+  const steps = Math.max(1, Math.ceil(len / 2.5));
+  const segStr = Math.min(32, (len / steps) * 1.35);
   for (let s = 1; s <= steps; s++) {
     const t = s / steps;
     const bx = x0 + dx * t;
     const by = y0 + dy * t;
-    sumiTine(bx, by, dx, dy, Math.min(18, (len / steps) * 1.1), SUMI_TINE_U);
+    sumiTine(bx, by, dx, dy, segStr, SUMI_TINE_U);
   }
+  sumiPushFlow(x1, y1, dx, dy, Math.min(34, len * 0.85));
   sumiSmoothAll(1);
+}
+
+function drawSumiRipples(targetCtx) {
+  const c = targetCtx || ctx;
+  const now = Date.now();
+  c.save();
+  for (let i = sumiRipples.length - 1; i >= 0; i--) {
+    const rip = sumiRipples[i];
+    if (now < rip.born) continue;
+    rip.r += 2.1;
+    rip.life -= 0.011;
+    if (rip.life <= 0 || rip.r > rip.maxR) {
+      sumiRipples.splice(i, 1);
+      continue;
+    }
+    for (let ring = 0; ring < 3; ring++) {
+      const rr = rip.r - ring * 10;
+      if (rr < 3) continue;
+      c.beginPath();
+      c.arc(rip.x, rip.y, rr, 0, Math.PI * 2);
+      c.strokeStyle = rip.color;
+      c.globalAlpha = rip.life * (0.32 - ring * 0.08);
+      c.lineWidth = Math.max(0.6, 2.2 - ring * 0.5);
+      c.stroke();
+    }
+  }
+  c.restore();
 }
 
 function animateSumiFrame() {
   drawWashiBackground();
+  sumiApplyFlows();
   drawSumiDrops();
+  drawSumiRipples();
 
   // 閒置時跟呼吸慢滴小墨，畫面唔會完全靜止
   const now = Date.now();
@@ -1192,6 +1269,8 @@ function initSumiBar() {
 
 function clearSumiCanvas() {
   sumiDrops = [];
+  sumiFlowImpulses = [];
+  sumiRipples = [];
   strokeCount = 0;
   showToast("水面已洗淨，重新開始");
 }
@@ -1677,6 +1756,8 @@ function continueStroke(e) {
       const segLen = Math.hypot(dx, dy);
       if (segLen > 2) {
         sumiDragDist += segLen;
+        sumiLastFlowDx = dx / segLen;
+        sumiLastFlowDy = dy / segLen;
         sumiTineAlong(sumiLastPos.x, sumiLastPos.y, pos.x, pos.y);
         sumiLastPos = pos;
         sumiLastInteraction = Date.now();
@@ -1698,6 +1779,15 @@ function commitStroke() {
     if (sumiDragDist < 8 && currentStroke.length) {
       const p = currentStroke[0];
       sumiAddDrop(p.x, p.y, 16 + Math.random() * 26, SUMI_COLORS[sumiColorIndex].hex);
+    } else if (sumiDragDist >= 8) {
+      // 放手後水面仍隨慣性流一陣
+      sumiPushFlow(
+        currentStroke[currentStroke.length - 1]?.x || sumiLastPos?.x || canvasW / 2,
+        currentStroke[currentStroke.length - 1]?.y || sumiLastPos?.y || canvasH / 2,
+        sumiLastFlowDx * 40,
+        sumiLastFlowDy * 40,
+        28
+      );
     }
     sumiResample();
     strokeCount++;
@@ -2080,6 +2170,10 @@ function resetCanvasState() {
   sumiDragDist = 0;
   sumiLastInteraction = 0;
   sumiLastAutoDrop = 0;
+  sumiFlowImpulses = [];
+  sumiRipples = [];
+  sumiLastFlowDx = 0;
+  sumiLastFlowDy = 0;
   drawing = false;
   activePointerId = null;
   currentStroke = [];
