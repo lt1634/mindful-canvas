@@ -1,5 +1,13 @@
-const CACHE = "mindful-canvas-v2-sumi-2";
-const ASSETS = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
+const CACHE = "mindful-canvas-v2-modules-1";
+const ASSETS = [
+  "./",
+  "./index.html",
+  "./css/style.css",
+  "./js/app.js",
+  "./manifest.json",
+  "./icon-192.png",
+  "./icon-512.png",
+];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(

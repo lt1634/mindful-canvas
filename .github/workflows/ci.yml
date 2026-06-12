@@ -67,8 +67,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Prepare static site
         run: |
-          mkdir -p _site
+          mkdir -p _site/css _site/js
           cp index.html manifest.json sw.js icon-192.png icon-512.png _site/
+          cp css/style.css _site/css/
+          cp js/app.js _site/js/
           cp .nojekyll _site/ 2>/dev/null || touch _site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

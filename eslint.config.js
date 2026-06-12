@@ -28,6 +28,7 @@ export default [
       "dist/**",
       "*.min.js",
       "sw.js",
+      "js/app.js",
       "REFERENCES/**",
       ".cursor/**",
       "Plan/**",
