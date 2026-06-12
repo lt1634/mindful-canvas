@@ -1,9 +1,10 @@
-const CACHE = "mindful-canvas-v2-modules-1";
+const CACHE = "mindful-canvas-v2-modules-2";
 const ASSETS = [
   "./",
   "./index.html",
   "./css/style.css",
   "./js/app.js",
+  "./src/logic.js",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
