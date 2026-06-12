@@ -64,9 +64,10 @@ const SUMI_COLORS = [
   { hex: "#8b5e83", name: "暮色" },
 ];
 const SUMI_MAX_DROPS = 64;
-const SUMI_DROP_VERTS = 72;
-const SUMI_MAX_VERTS = 240;
+const SUMI_DROP_VERTS = 96;
+const SUMI_MAX_VERTS = 320;
 const SUMI_AUTO_DROP_MS = 9000;
+const SUMI_TINE_U = 0.975; // 越大暈開越柔（0.94 太尖）
 
 const ZEN_TEMPLATES = {
   circle: {
@@ -998,12 +999,15 @@ function sumiDisplaceByDrop(cx, cy, r) {
 function sumiAddDrop(cx, cy, r, color) {
   sumiDisplaceByDrop(cx, cy, r);
   const verts = [];
+  const wobble = 0.06 + Math.random() * 0.05;
   for (let i = 0; i < SUMI_DROP_VERTS; i++) {
     const a = (i / SUMI_DROP_VERTS) * Math.PI * 2;
-    verts.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
+    const rr = r * (1 + Math.sin(a * 2.5 + cx * 0.01) * wobble);
+    verts.push({ x: cx + Math.cos(a) * rr, y: cy + Math.sin(a) * rr });
   }
   sumiDrops.push({ color, verts });
   if (sumiDrops.length > SUMI_MAX_DROPS) sumiDrops.shift();
+  sumiSmoothAll(1);
 }
 
 // 攪水（tine line）：P' = P + z·u^d·M（d = 點到拖曳線距離）
@@ -1028,7 +1032,7 @@ function sumiTine(bx, by, mx, my, z, u) {
 
 // 變換後邊過長就插中點，保持多邊形平滑
 function sumiResample() {
-  const maxSeg = 14;
+  const maxSeg = 8;
   for (const drop of sumiDrops) {
     if (drop.verts.length >= SUMI_MAX_VERTS) continue;
     const out = [];
@@ -1043,28 +1047,90 @@ function sumiResample() {
     }
     drop.verts = out;
   }
+  sumiSmoothAll(1);
+}
+
+// Laplacian 平滑頂點，消除攪水後嘅尖角
+function sumiSmoothVerts(verts, passes) {
+  let cur = verts;
+  for (let p = 0; p < passes; p++) {
+    const next = [];
+    const n = cur.length;
+    for (let i = 0; i < n; i++) {
+      const prev = cur[(i - 1 + n) % n];
+      const c = cur[i];
+      const nxt = cur[(i + 1) % n];
+      next.push({
+        x: c.x * 0.55 + prev.x * 0.225 + nxt.x * 0.225,
+        y: c.y * 0.55 + prev.y * 0.225 + nxt.y * 0.225,
+      });
+    }
+    cur = next;
+  }
+  return cur;
+}
+
+function sumiSmoothAll(passes) {
+  for (const drop of sumiDrops) {
+    if (drop.verts.length >= 4) drop.verts = sumiSmoothVerts(drop.verts, passes);
+  }
+}
+
+// 用二次曲線畫閉合墨形，唔用直線 polygon
+function sumiPathSmooth(c, verts) {
+  const n = verts.length;
+  if (n < 3) return;
+  const p = (i) => verts[(i + n) % n];
+  c.moveTo((p(0).x + p(1).x) / 2, (p(0).y + p(1).y) / 2);
+  for (let i = 0; i < n; i++) {
+    const cp = p(i);
+    const mid = { x: (p(i).x + p(i + 1).x) / 2, y: (p(i).y + p(i + 1).y) / 2 };
+    c.quadraticCurveTo(cp.x, cp.y, mid.x, mid.y);
+  }
+  c.closePath();
 }
 
 function drawSumiDrops(targetCtx) {
   const c = targetCtx || ctx;
   c.save();
-  c.globalCompositeOperation = "multiply";
+  c.globalCompositeOperation = "source-over";
   for (const drop of sumiDrops) {
     const verts = drop.verts;
     if (verts.length < 3) continue;
     c.beginPath();
-    c.moveTo(verts[0].x, verts[0].y);
-    for (let i = 1; i < verts.length; i++) c.lineTo(verts[i].x, verts[i].y);
-    c.closePath();
-    c.globalAlpha = 0.82;
+    sumiPathSmooth(c, verts);
+    // 外層墨暈（柔邊）
+    c.shadowColor = drop.color;
+    c.shadowBlur = 18;
+    c.globalAlpha = 0.22;
     c.fillStyle = drop.color;
     c.fill();
-    c.globalAlpha = 0.3;
-    c.strokeStyle = drop.color;
-    c.lineWidth = 1;
-    c.stroke();
+    // 中層
+    c.shadowBlur = 8;
+    c.globalAlpha = 0.38;
+    c.fill();
+    // 核心
+    c.shadowBlur = 0;
+    c.globalAlpha = 0.52;
+    c.fill();
   }
   c.restore();
+}
+
+// 拖曳時沿路徑多步攪水，流動更連續
+function sumiTineAlong(x0, y0, x1, y1) {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const len = Math.hypot(dx, dy);
+  if (len < 0.5) return;
+  const steps = Math.max(1, Math.ceil(len / 3));
+  for (let s = 1; s <= steps; s++) {
+    const t = s / steps;
+    const bx = x0 + dx * t;
+    const by = y0 + dy * t;
+    sumiTine(bx, by, dx, dy, Math.min(18, (len / steps) * 1.1), SUMI_TINE_U);
+  }
+  sumiSmoothAll(1);
 }
 
 function animateSumiFrame() {
@@ -1609,16 +1675,9 @@ function continueStroke(e) {
       const dx = pos.x - sumiLastPos.x;
       const dy = pos.y - sumiLastPos.y;
       const segLen = Math.hypot(dx, dy);
-      if (segLen > 4) {
+      if (segLen > 2) {
         sumiDragDist += segLen;
-        sumiTine(
-          (pos.x + sumiLastPos.x) / 2,
-          (pos.y + sumiLastPos.y) / 2,
-          dx,
-          dy,
-          Math.min(26, segLen * 0.9),
-          0.94
-        );
+        sumiTineAlong(sumiLastPos.x, sumiLastPos.y, pos.x, pos.y);
         sumiLastPos = pos;
         sumiLastInteraction = Date.now();
       }
