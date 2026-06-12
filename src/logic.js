@@ -61,6 +61,7 @@ export const OLLAMA_SCENE_MAP = {
   mudita: "喜、為他人歡喜、分享快樂",
   upekkha: "捨、放下執著、接納無常",
   zen: "禪繞唐卡、靜心跟隨、輕觸感受、一分鐘完成",
+  sumi: "墨流畫布、滴墨攪水、觀察流動、放下控制",
 };
 
 export const BREATH_CYCLE_MS = 8000;
