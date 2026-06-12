@@ -80,6 +80,6 @@ test.describe("Mindful Canvas", () => {
   test("is responsive on mobile viewport", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await expect(page.locator("#welcome")).toBeVisible();
-    await expect(page.locator(".mode-card")).toHaveCount(2);
+    await expect(page.locator(".mode-card")).toHaveCount(3);
   });
 });
