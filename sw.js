@@ -1,4 +1,4 @@
-const CACHE = "mindful-canvas-v2-sumi-v22";
+const CACHE = "mindful-canvas-v2-no-feedback";
 const ASSETS = [
   "./",
   "./index.html",

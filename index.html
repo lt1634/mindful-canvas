@@ -165,37 +165,7 @@
         <div class="card-actions" id="cardActions">
           <button class="btn-secondary" onclick="showTerms()">使用條款</button>
           <button class="btn-secondary" onclick="saveCard()">儲存卡片</button>
-          <button class="btn-primary" onclick="showFeedback()">下一步 →</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- FEEDBACK -->
-    <div id="feedbackScreen" class="screen">
-      <div class="feedback-container">
-        <h2>簡單問你幾條</h2>
-        <div class="feedback-q">
-          <label>畫的過程開心指數（1–10）</label>
-          <div class="happiness-bar" id="happinessBar"></div>
-        </div>
-        <div class="feedback-q">
-          <label>會唔會想再玩？</label>
-          <div class="replay-btns">
-            <button type="button" id="replayYes" onclick="selectReplay(true)">會</button>
-            <button type="button" id="replayNo" onclick="selectReplay(false)">唔會</button>
-          </div>
-        </div>
-        <div class="feedback-q">
-          <label>有乜嘢想改進？（可選）</label>
-          <textarea
-            class="feedback-comment"
-            id="feedbackComment"
-            placeholder="例如：想多啲顏色…"
-          ></textarea>
-        </div>
-        <div class="feedback-actions">
-          <button class="btn-secondary" onclick="skipFeedback()">跳過</button>
-          <button class="btn-primary" onclick="submitFeedback()">提交</button>
+          <button class="btn-primary" onclick="finishFromCard()">返回首頁</button>
         </div>
       </div>
     </div>

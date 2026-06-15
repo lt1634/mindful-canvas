@@ -18,8 +18,6 @@ let particles = [];
 let fadePhase = 0;
 let particlesEnabled = true;
 let pendingSession = null;
-let feedbackHappiness = null;
-let feedbackReplay = null;
 let logoPressTimer = null;
 let appMode = "free";
 let zenStartTime = 0;
@@ -55,6 +53,8 @@ let sumiRipples = [];
 let sumiLastFlowDx = 0;
 let sumiLastFlowDy = 0;
 let sumiAutoMawariAngle = 0;
+let sumiAnimFrame = 0;
+let sumiBgCache = null;
 
 const BREATH_CYCLE_MS = 8000;
 const TOOLS_IDLE_MS = 3000;
@@ -340,7 +340,7 @@ function restoreCardUI(mode) {
     actions.innerHTML = `
       <button class="btn-secondary" onclick="showTerms()">使用條款</button>
       <button class="btn-secondary" onclick="saveCard()">儲存卡片</button>
-      <button class="btn-primary" onclick="showFeedback()">下一步 →</button>
+      <button class="btn-primary" onclick="finishFromCard()">返回首頁</button>
     `;
   }
 }
@@ -620,7 +620,7 @@ function getInkStamp(color, brushSize) {
   for (let i = layers; i >= 1; i--) {
     const t = i / layers;
     const r = (brushSize * 0.55 + 4) * t * 1.15;
-    sctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${0.07 * t})`;
+    sctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${0.16 * t})`;
     sctx.beginPath();
     sctx.arc(cx, cy, r, 0, Math.PI * 2);
     sctx.fill();
@@ -772,6 +772,18 @@ function drawWashiBackground(targetCtx, w, h) {
   c.fillRect(0, 0, pw, ph);
 }
 
+function drawWashiBackgroundCached(targetCtx) {
+  const c = targetCtx || ctx;
+  if (!sumiBgCache || sumiBgCache.w !== canvasW || sumiBgCache.h !== canvasH) {
+    const off = document.createElement("canvas");
+    off.width = canvasW;
+    off.height = canvasH;
+    drawWashiBackground(off.getContext("2d"), canvasW, canvasH);
+    sumiBgCache = { canvas: off, w: canvasW, h: canvasH };
+  }
+  c.drawImage(sumiBgCache.canvas, 0, 0, canvasW, canvasH);
+}
+
 function resizeCanvas() {
   const rect = canvas.parentElement.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
@@ -779,6 +791,7 @@ function resizeCanvas() {
   canvasH = rect.height;
   canvas.width = canvasW * dpr;
   canvas.height = canvasH * dpr;
+  sumiBgCache = null;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.scale(dpr, dpr);
   ctx.lineCap = "round";
@@ -866,9 +879,9 @@ function redrawWithFade() {
       return;
     }
     const age = strokeHistory.length > 1 ? (strokeHistory.length - idx) / strokeHistory.length : 1;
-    const fadeAmount = Math.max(0.12, 1 - fadePhase * 0.005 * age);
-    drawInkAlongPoints(ctx, stroke.points, stroke.color, stroke.size, fadeAmount * 0.9);
-    drawStroke(stroke, fadeAmount * 0.35);
+    const fadeAmount = Math.max(0.72, 1 - fadePhase * 0.002 * age);
+    drawInkAlongPoints(ctx, stroke.points, stroke.color, stroke.size, fadeAmount, 4);
+    drawStroke(stroke, fadeAmount * 0.85);
   });
 }
 
@@ -892,7 +905,7 @@ function animateFreeFrame() {
   if (drawing && currentStroke.length > 1) {
     if (!isEraser) {
       strokeTrail.draw(ctx, currentColor, getBrushSize(false));
-      drawInkAlongPoints(ctx, currentStroke, currentColor, getBrushSize(false), 0.92, 5);
+      drawInkAlongPoints(ctx, currentStroke, currentColor, getBrushSize(false), 1, 4);
       drawStroke(
         {
           points: currentStroke,
@@ -900,7 +913,7 @@ function animateFreeFrame() {
           size: getBrushSize(false),
           eraser: false,
         },
-        0.4
+        0.88
       );
     } else {
       drawEraserAlongPoints(ctx, currentStroke, getBrushSize(true));
@@ -1196,26 +1209,53 @@ function sumiPathSmooth(c, verts) {
   c.closePath();
 }
 
+function sumiDropBounds(verts) {
+  let cx = 0;
+  let cy = 0;
+  for (const v of verts) {
+    cx += v.x;
+    cy += v.y;
+  }
+  cx /= verts.length;
+  cy /= verts.length;
+  let r = 0;
+  for (const v of verts) {
+    r = Math.max(r, Math.hypot(v.x - cx, v.y - cy));
+  }
+  return { cx, cy, r: r || 1 };
+}
+
+function fillSumiDrop(c, verts, color) {
+  const { cx, cy, r } = sumiDropBounds(verts);
+  const rgb = hexToRgb(color);
+  c.beginPath();
+  sumiPathSmooth(c, verts);
+  const wash = c.createRadialGradient(cx, cy, 0, cx, cy, r * 1.15);
+  wash.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},0.78)`);
+  wash.addColorStop(0.35, `rgba(${rgb.r},${rgb.g},${rgb.b},0.48)`);
+  wash.addColorStop(0.7, `rgba(${rgb.r},${rgb.g},${rgb.b},0.18)`);
+  wash.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
+  c.fillStyle = wash;
+  c.shadowColor = color;
+  c.shadowBlur = 16;
+  c.fill();
+  c.shadowBlur = 0;
+  const core = c.createRadialGradient(cx, cy, 0, cx, cy, r * 0.42);
+  core.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},0.55)`);
+  core.addColorStop(0.6, `rgba(${rgb.r},${rgb.g},${rgb.b},0.12)`);
+  core.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
+  c.fillStyle = core;
+  c.fill();
+}
+
 function drawSumiDrops(targetCtx) {
   const c = targetCtx || ctx;
   c.save();
-  c.globalCompositeOperation = "multiply";
+  c.globalCompositeOperation = "source-over";
   for (const drop of sumiDrops) {
     const verts = drop.verts;
     if (verts.length < 3) continue;
-    c.beginPath();
-    sumiPathSmooth(c, verts);
-    c.shadowColor = drop.color;
-    c.shadowBlur = 18;
-    c.globalAlpha = 0.18;
-    c.fillStyle = drop.color;
-    c.fill();
-    c.shadowBlur = 8;
-    c.globalAlpha = 0.32;
-    c.fill();
-    c.shadowBlur = 0;
-    c.globalAlpha = 0.48;
-    c.fill();
+    fillSumiDrop(c, verts, drop.color);
   }
   c.restore();
 }
@@ -1267,22 +1307,24 @@ function drawSumiRipples(targetCtx) {
 }
 
 function sumiAutoMawari() {
-  if (!sumiDrops.length) return;
+  if (!sumiDrops.length || drawing) return;
+  if (Date.now() - sumiLastInteraction < 1800) return;
   const cx = canvasW / 2;
   const cy = canvasH / 2;
-  const r = Math.min(canvasW, canvasH) * 0.32;
-  sumiAutoMawariAngle += 0.003;
-  const fx = cx + Math.cos(sumiAutoMawariAngle) * r;
-  const fy = cy + Math.sin(sumiAutoMawariAngle) * r;
-  const tx = -Math.sin(sumiAutoMawariAngle) * 3;
-  const ty = Math.cos(sumiAutoMawariAngle) * 3;
-  sumiTine(fx, fy, tx, ty, 2.5, SUMI_TINE_U);
+  const orbit = Math.min(canvasW, canvasH) * 0.32;
+  sumiAutoMawariAngle += 0.0025;
+  const fx = cx + Math.cos(sumiAutoMawariAngle) * orbit;
+  const fy = cy + Math.sin(sumiAutoMawariAngle) * orbit;
+  const tx = -Math.sin(sumiAutoMawariAngle) * 2.5;
+  const ty = Math.cos(sumiAutoMawariAngle) * 2.5;
+  sumiTine(fx, fy, tx, ty, 2, SUMI_TINE_U);
 }
 
 function animateSumiFrame() {
-  drawWashiBackground();
-  sumiApplyFlows();
-  sumiAutoMawari();
+  sumiAnimFrame++;
+  drawWashiBackgroundCached();
+  if (sumiAnimFrame % 2 === 0) sumiApplyFlows();
+  if (sumiAnimFrame % 4 === 0) sumiAutoMawari();
   drawSumiDrops();
   drawSumiRipples();
 
@@ -1814,7 +1856,7 @@ function renderPureArtwork(targetCtx, w, h) {
   } else {
     strokeHistory.forEach((s) => {
       if (s.eraser) return;
-      drawInkAlongPoints(targetCtx, s.points, s.color, s.size, 0.9);
+      drawInkAlongPoints(targetCtx, s.points, s.color, s.size, 1, 4);
       drawStroke(s, 0.35, targetCtx);
     });
   }
@@ -1878,7 +1920,7 @@ function continueStroke(e) {
       }
     }
   } else if (!isEraser) {
-    stampInkIfMoved(pos.x, pos.y, currentColor, getBrushSize(false), 0.7, 5);
+    stampInkIfMoved(pos.x, pos.y, currentColor, getBrushSize(false), 0.95, 4);
   }
   if (appMode !== "zen" && !isEraser && particlesEnabled && Math.random() < 0.6) {
     particles.push(new Particle(pos.x, pos.y, currentColor));
@@ -2251,9 +2293,9 @@ function setToolsCollapsed(collapsed) {
 }
 
 function touchToolsActivity() {
-  if (toolsIdleTimer) clearTimeout(toolsIdleTimer);
-  if (appMode === "free" && !toolsCollapsed) {
-    toolsIdleTimer = setTimeout(() => setToolsCollapsed(true), TOOLS_IDLE_MS);
+  if (toolsIdleTimer) {
+    clearTimeout(toolsIdleTimer);
+    toolsIdleTimer = null;
   }
 }
 
@@ -2300,6 +2342,8 @@ function resetCanvasState() {
   sumiLastFlowDx = 0;
   sumiLastFlowDy = 0;
   sumiAutoMawariAngle = 0;
+  sumiAnimFrame = 0;
+  sumiBgCache = null;
   drawing = false;
   activePointerId = null;
   currentStroke = [];
@@ -2383,12 +2427,6 @@ function goHome() {
   particles = [];
   lastArtworkDataUrl = "";
   pendingSession = null;
-  feedbackHappiness = null;
-  feedbackReplay = null;
-  document.getElementById("feedbackComment").value = "";
-  document.querySelectorAll(".happiness-btn").forEach((b) => b.classList.remove("active"));
-  document.getElementById("replayYes").classList.remove("active");
-  document.getElementById("replayNo").classList.remove("active");
   restoreCardUI("normal");
   zenFinished = false;
   isEraser = false;
@@ -2891,30 +2929,7 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove("show"), 3000);
 }
 
-// ===== FEEDBACK & STORAGE =====
-function showFeedback() {
-  feedbackHappiness = null;
-  feedbackReplay = null;
-  document.getElementById("feedbackComment").value = "";
-  document.querySelectorAll(".happiness-btn").forEach((b) => b.classList.remove("active"));
-  document.getElementById("replayYes").classList.remove("active");
-  document.getElementById("replayNo").classList.remove("active");
-  showScreen("feedbackScreen");
-}
-
-function selectHappiness(n) {
-  feedbackHappiness = n;
-  document.querySelectorAll(".happiness-btn").forEach((b) => {
-    b.classList.toggle("active", parseInt(b.dataset.n, 10) === n);
-  });
-}
-
-function selectReplay(val) {
-  feedbackReplay = val;
-  document.getElementById("replayYes").classList.toggle("active", val === true);
-  document.getElementById("replayNo").classList.toggle("active", val === false);
-}
-
+// ===== SESSION STORAGE (教師長按匯出) =====
 function getSessions() {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -2929,37 +2944,8 @@ function saveSession(record) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
 }
 
-function submitFeedback() {
-  if (feedbackHappiness === null) {
-    showToast("請選擇開心指數");
-    return;
-  }
-  if (feedbackReplay === null) {
-    showToast("請選擇會否再玩");
-    return;
-  }
-  if (pendingSession) {
-    saveSession({
-      ...pendingSession,
-      happiness: feedbackHappiness,
-      replay: feedbackReplay,
-      comment: document.getElementById("feedbackComment").value.trim() || null,
-    });
-    showToast("多謝你的反饋");
-  }
-  goHome();
-}
-
-function skipFeedback() {
-  if (pendingSession) {
-    saveSession({
-      ...pendingSession,
-      happiness: null,
-      replay: null,
-      comment: null,
-      skipped: true,
-    });
-  }
+function finishFromCard() {
+  if (pendingSession) saveSession({ ...pendingSession });
   goHome();
 }
 
@@ -2971,20 +2957,7 @@ function exportSessions() {
   link.href = URL.createObjectURL(blob);
   link.click();
   URL.revokeObjectURL(link.href);
-  showToast("已匯出反饋數據");
-}
-
-function initHappinessBar() {
-  const bar = document.getElementById("happinessBar");
-  for (let i = 1; i <= 10; i++) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "happiness-btn";
-    btn.dataset.n = i;
-    btn.textContent = i;
-    btn.onclick = () => selectHappiness(i);
-    bar.appendChild(btn);
-  }
+  showToast("已匯出 session 數據");
 }
 
 function initTeacherExport() {
@@ -3035,7 +3008,6 @@ function restartWelcomeEnterAnimation() {
 // ===== INIT =====
 initColors();
 initSizes();
-initHappinessBar();
 initTeacherExport();
 initParticleToggle();
 registerServiceWorker();
@@ -3063,8 +3035,5 @@ window.toggleToolsPanel = toggleToolsPanel;
 window.toggleEraser = toggleEraser;
 window.showTerms = showTerms;
 window.saveCard = saveCard;
-window.showFeedback = showFeedback;
-window.selectReplay = selectReplay;
-window.skipFeedback = skipFeedback;
-window.submitFeedback = submitFeedback;
+window.finishFromCard = finishFromCard;
 window.closeTerms = closeTerms;
