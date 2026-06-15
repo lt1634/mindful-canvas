@@ -54,6 +54,7 @@ let sumiFlowImpulses = [];
 let sumiRipples = [];
 let sumiLastFlowDx = 0;
 let sumiLastFlowDy = 0;
+let sumiAutoMawariAngle = 0;
 
 const BREATH_CYCLE_MS = 8000;
 const TOOLS_IDLE_MS = 3000;
@@ -68,12 +69,12 @@ const SONG_FADE_IN_SEC = 2.8;
 const SONG_FADE_OUT_SEC = 2.8;
 const ZEN_TRACE_COLORS = ["#f0c674", "#e8a87c", "#f5e6d3", "#d4a5ff", "#7ec8b8"];
 
-// 墨流調色（沿用禪意調色盤色碼，解讀引擎可直接識別）
+// 墨流調色 — v2.2 日式四色 + 暮色
 const SUMI_COLORS = [
-  { hex: "#3a3a4a", name: "墨色" },
-  { hex: "#2c5f7c", name: "深海" },
-  { hex: "#c46b4a", name: "晚霞" },
-  { hex: "#5a7a5a", name: "翠竹" },
+  { hex: "#1a1a1a", name: "黑墨" },
+  { hex: "#1a3a5c", name: "深藍" },
+  { hex: "#c43a2a", name: "朱紅" },
+  { hex: "#3a5a3a", name: "松葉綠" },
   { hex: "#8b5e83", name: "暮色" },
 ];
 const SUMI_MAX_DROPS = 64;
@@ -749,11 +750,11 @@ function drawWashiBackground(targetCtx, w, h) {
   const c = targetCtx || ctx;
   const pw = w || canvasW;
   const ph = h || canvasH;
-  c.fillStyle = "#ebe4d6";
+  c.fillStyle = "#f0ebe0";
   c.fillRect(0, 0, pw, ph);
   const tex = ensureWashiTexture();
   c.save();
-  c.globalAlpha = 0.92;
+  c.globalAlpha = 0.96;
   c.fillStyle = c.createPattern(tex, "repeat");
   c.fillRect(0, 0, pw, ph);
   c.restore();
@@ -766,7 +767,7 @@ function drawWashiBackground(targetCtx, w, h) {
     Math.max(pw, ph) * 0.78
   );
   vg.addColorStop(0, "rgba(255,255,255,0)");
-  vg.addColorStop(1, "rgba(72, 52, 32, 0.14)");
+  vg.addColorStop(1, "rgba(72, 52, 32, 0.18)");
   c.fillStyle = vg;
   c.fillRect(0, 0, pw, ph);
 }
@@ -1198,25 +1199,22 @@ function sumiPathSmooth(c, verts) {
 function drawSumiDrops(targetCtx) {
   const c = targetCtx || ctx;
   c.save();
-  c.globalCompositeOperation = "source-over";
+  c.globalCompositeOperation = "multiply";
   for (const drop of sumiDrops) {
     const verts = drop.verts;
     if (verts.length < 3) continue;
     c.beginPath();
     sumiPathSmooth(c, verts);
-    // 外層墨暈（柔邊）
     c.shadowColor = drop.color;
     c.shadowBlur = 18;
-    c.globalAlpha = 0.22;
+    c.globalAlpha = 0.18;
     c.fillStyle = drop.color;
     c.fill();
-    // 中層
     c.shadowBlur = 8;
-    c.globalAlpha = 0.38;
+    c.globalAlpha = 0.32;
     c.fill();
-    // 核心
     c.shadowBlur = 0;
-    c.globalAlpha = 0.52;
+    c.globalAlpha = 0.48;
     c.fill();
   }
   c.restore();
@@ -1268,9 +1266,23 @@ function drawSumiRipples(targetCtx) {
   c.restore();
 }
 
+function sumiAutoMawari() {
+  if (!sumiDrops.length) return;
+  const cx = canvasW / 2;
+  const cy = canvasH / 2;
+  const r = Math.min(canvasW, canvasH) * 0.32;
+  sumiAutoMawariAngle += 0.003;
+  const fx = cx + Math.cos(sumiAutoMawariAngle) * r;
+  const fy = cy + Math.sin(sumiAutoMawariAngle) * r;
+  const tx = -Math.sin(sumiAutoMawariAngle) * 3;
+  const ty = Math.cos(sumiAutoMawariAngle) * 3;
+  sumiTine(fx, fy, tx, ty, 2.5, SUMI_TINE_U);
+}
+
 function animateSumiFrame() {
   drawWashiBackground();
   sumiApplyFlows();
+  sumiAutoMawari();
   drawSumiDrops();
   drawSumiRipples();
 
@@ -1362,6 +1374,7 @@ function clearSumiCanvas() {
   sumiDrops = [];
   sumiFlowImpulses = [];
   sumiRipples = [];
+  sumiAutoMawariAngle = 0;
   strokeCount = 0;
   showToast("水面已洗淨，重新開始");
 }
@@ -1879,7 +1892,17 @@ function commitStroke() {
   if (appMode === "sumi") {
     if (sumiDragDist < 8 && currentStroke.length) {
       const p = currentStroke[0];
-      sumiAddDrop(p.x, p.y, 16 + Math.random() * 26, SUMI_COLORS[sumiColorIndex].hex);
+      const baseR = 18 + Math.random() * 8;
+      const rings = 3 + Math.floor(Math.random() * 3);
+      sumiAddDrop(p.x, p.y, baseR, SUMI_COLORS[sumiColorIndex].hex);
+      for (let ring = 1; ring < rings; ring++) {
+        const rr = baseR * (1 + ring * 0.55);
+        const useColor = SUMI_COLORS[(sumiColorIndex + ring) % SUMI_COLORS.length].hex;
+        setTimeout(() => {
+          sumiAddDrop(p.x, p.y, rr, useColor);
+          sumiResample();
+        }, ring * 140);
+      }
     } else if (sumiDragDist >= 8) {
       // 放手後水面仍隨慣性流一陣
       const fp = getSumiFlowPreset();
@@ -2276,6 +2299,7 @@ function resetCanvasState() {
   sumiRipples = [];
   sumiLastFlowDx = 0;
   sumiLastFlowDy = 0;
+  sumiAutoMawariAngle = 0;
   drawing = false;
   activePointerId = null;
   currentStroke = [];
