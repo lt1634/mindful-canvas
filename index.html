@@ -12,7 +12,7 @@
     <meta name="copyright" content="© 2026 Tim Yuen / ZenArt Lab. All rights reserved." />
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" href="icon-192.png" />
-    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/style.css?v=zen-preview3" />
   </head>
   <body>
     <!-- WELCOME -->
@@ -36,7 +36,7 @@
             <div class="mode-desc">
               選一個圖案，跟住金光一步一步畫。輕觸留下你的色彩，跟完按「跟好了」，約 1 分鐘完成。
             </div>
-            <div class="mode-meta">約 1 分鐘 · 分步跟畫 · 3 款圖案</div>
+            <div class="mode-meta">約 1 分鐘 · 分步跟畫 · 7 款圖案</div>
           </div>
           <div class="mode-card sumi" onclick="startSumiMode()">
             <canvas class="mode-card-preview" id="previewSumi" aria-hidden="true"></canvas>
@@ -67,39 +67,8 @@
           ← 返回
         </button>
         <h2 class="zen-picker-title">選一個圖案跟住畫</h2>
-        <p class="zen-picker-sub">每一步都有金光引導；跟完一步，按「跟好了」繼續</p>
-        <div class="zen-template-cards">
-          <div class="zen-tpl-card" onclick="startZenMode('circle')">
-            <span class="zen-tpl-emoji">⭕</span>
-            <div class="zen-tpl-name">同心圓</div>
-            <div class="zen-tpl-desc">最簡單 · 4 步 · 適合第一次</div>
-          </div>
-          <div class="zen-tpl-card" onclick="startZenMode('lotus')">
-            <span class="zen-tpl-emoji">🪷</span>
-            <div class="zen-tpl-name">靜心蓮</div>
-            <div class="zen-tpl-desc">經典禪意 · 5 步 · 視覺最豐富</div>
-          </div>
-          <div class="zen-tpl-card" onclick="startZenMode('spiral')">
-            <span class="zen-tpl-emoji">🌀</span>
-            <div class="zen-tpl-name">螺旋息</div>
-            <div class="zen-tpl-desc">跟呼吸繞圈 · 5 步 · 流動感</div>
-          </div>
-          <div class="zen-tpl-card" onclick="startZenMode('dharma_wheel')">
-            <span class="zen-tpl-emoji">🔷</span>
-            <div class="zen-tpl-name">智慧法輪</div>
-            <div class="zen-tpl-desc">八正道之光 · 5 步 · 莊嚴神聖</div>
-          </div>
-          <div class="zen-tpl-card" onclick="startZenMode('flower_of_life')">
-            <span class="zen-tpl-emoji">🌸</span>
-            <div class="zen-tpl-name">生命之花</div>
-            <div class="zen-tpl-desc">神聖幾何 · 7 步 · 對稱之美</div>
-          </div>
-          <div class="zen-tpl-card" onclick="startZenMode('endless_knot')">
-            <span class="zen-tpl-emoji">➰</span>
-            <div class="zen-tpl-name">吉祥如意結</div>
-            <div class="zen-tpl-desc">無盡守護 · 6 步 · 慈悲智慧</div>
-          </div>
-        </div>
+        <p class="zen-picker-sub">每個圖案都有預覽；睇清楚再撳，跟住金光一步一步畫</p>
+        <div class="zen-template-cards" id="zenTemplateCards"></div>
       </div>
     </div>
 
@@ -238,6 +207,6 @@
       </div>
     </div>
 
-    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/app.js?v=zen-preview3"></script>
   </body>
 </html>

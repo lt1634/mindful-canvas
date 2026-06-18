@@ -162,6 +162,8 @@ function getSumiFlowPreset() {
   return SUMI_FLOW_PRESETS[sumiFlowLevel] || SUMI_FLOW_PRESETS[0];
 }
 
+const ZEN_GUIDE_RADIUS = 0.46;
+
 const ZEN_TEMPLATES = {
   circle: {
     id: "circle",
@@ -333,81 +335,68 @@ const ZEN_TEMPLATES = {
       },
     ],
   },
-  dharma_wheel: {
-    id: "dharma_wheel",
-    name: "智慧法輪",
+  mandala: {
+    id: "mandala",
+    name: "大日如來壇城",
     steps: [
       {
-        hint: "跟住畫外圈——法輪之緣",
+        hint: "畫外圈火焰環",
         draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
           ctx.save();
           ctx.strokeStyle = `rgba(226,181,90,${a})`;
           ctx.lineWidth = lw;
-          ctx.lineCap = "round";
+          ctx.setLineDash([8, 6]);
           ctx.beginPath();
-          ctx.arc(cx, cy, r * 0.9, 0, Math.PI * 2);
+          ctx.arc(cx, cy, sz * 0.46, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.arc(cx, cy, sz * 0.44, 0, Math.PI * 2);
           ctx.stroke();
           ctx.restore();
         },
       },
       {
-        hint: "畫內圈，圓滿之心",
+        hint: "畫金剛蓮瓣外圈",
         draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
           ctx.save();
           ctx.strokeStyle = `rgba(44,95,124,${a * 0.85})`;
           ctx.lineWidth = lw;
-          ctx.lineCap = "round";
           ctx.beginPath();
-          ctx.arc(cx, cy, r * 0.52, 0, Math.PI * 2);
+          ctx.arc(cx, cy, sz * 0.38, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(cx, cy, sz * 0.35, 0, Math.PI * 2);
           ctx.stroke();
           ctx.restore();
         },
       },
       {
-        hint: "畫四條主輻——東西南北",
+        hint: "畫四正城門方殿",
         draw(cx, cy, r, a, lw) {
-          ctx.save();
-          ctx.strokeStyle = `rgba(226,181,90,${a})`;
-          ctx.lineWidth = lw;
-          ctx.lineCap = "round";
-          for (let i = 0; i < 4; i++) {
-            const ang = (i / 4) * Math.PI * 2;
-            ctx.beginPath();
-            ctx.moveTo(cx + Math.cos(ang) * r * 0.18, cy + Math.sin(ang) * r * 0.18);
-            ctx.lineTo(cx + Math.cos(ang) * r * 0.86, cy + Math.sin(ang) * r * 0.86);
-            ctx.stroke();
-          }
-          ctx.restore();
+          drawZenMandalaPalace(cx, cy, r, a, lw);
         },
       },
       {
-        hint: "畫四條間輻——八正道之光",
+        hint: "畫八瓣心蓮",
         draw(cx, cy, r, a, lw) {
-          ctx.save();
-          ctx.strokeStyle = `rgba(90,122,90,${a * 0.8})`;
-          ctx.lineWidth = lw * 0.85;
-          ctx.lineCap = "round";
-          for (let i = 0; i < 4; i++) {
-            const ang = (i / 4) * Math.PI * 2 + Math.PI / 4;
-            ctx.beginPath();
-            ctx.moveTo(cx + Math.cos(ang) * r * 0.22, cy + Math.sin(ang) * r * 0.22);
-            ctx.lineTo(cx + Math.cos(ang) * r * 0.8, cy + Math.sin(ang) * r * 0.8);
-            ctx.stroke();
-          }
-          ctx.restore();
+          drawZenMandalaPetals(cx, cy, r, a, lw);
         },
       },
       {
         hint: "點亮中心智慧之光",
         draw(cx, cy, r, a) {
+          const sz = zenArtSize(r);
           ctx.save();
-          ctx.fillStyle = `rgba(226,181,90,${a})`;
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
           ctx.beginPath();
-          ctx.arc(cx, cy, r * 0.1, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = `rgba(255,248,220,${a * 0.7})`;
+          ctx.arc(cx, cy, sz * 0.03, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = `rgba(255,248,220,${a * 0.75})`;
           ctx.beginPath();
-          ctx.arc(cx, cy, r * 0.04, 0, Math.PI * 2);
+          ctx.arc(cx, cy, sz * 0.015, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         },
@@ -521,91 +510,194 @@ const ZEN_TEMPLATES = {
   },
   endless_knot: {
     id: "endless_knot",
-    name: "吉祥如意結",
+    name: "無盡意吉祥結",
     steps: [
       {
-        hint: "跟住畫方形框架",
+        hint: "跟住畫外圍光環",
         draw(cx, cy, r, a, lw) {
-          const s = r * 0.62;
+          const s = zenArtSize(r) * 0.07;
           ctx.save();
-          ctx.strokeStyle = `rgba(226,181,90,${a})`;
-          ctx.lineWidth = lw;
-          ctx.lineCap = "round";
-          ctx.strokeRect(cx - s, cy - s, s * 2, s * 2);
+          ctx.strokeStyle = `rgba(226,181,90,${a * 0.5})`;
+          ctx.lineWidth = lw * 0.8;
+          ctx.setLineDash([10, 10]);
+          const side = s * 4;
+          ctx.beginPath();
+          ctx.rect(cx - side, cy - side, side * 2, side * 2);
+          ctx.stroke();
           ctx.restore();
         },
       },
       {
-        hint: "畫上方半圓結",
+        hint: "畫主結外環",
         draw(cx, cy, r, a, lw) {
-          const w = r * 0.5;
+          const s = zenArtSize(r) * 0.07;
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.lineWidth = lw * 1.1;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.beginPath();
+          traceZenKnotOuter(cx, cy, s);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫內部交織結",
+        draw(cx, cy, r, a, lw) {
+          const s = zenArtSize(r) * 0.07;
           ctx.save();
           ctx.strokeStyle = `rgba(44,95,124,${a * 0.85})`;
-          ctx.lineWidth = lw;
+          ctx.lineWidth = lw * 0.85;
           ctx.lineCap = "round";
+          ctx.lineJoin = "round";
           ctx.beginPath();
-          ctx.arc(cx - w * 0.45, cy - r * 0.12, w * 0.38, 0, Math.PI);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.arc(cx + w * 0.45, cy - r * 0.12, w * 0.38, 0, Math.PI);
+          ctx.moveTo(cx, cy - 1.2 * s);
+          ctx.lineTo(cx + 1.6 * s, cy + 0.4 * s);
+          ctx.lineTo(cx, cy + 2.0 * s);
+          ctx.lineTo(cx - 1.6 * s, cy + 0.4 * s);
+          ctx.closePath();
           ctx.stroke();
           ctx.restore();
         },
       },
       {
-        hint: "畫下方半圓結",
+        hint: "點出交織節點",
         draw(cx, cy, r, a, lw) {
-          const w = r * 0.5;
+          const s = zenArtSize(r) * 0.07;
+          const nodes = [
+            [0, -1.6],
+            [1.6, 0.4],
+            [-1.6, 0.4],
+            [0, 2.0],
+            [1.6, -1.6],
+            [-1.6, -1.6],
+          ];
           ctx.save();
-          ctx.strokeStyle = `rgba(226,181,90,${a})`;
-          ctx.lineWidth = lw;
-          ctx.lineCap = "round";
-          ctx.beginPath();
-          ctx.arc(cx - w * 0.45, cy + r * 0.12, w * 0.38, Math.PI, Math.PI * 2);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.arc(cx + w * 0.45, cy + r * 0.12, w * 0.38, Math.PI, Math.PI * 2);
-          ctx.stroke();
+          ctx.strokeStyle = `rgba(90,122,90,${a * 0.75})`;
+          ctx.lineWidth = lw * 0.6;
+          ctx.setLineDash([2, 2]);
+          nodes.forEach(([nx, ny]) => {
+            ctx.beginPath();
+            ctx.arc(cx + nx * s, cy + ny * s, s * 0.25, 0, Math.PI * 2);
+            ctx.stroke();
+          });
           ctx.restore();
         },
       },
       {
-        hint: "連接左側線條",
+        hint: "描細線立體感",
         draw(cx, cy, r, a, lw) {
-          const s = r * 0.62;
+          const s = zenArtSize(r) * 0.07;
           ctx.save();
-          ctx.strokeStyle = `rgba(90,122,90,${a * 0.8})`;
-          ctx.lineWidth = lw * 0.9;
+          ctx.strokeStyle = `rgba(139,94,131,${a * 0.7})`;
+          ctx.lineWidth = lw * 0.5;
           ctx.lineCap = "round";
           ctx.beginPath();
-          ctx.moveTo(cx - s, cy - s * 0.35);
-          ctx.quadraticCurveTo(cx - s * 0.35, cy, cx - s, cy + s * 0.35);
+          traceZenKnotOuter(cx, cy, s);
           ctx.stroke();
           ctx.restore();
         },
       },
       {
-        hint: "連接右側線條",
-        draw(cx, cy, r, a, lw) {
-          const s = r * 0.62;
-          ctx.save();
-          ctx.strokeStyle = `rgba(139,94,131,${a * 0.78})`;
-          ctx.lineWidth = lw * 0.9;
-          ctx.lineCap = "round";
-          ctx.beginPath();
-          ctx.moveTo(cx + s, cy - s * 0.35);
-          ctx.quadraticCurveTo(cx + s * 0.35, cy, cx + s, cy + s * 0.35);
-          ctx.stroke();
-          ctx.restore();
-        },
-      },
-      {
-        hint: "點綴中心——吉祥圓滿",
+        hint: "中心圓滿一點",
         draw(cx, cy, r, a) {
           ctx.save();
           ctx.fillStyle = `rgba(226,181,90,${a})`;
           ctx.beginPath();
-          ctx.arc(cx, cy, r * 0.07, 0, Math.PI * 2);
+          ctx.arc(cx, cy, r * 0.05, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        },
+      },
+    ],
+  },
+  bodhi_fish: {
+    id: "bodhi_fish",
+    name: "菩提雙魚",
+    steps: [
+      {
+        hint: "畫菩提葉輪廓",
+        draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
+          ctx.save();
+          ctx.strokeStyle = `rgba(90,122,90,${a * 0.7})`;
+          ctx.lineWidth = lw;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - sz * 0.45);
+          ctx.quadraticCurveTo(cx + sz * 0.35, cy - sz * 0.1, cx, cy + sz * 0.42);
+          ctx.quadraticCurveTo(cx - sz * 0.35, cy - sz * 0.1, cx, cy - sz * 0.45);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫葉脈引導線",
+        draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
+          ctx.save();
+          ctx.strokeStyle = `rgba(44,95,124,${a * 0.6})`;
+          ctx.lineWidth = lw * 0.7;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - sz * 0.45);
+          ctx.lineTo(cx, cy + sz * 0.42);
+          ctx.stroke();
+          for (let i = 1; i <= 4; i++) {
+            const y = cy - sz * 0.45 + sz * 0.8 * (i / 5);
+            ctx.beginPath();
+            ctx.moveTo(cx, y);
+            ctx.quadraticCurveTo(cx + sz * 0.2, y - sz * 0.05, cx + sz * 0.25, y - sz * 0.12);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(cx, y);
+            ctx.quadraticCurveTo(cx - sz * 0.2, y - sz * 0.05, cx - sz * 0.25, y - sz * 0.12);
+            ctx.stroke();
+          }
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫左側吉祥魚",
+        draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
+          const sc = (r * 0.45) / 80;
+          drawZenFish(cx - sz * 0.11, cy, sc, -25, false, a, lw);
+        },
+      },
+      {
+        hint: "畫右側吉祥魚",
+        draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
+          const sc = (r * 0.45) / 80;
+          drawZenFish(cx + sz * 0.11, cy, sc, 155, true, a, lw);
+        },
+      },
+      {
+        hint: "畫水波漣漪",
+        draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a * 0.55})`;
+          ctx.lineWidth = lw * 0.8;
+          ctx.setLineDash([4, 12]);
+          ctx.beginPath();
+          ctx.arc(cx, cy, sz * 0.3, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([10, 20]);
+          ctx.beginPath();
+          ctx.arc(cx, cy, sz * 0.42, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "點亮中心平靜",
+        draw(cx, cy, r, a) {
+          ctx.save();
+          ctx.fillStyle = `rgba(226,181,90,${a})`;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r * 0.04, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         },
@@ -809,7 +901,7 @@ function setDefaultFreeBrushSize() {
 
 // ===== CANVAS (rAF + 粒子 + 無常淡化) =====
 const canvas = document.getElementById("drawCanvas");
-const ctx = canvas.getContext("2d", { alpha: true });
+let ctx = canvas.getContext("2d", { alpha: true });
 let drawing = false;
 let activePointerId = null;
 let strokeCount = 0;
@@ -1305,7 +1397,7 @@ function drawZenPetal(cx, cy, dist, angle, color, alpha, scale) {
 function zenGuideMetrics() {
   const cx = canvasW / 2;
   const cy = canvasH / 2;
-  const r = Math.min(canvasW, canvasH) * 0.36;
+  const r = Math.min(canvasW, canvasH) * ZEN_GUIDE_RADIUS;
   return { cx, cy, r };
 }
 
@@ -1330,6 +1422,127 @@ function drawZenSpiralArc(cx, cy, r, startTurns, endTurns, alpha, lineW) {
   ctx.restore();
 }
 
+function zenArtSize(r) {
+  return r / 0.46;
+}
+
+function traceZenKnotOuter(cx, cy, s) {
+  ctx.moveTo(cx, cy - 3.2 * s);
+  ctx.lineTo(cx + 1.6 * s, cy - 1.6 * s);
+  ctx.lineTo(cx + 3.2 * s, cy - 3.2 * s);
+  ctx.lineTo(cx + 4.2 * s, cy - 2.2 * s);
+  ctx.lineTo(cx + 2.6 * s, cy - 0.6 * s);
+  ctx.lineTo(cx + 4.2 * s, cy + 1.0 * s);
+  ctx.lineTo(cx + 3.2 * s, cy + 2.0 * s);
+  ctx.lineTo(cx + 1.6 * s, cy + 0.4 * s);
+  ctx.lineTo(cx, cy + 2.0 * s);
+  ctx.lineTo(cx - 1.6 * s, cy + 0.4 * s);
+  ctx.lineTo(cx - 3.2 * s, cy + 2.0 * s);
+  ctx.lineTo(cx - 4.2 * s, cy + 1.0 * s);
+  ctx.lineTo(cx - 2.6 * s, cy - 0.6 * s);
+  ctx.lineTo(cx - 4.2 * s, cy - 2.2 * s);
+  ctx.lineTo(cx - 3.2 * s, cy - 3.2 * s);
+  ctx.lineTo(cx - 1.6 * s, cy - 1.6 * s);
+  ctx.closePath();
+}
+
+function drawZenMandalaPalace(cx, cy, r, a, lw) {
+  const sz = zenArtSize(r);
+  const ri = sz * 0.25;
+  const rg = sz * 0.08;
+  ctx.save();
+  ctx.strokeStyle = `rgba(226,181,90,${a})`;
+  ctx.lineWidth = lw;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(cx - ri, cy - ri);
+  ctx.lineTo(cx - rg, cy - ri);
+  ctx.lineTo(cx - rg, cy - ri - rg);
+  ctx.lineTo(cx + rg, cy - ri - rg);
+  ctx.lineTo(cx + rg, cy - ri);
+  ctx.lineTo(cx + ri, cy - ri);
+  ctx.lineTo(cx + ri, cy - rg);
+  ctx.lineTo(cx + ri + rg, cy - rg);
+  ctx.lineTo(cx + ri + rg, cy + rg);
+  ctx.lineTo(cx + ri, cy + rg);
+  ctx.lineTo(cx + ri, cy + ri);
+  ctx.lineTo(cx + rg, cy + ri);
+  ctx.lineTo(cx + rg, cy + ri + rg);
+  ctx.lineTo(cx - rg, cy + ri + rg);
+  ctx.lineTo(cx - rg, cy + ri);
+  ctx.lineTo(cx - ri, cy + ri);
+  ctx.lineTo(cx - ri, cy + rg);
+  ctx.lineTo(cx - ri - rg, cy + rg);
+  ctx.lineTo(cx - ri - rg, cy - rg);
+  ctx.lineTo(cx - ri, cy - rg);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawZenMandalaPetals(cx, cy, r, a, lw) {
+  const sz = zenArtSize(r);
+  ctx.save();
+  ctx.strokeStyle = `rgba(90,122,90,${a * 0.8})`;
+  ctx.lineWidth = lw * 0.9;
+  ctx.lineCap = "round";
+  for (let i = 0; i < 8; i++) {
+    const angle = (i * Math.PI) / 4;
+    const x1 = cx + Math.cos(angle) * sz * 0.04;
+    const y1 = cy + Math.sin(angle) * sz * 0.04;
+    const x2 = cx + Math.cos(angle) * sz * 0.18;
+    const y2 = cy + Math.sin(angle) * sz * 0.18;
+    const cp1x = cx + Math.cos(angle - 0.2) * sz * 0.13;
+    const cp1y = cy + Math.sin(angle - 0.2) * sz * 0.13;
+    const cp2x = cx + Math.cos(angle + 0.2) * sz * 0.13;
+    const cp2y = cy + Math.sin(angle + 0.2) * sz * 0.13;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.quadraticCurveTo(cp1x, cp1y, x2, y2);
+    ctx.quadraticCurveTo(cp2x, cp2y, x1, y1);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawZenFish(cx, cy, scale, angleDeg, reversed, a, lw) {
+  const dir = reversed ? -1 : 1;
+  const rad = (angleDeg * Math.PI) / 180;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(rad);
+  ctx.scale(scale, scale);
+  ctx.strokeStyle = `rgba(226,181,90,${a})`;
+  ctx.lineWidth = Math.max(1.2, lw / scale);
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(-80, 0);
+  ctx.quadraticCurveTo(0, -40 * dir, 80, 0);
+  ctx.quadraticCurveTo(0, 40 * dir, -80, 0);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.fillStyle = `rgba(226,181,90,${a * 0.85})`;
+  ctx.beginPath();
+  ctx.arc(50, 5 * dir, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(40, -18 * dir);
+  ctx.quadraticCurveTo(30, 0, 40, 18 * dir);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-80, 0);
+  ctx.quadraticCurveTo(-110, -30 * dir, -130, -15 * dir);
+  ctx.quadraticCurveTo(-110, 0, -80, 0);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-80, 0);
+  ctx.quadraticCurveTo(-110, 30 * dir, -130, 15 * dir);
+  ctx.quadraticCurveTo(-110, 0, -80, 0);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawZenGuide() {
   const tpl = ZEN_TEMPLATES[zenTemplateId];
   if (!tpl) return;
@@ -1342,9 +1555,9 @@ function drawZenGuide() {
 
   const pulse = 0.55 + Math.sin(Date.now() / 800) * 0.28;
   tpl.steps.forEach((step, i) => {
-    if (i > zenStepIndex) step.draw(cx, cy, r, 0.12, 1);
-    else if (i === zenStepIndex) step.draw(cx, cy, r, pulse, 2.5);
-    else step.draw(cx, cy, r, 0.22, 1.2);
+    if (i > zenStepIndex) step.draw(cx, cy, r, 0.12, 1.2);
+    else if (i === zenStepIndex) step.draw(cx, cy, r, pulse, 3.2);
+    else step.draw(cx, cy, r, 0.22, 1.5);
   });
 }
 
@@ -1372,8 +1585,85 @@ function advanceZenStep() {
   updateZenStepUI();
 }
 
+const ZEN_PICKER_ITEMS = [
+  { id: "circle", desc: "最簡單 · 4 步 · 適合第一次" },
+  { id: "lotus", desc: "經典禪意 · 5 步 · 視覺最豐富" },
+  { id: "spiral", desc: "跟呼吸繞圈 · 5 步 · 流動感" },
+  { id: "mandala", desc: "神聖壇城 · 5 步 · 專業底稿" },
+  { id: "flower_of_life", desc: "神聖幾何 · 7 步 · 對稱之美" },
+  { id: "endless_knot", desc: "因緣交織 · 6 步 · 立體編織" },
+  { id: "bodhi_fish", desc: "八吉祥 · 6 步 · 流動和諧" },
+];
+
+function drawZenTemplatePreview(canvas, templateId) {
+  const tpl = ZEN_TEMPLATES[templateId];
+  if (!tpl || !canvas) return;
+  const box = canvas.parentElement;
+  const cssSize = Math.max(80, Math.round(box?.clientWidth || 120));
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(cssSize * dpr);
+  canvas.height = Math.round(cssSize * dpr);
+  const pctx = canvas.getContext("2d");
+  pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const cx = cssSize / 2;
+  const cy = cssSize / 2;
+  const r = cssSize * ZEN_GUIDE_RADIUS;
+  pctx.fillStyle = "rgba(8, 12, 24, 0.95)";
+  pctx.fillRect(0, 0, cssSize, cssSize);
+  const glow = pctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.1);
+  glow.addColorStop(0, "rgba(226,181,90,0.15)");
+  glow.addColorStop(1, "rgba(0,0,0,0)");
+  pctx.fillStyle = glow;
+  pctx.fillRect(0, 0, cssSize, cssSize);
+  const savedCtx = ctx;
+  ctx = pctx;
+  try {
+    const lw = Math.max(1.4, cssSize * 0.02);
+    tpl.steps.forEach((step) => {
+      step.draw(cx, cy, r, 1, lw);
+    });
+  } finally {
+    ctx = savedCtx;
+  }
+}
+
+function buildZenPickerCards() {
+  const container = document.getElementById("zenTemplateCards");
+  if (!container) return;
+  container.innerHTML = "";
+  ZEN_PICKER_ITEMS.forEach((item) => {
+    const tpl = ZEN_TEMPLATES[item.id];
+    if (!tpl) return;
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "zen-tpl-card";
+    card.setAttribute("aria-label", `選擇${tpl.name}`);
+    card.onclick = () => startZenMode(item.id);
+    const preview = document.createElement("div");
+    preview.className = "zen-tpl-preview";
+    const canvas = document.createElement("canvas");
+    preview.appendChild(canvas);
+    const name = document.createElement("div");
+    name.className = "zen-tpl-name";
+    name.textContent = tpl.name;
+    const desc = document.createElement("div");
+    desc.className = "zen-tpl-desc";
+    desc.textContent = item.desc || `${tpl.steps.length} 步跟畫`;
+    card.append(preview, name, desc);
+    container.appendChild(card);
+    try {
+      drawZenTemplatePreview(canvas, item.id);
+    } catch (err) {
+      console.warn("zen preview failed:", item.id, err);
+    }
+  });
+}
+
 function openZenPicker() {
   showScreen("zenPickerScreen");
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => buildZenPickerCards());
+  });
 }
 
 // ===== SUMI ENGINE（數學墨流，Lu & Jaffer 2012）=====
@@ -1742,7 +2032,7 @@ function clearSumiCanvas() {
 function drawZenMandala(progress) {
   const cx = canvasW / 2;
   const cy = canvasH / 2;
-  const r = Math.min(canvasW, canvasH) * 0.36;
+  const r = Math.min(canvasW, canvasH) * ZEN_GUIDE_RADIUS;
 
   const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.3);
   glow.addColorStop(0, "rgba(226,181,90," + 0.12 * progress + ")");

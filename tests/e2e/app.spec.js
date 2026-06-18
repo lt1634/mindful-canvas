@@ -33,7 +33,8 @@ test.describe("Mindful Canvas", () => {
     await page.locator(".mode-card.zen").click();
     await expect(page.locator("#zenPickerScreen")).toHaveClass(/active/);
     await expect(page.getByRole("heading", { name: "選一個圖案跟住畫" })).toBeVisible();
-    await expect(page.locator(".zen-tpl-card")).toHaveCount(6);
+    await expect(page.locator(".zen-tpl-card")).toHaveCount(7);
+    await expect(page.locator(".zen-tpl-preview canvas")).toHaveCount(7);
     await page.locator(".zen-tpl-card").first().click();
     await expect(page.locator("#canvasScreen")).toHaveClass(/active/);
     await expect(page.locator("#zenOverlay")).toBeVisible();
