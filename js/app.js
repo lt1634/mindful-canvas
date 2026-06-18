@@ -9,7 +9,7 @@ import {
 
 let currentScene = "free";
 let currentColor = "#e2b55a";
-let currentSize = 4;
+let currentSize = 8;
 let strokeHistory = [];
 let currentStroke = [];
 let fadeTimer = null;
@@ -396,7 +396,7 @@ function initSizes() {
   const bar = document.getElementById("sizeBar");
   SIZES.forEach((s, i) => {
     const dot = document.createElement("div");
-    dot.className = "size-dot" + (i === 1 ? " active" : "");
+    dot.className = "size-dot" + (s === currentSize ? " active" : "");
     dot.style.width = s + "px";
     dot.style.height = s + "px";
     dot.onclick = () => selectSize(s, dot);
@@ -484,6 +484,14 @@ function selectSize(s, el) {
   document.querySelectorAll(".size-dot").forEach((d) => d.classList.remove("active"));
   el.classList.add("active");
   touchToolsActivity();
+}
+
+function setDefaultFreeBrushSize() {
+  currentSize = 8;
+  document.querySelectorAll(".size-dot").forEach((d) => {
+    const w = parseInt(d.style.width, 10);
+    d.classList.toggle("active", w === currentSize);
+  });
 }
 
 // ===== CANVAS (rAF + 粒子 + 無常淡化) =====
@@ -1236,10 +1244,7 @@ function fillSumiDrop(c, verts, color) {
   wash.addColorStop(0.7, `rgba(${rgb.r},${rgb.g},${rgb.b},0.18)`);
   wash.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
   c.fillStyle = wash;
-  c.shadowColor = color;
-  c.shadowBlur = 16;
   c.fill();
-  c.shadowBlur = 0;
   const core = c.createRadialGradient(cx, cy, 0, cx, cy, r * 0.42);
   core.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},0.55)`);
   core.addColorStop(0.6, `rgba(${rgb.r},${rgb.g},${rgb.b},0.12)`);
@@ -1308,25 +1313,25 @@ function drawSumiRipples(targetCtx) {
 
 function sumiAutoMawari() {
   if (!sumiDrops.length || drawing) return;
-  if (Date.now() - sumiLastInteraction < 1800) return;
+  if (Date.now() - sumiLastInteraction < 4000) return;
   const cx = canvasW / 2;
   const cy = canvasH / 2;
   const orbit = Math.min(canvasW, canvasH) * 0.32;
-  sumiAutoMawariAngle += 0.0025;
+  sumiAutoMawariAngle += 0.002;
   const fx = cx + Math.cos(sumiAutoMawariAngle) * orbit;
   const fy = cy + Math.sin(sumiAutoMawariAngle) * orbit;
-  const tx = -Math.sin(sumiAutoMawariAngle) * 2.5;
-  const ty = Math.cos(sumiAutoMawariAngle) * 2.5;
-  sumiTine(fx, fy, tx, ty, 2, SUMI_TINE_U);
+  const tx = -Math.sin(sumiAutoMawariAngle) * 2;
+  const ty = Math.cos(sumiAutoMawariAngle) * 2;
+  sumiTine(fx, fy, tx, ty, 1.6, SUMI_TINE_U);
 }
 
 function animateSumiFrame() {
   sumiAnimFrame++;
   drawWashiBackgroundCached();
-  if (sumiAnimFrame % 2 === 0) sumiApplyFlows();
-  if (sumiAnimFrame % 4 === 0) sumiAutoMawari();
+  if (sumiAnimFrame % 3 === 0) sumiApplyFlows();
+  if (sumiAnimFrame % 8 === 0) sumiAutoMawari();
   drawSumiDrops();
-  drawSumiRipples();
+  if (sumiAnimFrame % 2 === 0) drawSumiRipples();
 
   // 閒置時跟呼吸慢滴小墨，畫面唔會完全靜止
   const now = Date.now();
@@ -1934,16 +1939,17 @@ function commitStroke() {
   if (appMode === "sumi") {
     if (sumiDragDist < 8 && currentStroke.length) {
       const p = currentStroke[0];
+      const ink = SUMI_COLORS[sumiColorIndex].hex;
       const baseR = 18 + Math.random() * 8;
-      const rings = 3 + Math.floor(Math.random() * 3);
-      sumiAddDrop(p.x, p.y, baseR, SUMI_COLORS[sumiColorIndex].hex);
+      const rings = 2 + Math.floor(Math.random() * 2);
+      sumiAddDrop(p.x, p.y, baseR, ink);
       for (let ring = 1; ring < rings; ring++) {
-        const rr = baseR * (1 + ring * 0.55);
-        const useColor = SUMI_COLORS[(sumiColorIndex + ring) % SUMI_COLORS.length].hex;
+        const rr = baseR * (1 + ring * 0.42);
+        const last = ring === rings - 1;
         setTimeout(() => {
-          sumiAddDrop(p.x, p.y, rr, useColor);
-          sumiResample();
-        }, ring * 140);
+          sumiAddDrop(p.x, p.y, rr, ink);
+          if (last) sumiResample();
+        }, ring * 120);
       }
     } else if (sumiDragDist >= 8) {
       // 放手後水面仍隨慣性流一陣
@@ -2356,6 +2362,7 @@ function startFreeMode() {
   appMode = "free";
   currentScene = "free";
   resetCanvasState();
+  setDefaultFreeBrushSize();
   setToolsCollapsed(false);
   setCanvasModeUI(true);
   enterCanvasScreen();
