@@ -33,6 +33,7 @@ test.describe("Mindful Canvas", () => {
     await page.locator(".mode-card.zen").click();
     await expect(page.locator("#zenPickerScreen")).toHaveClass(/active/);
     await expect(page.getByRole("heading", { name: "選一個圖案跟住畫" })).toBeVisible();
+    await expect(page.locator(".zen-tpl-card")).toHaveCount(6);
     await page.locator(".zen-tpl-card").first().click();
     await expect(page.locator("#canvasScreen")).toHaveClass(/active/);
     await expect(page.locator("#zenOverlay")).toBeVisible();
@@ -47,7 +48,7 @@ test.describe("Mindful Canvas", () => {
     await expect(page.locator("#sumiUI")).toBeVisible();
     await expect(page.locator(".sumi-flow-btn")).toHaveCount(3);
     await expect(page.locator(".sumi-flow-btn").first()).toHaveClass(/active/);
-    await expect(page.locator(".sumi-dot")).toHaveCount(5);
+    await expect(page.locator(".sumi-dot")).toHaveCount(14);
     const canvas = page.locator("#drawCanvas");
     const box = await canvas.boundingBox();
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);

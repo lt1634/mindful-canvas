@@ -67,15 +67,41 @@ const AMBIENCE_SONGS = [
 ].map((path) => encodeURI(path));
 const SONG_FADE_IN_SEC = 2.8;
 const SONG_FADE_OUT_SEC = 2.8;
-const ZEN_TRACE_COLORS = ["#f0c674", "#e8a87c", "#f5e6d3", "#d4a5ff", "#7ec8b8"];
+const ZEN_TRACE_COLORS = [
+  "#f0c674",
+  "#e8a87c",
+  "#f5e6d3",
+  "#f0d9a8",
+  "#d4d0c8",
+  "#d4a5ff",
+  "#7ec8b8",
+  "#e2b55a",
+  "#c9b08a",
+  "#a0826d",
+  "#8b7355",
+  "#b8734a",
+  "#5a7a5a",
+  "#2c5f7c",
+  "#8b5e83",
+  "#3a3a4a",
+];
 
-// 墨流調色 — v2.2 日式四色 + 暮色
+// 墨流調色：淺染／深色墨／大地色
 const SUMI_COLORS = [
   { hex: "#1a1a1a", name: "黑墨" },
   { hex: "#1a3a5c", name: "深藍" },
+  { hex: "#2a2820", name: "深褐" },
+  { hex: "#3a5a3a", name: "松綠" },
+  { hex: "#8b5e3c", name: "赭土" },
+  { hex: "#7a6a52", name: "陶褐" },
+  { hex: "#6b5344", name: "栗木" },
+  { hex: "#5c6b52", name: "苔綠" },
   { hex: "#c43a2a", name: "朱紅" },
-  { hex: "#3a5a3a", name: "松葉綠" },
+  { hex: "#4a6a8c", name: "靛青" },
   { hex: "#8b5e83", name: "暮色" },
+  { hex: "#b8a090", name: "淡赭" },
+  { hex: "#9ab5a8", name: "淺翠" },
+  { hex: "#c4b8a8", name: "米色" },
 ];
 const SUMI_MAX_DROPS = 64;
 const SUMI_DROP_VERTS = 96;
@@ -307,6 +333,285 @@ const ZEN_TEMPLATES = {
       },
     ],
   },
+  dharma_wheel: {
+    id: "dharma_wheel",
+    name: "智慧法輪",
+    steps: [
+      {
+        hint: "跟住畫外圈——法輪之緣",
+        draw(cx, cy, r, a, lw) {
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.lineWidth = lw;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.arc(cx, cy, r * 0.9, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫內圈，圓滿之心",
+        draw(cx, cy, r, a, lw) {
+          ctx.save();
+          ctx.strokeStyle = `rgba(44,95,124,${a * 0.85})`;
+          ctx.lineWidth = lw;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.arc(cx, cy, r * 0.52, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫四條主輻——東西南北",
+        draw(cx, cy, r, a, lw) {
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.lineWidth = lw;
+          ctx.lineCap = "round";
+          for (let i = 0; i < 4; i++) {
+            const ang = (i / 4) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(ang) * r * 0.18, cy + Math.sin(ang) * r * 0.18);
+            ctx.lineTo(cx + Math.cos(ang) * r * 0.86, cy + Math.sin(ang) * r * 0.86);
+            ctx.stroke();
+          }
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫四條間輻——八正道之光",
+        draw(cx, cy, r, a, lw) {
+          ctx.save();
+          ctx.strokeStyle = `rgba(90,122,90,${a * 0.8})`;
+          ctx.lineWidth = lw * 0.85;
+          ctx.lineCap = "round";
+          for (let i = 0; i < 4; i++) {
+            const ang = (i / 4) * Math.PI * 2 + Math.PI / 4;
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(ang) * r * 0.22, cy + Math.sin(ang) * r * 0.22);
+            ctx.lineTo(cx + Math.cos(ang) * r * 0.8, cy + Math.sin(ang) * r * 0.8);
+            ctx.stroke();
+          }
+          ctx.restore();
+        },
+      },
+      {
+        hint: "點亮中心智慧之光",
+        draw(cx, cy, r, a) {
+          ctx.save();
+          ctx.fillStyle = `rgba(226,181,90,${a})`;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r * 0.1, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = `rgba(255,248,220,${a * 0.7})`;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r * 0.04, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        },
+      },
+    ],
+  },
+  flower_of_life: {
+    id: "flower_of_life",
+    name: "生命之花",
+    steps: [
+      {
+        hint: "從中央圓開始",
+        draw(cx, cy, r, a, lw) {
+          const rr = r * 0.2;
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.lineWidth = lw;
+          ctx.beginPath();
+          ctx.arc(cx, cy, rr, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "向上畫第二圓",
+        draw(cx, cy, r, a, lw) {
+          const rr = r * 0.2;
+          ctx.save();
+          ctx.strokeStyle = `rgba(44,95,124,${a * 0.82})`;
+          ctx.lineWidth = lw;
+          ctx.beginPath();
+          ctx.arc(cx, cy - rr, rr, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "右上第三圓",
+        draw(cx, cy, r, a, lw) {
+          const rr = r * 0.2;
+          const dx = rr * Math.cos(Math.PI / 6);
+          const dy = rr * Math.sin(Math.PI / 6);
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.lineWidth = lw;
+          ctx.beginPath();
+          ctx.arc(cx + dx, cy - dy, rr, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "右下第四圓",
+        draw(cx, cy, r, a, lw) {
+          const rr = r * 0.2;
+          const dx = rr * Math.cos(Math.PI / 6);
+          const dy = rr * Math.sin(Math.PI / 6);
+          ctx.save();
+          ctx.strokeStyle = `rgba(90,122,90,${a * 0.78})`;
+          ctx.lineWidth = lw;
+          ctx.beginPath();
+          ctx.arc(cx + dx, cy + dy, rr, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "向下第五圓",
+        draw(cx, cy, r, a, lw) {
+          const rr = r * 0.2;
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.lineWidth = lw;
+          ctx.beginPath();
+          ctx.arc(cx, cy + rr, rr, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "左下第六圓",
+        draw(cx, cy, r, a, lw) {
+          const rr = r * 0.2;
+          const dx = rr * Math.cos(Math.PI / 6);
+          const dy = rr * Math.sin(Math.PI / 6);
+          ctx.save();
+          ctx.strokeStyle = `rgba(139,94,131,${a * 0.75})`;
+          ctx.lineWidth = lw;
+          ctx.beginPath();
+          ctx.arc(cx - dx, cy + dy, rr, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "左上第七圓——種子完成",
+        draw(cx, cy, r, a, lw) {
+          const rr = r * 0.2;
+          const dx = rr * Math.cos(Math.PI / 6);
+          const dy = rr * Math.sin(Math.PI / 6);
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.lineWidth = lw;
+          ctx.beginPath();
+          ctx.arc(cx - dx, cy - dy, rr, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+    ],
+  },
+  endless_knot: {
+    id: "endless_knot",
+    name: "吉祥如意結",
+    steps: [
+      {
+        hint: "跟住畫方形框架",
+        draw(cx, cy, r, a, lw) {
+          const s = r * 0.62;
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.lineWidth = lw;
+          ctx.lineCap = "round";
+          ctx.strokeRect(cx - s, cy - s, s * 2, s * 2);
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫上方半圓結",
+        draw(cx, cy, r, a, lw) {
+          const w = r * 0.5;
+          ctx.save();
+          ctx.strokeStyle = `rgba(44,95,124,${a * 0.85})`;
+          ctx.lineWidth = lw;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.arc(cx - w * 0.45, cy - r * 0.12, w * 0.38, 0, Math.PI);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(cx + w * 0.45, cy - r * 0.12, w * 0.38, 0, Math.PI);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫下方半圓結",
+        draw(cx, cy, r, a, lw) {
+          const w = r * 0.5;
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.lineWidth = lw;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.arc(cx - w * 0.45, cy + r * 0.12, w * 0.38, Math.PI, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(cx + w * 0.45, cy + r * 0.12, w * 0.38, Math.PI, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "連接左側線條",
+        draw(cx, cy, r, a, lw) {
+          const s = r * 0.62;
+          ctx.save();
+          ctx.strokeStyle = `rgba(90,122,90,${a * 0.8})`;
+          ctx.lineWidth = lw * 0.9;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(cx - s, cy - s * 0.35);
+          ctx.quadraticCurveTo(cx - s * 0.35, cy, cx - s, cy + s * 0.35);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "連接右側線條",
+        draw(cx, cy, r, a, lw) {
+          const s = r * 0.62;
+          ctx.save();
+          ctx.strokeStyle = `rgba(139,94,131,${a * 0.78})`;
+          ctx.lineWidth = lw * 0.9;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(cx + s, cy - s * 0.35);
+          ctx.quadraticCurveTo(cx + s * 0.35, cy, cx + s, cy + s * 0.35);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "點綴中心——吉祥圓滿",
+        draw(cx, cy, r, a) {
+          ctx.save();
+          ctx.fillStyle = `rgba(226,181,90,${a})`;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r * 0.07, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        },
+      },
+    ],
+  },
 };
 
 function getDominantColor() {
@@ -345,16 +650,24 @@ function restoreCardUI(mode) {
   }
 }
 
-// Colors — 禪意調色盤
+// Colors — 淺色／大地／深色
 const COLORS = [
-  { name: "金光", hex: "#e2b55a" },
-  { name: "深海", hex: "#2c5f7c" },
-  { name: "暮色", hex: "#8b5e83" },
+  { name: "雪白", hex: "#f5f0e8" },
+  { name: "薄霧", hex: "#e4dfd6" },
+  { name: "淡金", hex: "#f0d9a8" },
+  { name: "浅樱", hex: "#f0c8c0" },
   { name: "枯葉", hex: "#a0826d" },
-  { name: "霧白", hex: "#d4d0c8" },
-  { name: "翠竹", hex: "#5a7a5a" },
+  { name: "土褐", hex: "#8b7355" },
+  { name: "赭石", hex: "#b8734a" },
+  { name: "沙褐", hex: "#c9b08a" },
+  { name: "金光", hex: "#e2b55a" },
   { name: "晚霞", hex: "#c46b4a" },
+  { name: "翠竹", hex: "#5a7a5a" },
+  { name: "暮色", hex: "#8b5e83" },
+  { name: "深海", hex: "#2c5f7c" },
+  { name: "墨松", hex: "#3d5248" },
   { name: "墨色", hex: "#3a3a4a" },
+  { name: "深夜", hex: "#1e2838" },
 ];
 
 const SIZES = [2, 4, 8, 14];
@@ -383,9 +696,9 @@ const SCENE_GUIDANCE = {
 // ===== INIT =====
 function initColors() {
   const bar = document.getElementById("colorBar");
-  COLORS.forEach((c, i) => {
+  COLORS.forEach((c) => {
     const dot = document.createElement("div");
-    dot.className = "color-dot" + (i === 0 ? " active" : "");
+    dot.className = "color-dot" + (c.hex === currentColor ? " active" : "");
     dot.style.background = c.hex;
     dot.onclick = () => selectColor(c.hex, dot);
     bar.appendChild(dot);

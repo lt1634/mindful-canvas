@@ -66,7 +66,24 @@ export const OLLAMA_SCENE_MAP = {
 
 export const BREATH_CYCLE_MS = 8000;
 export const TOOLS_IDLE_MS = 3000;
-export const ZEN_TRACE_COLORS = ["#f0c674", "#e8a87c", "#f5e6d3", "#d4a5ff", "#7ec8b8"];
+export const ZEN_TRACE_COLORS = [
+  "#f0c674",
+  "#e8a87c",
+  "#f5e6d3",
+  "#f0d9a8",
+  "#d4d0c8",
+  "#d4a5ff",
+  "#7ec8b8",
+  "#e2b55a",
+  "#c9b08a",
+  "#a0826d",
+  "#8b7355",
+  "#b8734a",
+  "#5a7a5a",
+  "#2c5f7c",
+  "#8b5e83",
+  "#3a3a4a",
+];
 export const STORAGE_KEY = "mindful_canvas_sessions";
 
 // ===== SAFETY =====
