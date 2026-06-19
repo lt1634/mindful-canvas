@@ -742,7 +742,6 @@ function restoreCardUI(mode) {
     drawing.style.display = "flex";
     actions.innerHTML = `
       <button class="btn-secondary" onclick="showTerms()">使用條款</button>
-      <button class="btn-secondary" onclick="saveCard()">儲存卡片</button>
       <button class="btn-secondary" onclick="downloadArtwork()">下載作品</button>
       <button class="btn-primary" onclick="finishFromCard()">返回首頁</button>
     `;
@@ -3622,92 +3621,6 @@ function downloadArtwork() {
   }, "image/png");
 }
 
-// ===== SAVE CARD =====
-function saveCard() {
-  // Create a composite image
-  const saveCanvas = document.createElement("canvas");
-  const w = 1080;
-  const h = 1440;
-  saveCanvas.width = w;
-  saveCanvas.height = h;
-  const sctx = saveCanvas.getContext("2d");
-
-  const cardMode = pendingSession?.mode || appMode;
-  const isZenCard = cardMode === "zen" || cardMode === "sumi";
-  sctx.fillStyle = isZenCard ? "#ebe4d6" : "#1a1a2e";
-  sctx.fillRect(0, 0, w, h);
-  if (isZenCard) {
-    const tex = ensureWashiTexture();
-    sctx.save();
-    sctx.globalAlpha = 0.55;
-    sctx.fillStyle = sctx.createPattern(tex, "repeat");
-    sctx.fillRect(0, 0, w, h);
-    sctx.restore();
-  }
-
-  const img = new Image();
-  img.onload = () => {
-    const drawH = 720;
-    const pad = isZenCard ? 36 : 0;
-    sctx.drawImage(img, pad, 80 + pad * 0.5, w - pad * 2, drawH - pad);
-
-    sctx.fillStyle = isZenCard ? "#6b4f2a" : "#e2b55a";
-    sctx.font = "500 36px -apple-system, PingFang HK, sans-serif";
-    sctx.textAlign = "center";
-    wrapText(sctx, document.getElementById("cardAffirmation").textContent, w / 2, 860, w - 120, 48);
-
-    sctx.fillStyle = isZenCard ? "#5a5048" : "#a0a0b0";
-    sctx.font = "300 26px -apple-system, PingFang HK, sans-serif";
-    wrapText(sctx, document.getElementById("cardReflection").textContent, w / 2, 1100, w - 120, 38);
-
-    sctx.fillStyle = isZenCard ? "#8a7a68" : "#555";
-    sctx.font = "300 20px -apple-system, PingFang HK, sans-serif";
-    sctx.fillText("覺知畫布 Mindful Canvas", w / 2, 1380);
-
-    // Share or Download
-    saveCanvas.toBlob(async (blob) => {
-      if (navigator.share && navigator.canShare) {
-        const file = new File([blob], "mindful-canvas-card.png", { type: "image/png" });
-        if (navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({ files: [file], title: "覺知畫布 Mindful Canvas" });
-            showToast("已分享");
-            return;
-          } catch (e) {
-            // User cancelled or share failed, fall through to download
-          }
-        }
-      }
-      // Fallback: download
-      const link = document.createElement("a");
-      link.download = "mindful-canvas-card.png";
-      link.href = URL.createObjectURL(blob);
-      link.click();
-      URL.revokeObjectURL(link.href);
-      showToast("卡片已儲存");
-    }, "image/png");
-  };
-  img.src = document.getElementById("cardImage").src;
-}
-
-function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-  const chars = text.split("");
-  let line = "";
-  let currentY = y;
-  for (let i = 0; i < chars.length; i++) {
-    const testLine = line + chars[i];
-    const metrics = ctx.measureText(testLine);
-    if (metrics.width > maxWidth && line.length > 0) {
-      ctx.fillText(line, x, currentY);
-      line = chars[i];
-      currentY += lineHeight;
-    } else {
-      line = testLine;
-    }
-  }
-  ctx.fillText(line, x, currentY);
-}
-
 // ===== TERMS =====
 let termsReturnScreen = "cardScreen";
 
@@ -3817,39 +3730,6 @@ initParticleToggle();
 registerServiceWorker();
 startWelcomeAmbient();
 
-// ===== TUTORIAL =====
-let tutorialStep = 0;
-
-function showTutorial() {
-  if (localStorage.getItem("mc_tutorial_done")) return;
-  tutorialStep = 1;
-  document.getElementById("tutorialOverlay").style.display = "flex";
-  document.getElementById("tutorialStep1").style.display = "block";
-  document.getElementById("tutorialStep2").style.display = "none";
-  document.getElementById("tutorialStep3").style.display = "none";
-  document.getElementById("tutorialNextBtn").textContent = "繼續 →";
-}
-
-function advanceTutorial() {
-  tutorialStep++;
-  if (tutorialStep === 2) {
-    document.getElementById("tutorialStep1").style.display = "none";
-    document.getElementById("tutorialStep2").style.display = "block";
-  } else if (tutorialStep === 3) {
-    document.getElementById("tutorialStep2").style.display = "none";
-    document.getElementById("tutorialStep3").style.display = "block";
-    document.getElementById("tutorialNextBtn").textContent = "開始畫畫 ✨";
-  } else {
-    document.getElementById("tutorialOverlay").style.display = "none";
-    localStorage.setItem("mc_tutorial_done", "1");
-  }
-}
-
-window.advanceTutorial = advanceTutorial;
-
-// Show tutorial on first visit
-showTutorial();
-
 window.addEventListener("resize", () => {
   if (document.getElementById("welcome").classList.contains("active")) {
     resizeWelcomeAmbient();
@@ -3872,7 +3752,6 @@ window.clearSumiCanvas = clearSumiCanvas;
 window.toggleToolsPanel = toggleToolsPanel;
 window.toggleEraser = toggleEraser;
 window.showTerms = showTerms;
-window.saveCard = saveCard;
 window.downloadArtwork = downloadArtwork;
 window.finishFromCard = finishFromCard;
 window.closeTerms = closeTerms;

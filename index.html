@@ -156,7 +156,6 @@
         </div>
         <div class="card-actions" id="cardActions">
           <button class="btn-secondary" onclick="showTerms()">使用條款</button>
-          <button class="btn-secondary" onclick="saveCard()">儲存卡片</button>
           <button class="btn-secondary" onclick="downloadArtwork()">下載作品</button>
           <button class="btn-primary" onclick="finishFromCard()">返回首頁</button>
         </div>
@@ -167,32 +166,6 @@
     <div class="loading-overlay" id="loading" role="status" aria-live="polite">
       <div class="loading-spinner"></div>
       <div class="loading-text" id="loadingText">正在為你生成心靈解讀...</div>
-    </div>
-
-    <!-- FIRST-TIME TUTORIAL -->
-    <div class="tutorial-overlay" id="tutorialOverlay" style="display: none">
-      <div class="tutorial-card">
-        <div class="tutorial-step" id="tutorialStep1">
-          <div class="tutorial-emoji">🪷</div>
-          <div class="tutorial-title">選擇一個模式</div>
-          <div class="tutorial-desc">禪繞唐卡・墨流畫布・自由畫布<br />每個模式都有不同嘅體驗</div>
-        </div>
-        <div class="tutorial-step" id="tutorialStep2" style="display: none">
-          <div class="tutorial-emoji">✨</div>
-          <div class="tutorial-title">用手指畫畫</div>
-          <div class="tutorial-desc">
-            輕觸留下色彩，拖曳拉出線條<br />每一筆都會慢慢消失，唔使擔心畫錯
-          </div>
-        </div>
-        <div class="tutorial-step" id="tutorialStep3" style="display: none">
-          <div class="tutorial-emoji">💚</div>
-          <div class="tutorial-title">完成後儲存</div>
-          <div class="tutorial-desc">撳「完成」會為你生成心靈解讀<br />可以儲存或分享你嘅作品</div>
-        </div>
-        <button class="tutorial-next-btn" id="tutorialNextBtn" onclick="advanceTutorial()">
-          繼續 →
-        </button>
-      </div>
     </div>
 
     <!-- TOAST -->

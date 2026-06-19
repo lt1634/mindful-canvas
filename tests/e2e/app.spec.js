@@ -7,9 +7,6 @@ async function enterFreeMode(page) {
 
 test.describe("Mindful Canvas", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("mc_tutorial_done", "1");
-    });
     await page.goto("/");
   });
 
