@@ -1467,7 +1467,7 @@ function animateZenFrame() {
   document.getElementById("zenTimer").textContent = m + ":" + String(s).padStart(2, "0");
 
   if (zenStartTime && zenProgress >= 1 && !zenFinished) {
-    finishZenSession();
+    // Auto-finish removed — user clicks 完成 manually
   }
 }
 
@@ -2480,7 +2480,7 @@ function setCanvasModeUI(mode) {
   document.getElementById("sumiUI").style.display = mode === "sumi" ? "flex" : "none";
   document.getElementById("canvasTitle").textContent =
     mode === "zen" ? "禪繞唐卡" : mode === "sumi" ? "墨流畫布" : "自由畫布";
-  document.getElementById("completeBtn").style.display = mode === "zen" ? "none" : "";
+  document.getElementById("completeBtn").style.display = "";
 }
 
 function startCanvasLoop() {
@@ -3182,9 +3182,16 @@ function goHome() {
 
 // ===== CARD GENERATION =====
 function generateCard(force) {
-  if (!force && strokeCount === 0) {
+  if (!force && strokeCount === 0 && appMode === "free") {
     showToast("先畫一些東西吧");
     return;
+  }
+
+  // If zen mode and not yet finished, finalize it first
+  if (appMode === "zen" && !zenFinished) {
+    zenFinished = true;
+    stopZenAmbience();
+    strokeCount = Math.max(zenTouchStrokes.length, 1);
   }
 
   stopCanvasLoop();
