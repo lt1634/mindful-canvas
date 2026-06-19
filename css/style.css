@@ -368,10 +368,9 @@ body {
   text-align: center;
   z-index: 5;
 }
-.zen-step {
-  font-size: 14px;
-  color: var(--accent);
-  letter-spacing: 1px;
+.zen-step,
+.zen-next-btn {
+  display: none;
 }
 .zen-timer {
   font-size: 11px;
@@ -401,9 +400,9 @@ body {
   opacity: 0.9;
 }
 .zen-hint {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
-  margin-top: 6px;
+  margin-top: 0;
   line-height: 1.5;
   transition:
     transform 0.15s ease-out,
@@ -921,6 +920,18 @@ body {
 /* Tools panel collapse (Phase 4) */
 #freeModeUI {
   position: relative;
+}
+#freeModeUI.zen-tools .particle-toggle {
+  display: none;
+}
+#freeModeUI.zen-tools .tools-toggle {
+  display: none;
+}
+#freeModeUI.zen-tools .tools-panel,
+#freeModeUI.zen-tools.tools-collapsed .tools-panel {
+  max-height: 300px;
+  opacity: 1;
+  pointer-events: auto;
 }
 .tools-toggle {
   display: flex;

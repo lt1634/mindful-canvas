@@ -12,7 +12,7 @@
     <meta name="copyright" content="© 2026 Tim Yuen / ZenArt Lab. All rights reserved." />
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" href="icon-192.png" />
-    <link rel="stylesheet" href="css/style.css?v=zen-preview3" />
+    <link rel="stylesheet" href="css/style.css?v=zen-v4" />
   </head>
   <body>
     <!-- WELCOME -->
@@ -67,7 +67,7 @@
           ← 返回
         </button>
         <h2 class="zen-picker-title">選一個圖案跟住畫</h2>
-        <p class="zen-picker-sub">每個圖案都有預覽；睇清楚再撳，跟住金光一步一步畫</p>
+        <p class="zen-picker-sub">每個圖案都有預覽；撳圖案跟住淺色線條自由畫</p>
         <div class="zen-template-cards" id="zenTemplateCards"></div>
       </div>
     </div>
@@ -82,11 +82,7 @@
       <div class="canvas-area">
         <canvas id="drawCanvas"></canvas>
         <div class="zen-overlay" id="zenOverlay" style="display: none">
-          <div class="zen-step" id="zenStepLabel">步驟 1 / 4</div>
-          <div class="zen-hint" id="zenHint">輕觸並滑動，留下你的色彩痕跡</div>
-          <button type="button" class="zen-next-btn" id="zenNextBtn" onclick="advanceZenStep()">
-            跟好了 →
-          </button>
+          <div class="zen-hint" id="zenHint">跟住淺色線條，留下你的色彩痕跡</div>
           <div class="zen-timer" id="zenTimer" aria-hidden="true">2:00</div>
         </div>
         <div id="sumiUI" style="display: none">
@@ -99,7 +95,7 @@
               <button type="button" class="sumi-flow-btn" aria-pressed="false">大</button>
             </div>
             <span class="sumi-bar-sep" aria-hidden="true"></span>
-            <button type="button" class="sumi-clear" onclick="clearSumiCanvas()">洗い流す</button>
+            <button type="button" class="sumi-clear" onclick="clearSumiCanvas()">洗淨水面</button>
           </div>
         </div>
       </div>
@@ -207,6 +203,6 @@
       </div>
     </div>
 
-    <script type="module" src="js/app.js?v=zen-preview3"></script>
+    <script type="module" src="js/app.js?v=zen-v4"></script>
   </body>
 </html>

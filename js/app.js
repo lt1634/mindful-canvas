@@ -163,6 +163,9 @@ function getSumiFlowPreset() {
 }
 
 const ZEN_GUIDE_RADIUS = 0.46;
+const ZEN_BRUSH_SIZE = 6;
+const ZEN_GUIDE_GHOST_ALPHA = 0.2;
+const ZEN_HINT_TEXT = "跟住淺色線條，留下你的色彩痕跡";
 
 const ZEN_TEMPLATES = {
   circle: {
@@ -406,11 +409,12 @@ const ZEN_TEMPLATES = {
   flower_of_life: {
     id: "flower_of_life",
     name: "生命之花",
+    guideRadius: 0.52,
     steps: [
       {
         hint: "從中央圓開始",
         draw(cx, cy, r, a, lw) {
-          const rr = r * 0.2;
+          const rr = r * 0.45;
           ctx.save();
           ctx.strokeStyle = `rgba(226,181,90,${a})`;
           ctx.lineWidth = lw;
@@ -423,7 +427,7 @@ const ZEN_TEMPLATES = {
       {
         hint: "向上畫第二圓",
         draw(cx, cy, r, a, lw) {
-          const rr = r * 0.2;
+          const rr = r * 0.45;
           ctx.save();
           ctx.strokeStyle = `rgba(44,95,124,${a * 0.82})`;
           ctx.lineWidth = lw;
@@ -436,7 +440,7 @@ const ZEN_TEMPLATES = {
       {
         hint: "右上第三圓",
         draw(cx, cy, r, a, lw) {
-          const rr = r * 0.2;
+          const rr = r * 0.45;
           const dx = rr * Math.cos(Math.PI / 6);
           const dy = rr * Math.sin(Math.PI / 6);
           ctx.save();
@@ -451,7 +455,7 @@ const ZEN_TEMPLATES = {
       {
         hint: "右下第四圓",
         draw(cx, cy, r, a, lw) {
-          const rr = r * 0.2;
+          const rr = r * 0.45;
           const dx = rr * Math.cos(Math.PI / 6);
           const dy = rr * Math.sin(Math.PI / 6);
           ctx.save();
@@ -466,7 +470,7 @@ const ZEN_TEMPLATES = {
       {
         hint: "向下第五圓",
         draw(cx, cy, r, a, lw) {
-          const rr = r * 0.2;
+          const rr = r * 0.45;
           ctx.save();
           ctx.strokeStyle = `rgba(226,181,90,${a})`;
           ctx.lineWidth = lw;
@@ -479,7 +483,7 @@ const ZEN_TEMPLATES = {
       {
         hint: "左下第六圓",
         draw(cx, cy, r, a, lw) {
-          const rr = r * 0.2;
+          const rr = r * 0.45;
           const dx = rr * Math.cos(Math.PI / 6);
           const dy = rr * Math.sin(Math.PI / 6);
           ctx.save();
@@ -494,7 +498,7 @@ const ZEN_TEMPLATES = {
       {
         hint: "左上第七圓——種子完成",
         draw(cx, cy, r, a, lw) {
-          const rr = r * 0.2;
+          const rr = r * 0.45;
           const dx = rr * Math.cos(Math.PI / 6);
           const dy = rr * Math.sin(Math.PI / 6);
           ctx.save();
@@ -812,6 +816,7 @@ function initSizes() {
 function selectColor(hex, el) {
   isEraser = false;
   currentColor = hex;
+  if (appMode === "zen") currentZenStrokeColor = hex;
   document.getElementById("eraserBtn").classList.remove("active");
   canvas.classList.remove("eraser-cursor");
   document.querySelectorAll(".color-dot").forEach((d) => d.classList.remove("active"));
@@ -1266,29 +1271,48 @@ function drawStroke(stroke, alpha, targetCtx) {
   c.restore();
 }
 
-function drawEraserAlongPoints(targetCtx, points, size) {
-  if (points.length < 2) return;
+function eraseInkRadius(brushSize) {
+  return (brushSize * 2.8 + 14) / 2;
+}
+
+function eraseInkAlongPoints(targetCtx, points, size, stampBrushSize) {
+  if (!points.length) return;
+  const stampRadius = eraseInkRadius(stampBrushSize || size);
+  const spacing = Math.max(3, size * 0.35);
   targetCtx.save();
   targetCtx.globalCompositeOperation = "destination-out";
-  targetCtx.strokeStyle = "rgba(0,0,0,1)";
-  targetCtx.globalAlpha = 1;
-  targetCtx.lineWidth = size;
-  targetCtx.lineCap = "round";
-  targetCtx.lineJoin = "round";
-  targetCtx.beginPath();
-  targetCtx.moveTo(points[0].x, points[0].y);
-  for (let i = 1; i < points.length; i++) {
-    targetCtx.lineTo(points[i].x, points[i].y);
+  targetCtx.fillStyle = "rgba(0,0,0,1)";
+  const stampAt = (x, y) => {
+    targetCtx.beginPath();
+    targetCtx.arc(x, y, stampRadius, 0, Math.PI * 2);
+    targetCtx.fill();
+  };
+  if (points.length === 1) {
+    stampAt(points[0].x, points[0].y);
+  } else {
+    for (let i = 1; i < points.length; i++) {
+      const p0 = points[i - 1];
+      const p1 = points[i];
+      const segLen = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+      const steps = Math.max(1, Math.ceil(segLen / spacing));
+      for (let s = 0; s <= steps; s++) {
+        const t = s / steps;
+        stampAt(p0.x + (p1.x - p0.x) * t, p0.y + (p1.y - p0.y) * t);
+      }
+    }
   }
-  targetCtx.stroke();
   targetCtx.restore();
+}
+
+function drawEraserAlongPoints(targetCtx, points, size) {
+  eraseInkAlongPoints(targetCtx, points, size);
 }
 
 function redrawWithFade() {
   fadePhase += 0.05;
   strokeHistory.forEach((stroke, idx) => {
     if (stroke.eraser) {
-      drawEraserAlongPoints(ctx, stroke.points, stroke.size);
+      eraseInkAlongPoints(ctx, stroke.points, stroke.size);
       return;
     }
     const age = strokeHistory.length > 1 ? (strokeHistory.length - idx) / strokeHistory.length : 1;
@@ -1315,21 +1339,23 @@ function animateFreeFrame() {
   drawPaperBackground();
   drawBreathOverlay();
   redrawWithFade();
-  if (drawing && currentStroke.length > 1) {
+  if (drawing && currentStroke.length) {
     if (!isEraser) {
-      strokeTrail.draw(ctx, currentColor, getBrushSize(false));
-      drawInkAlongPoints(ctx, currentStroke, currentColor, getBrushSize(false), 1, 4);
-      drawStroke(
-        {
-          points: currentStroke,
-          color: currentColor,
-          size: getBrushSize(false),
-          eraser: false,
-        },
-        0.88
-      );
+      if (currentStroke.length > 1) {
+        strokeTrail.draw(ctx, currentColor, getBrushSize(false));
+        drawInkAlongPoints(ctx, currentStroke, currentColor, getBrushSize(false), 1, 4);
+        drawStroke(
+          {
+            points: currentStroke,
+            color: currentColor,
+            size: getBrushSize(false),
+            eraser: false,
+          },
+          0.88
+        );
+      }
     } else {
-      drawEraserAlongPoints(ctx, currentStroke, getBrushSize(true));
+      eraseInkAlongPoints(ctx, currentStroke, getBrushSize(true));
     }
   }
   drawParticles();
@@ -1347,12 +1373,17 @@ function animateZenFrame() {
     ctx.drawImage(zenTraceLayer, 0, 0, canvasW, canvasH);
   }
   if (drawing && currentStroke.length && appMode === "zen") {
-    strokeTrail.draw(ctx, currentZenStrokeColor, 12);
-    drawZenTraceStroke({
-      points: currentStroke,
-      color: currentZenStrokeColor,
-      size: 12,
-    });
+    const brush = getZenBrushSize(isEraser);
+    if (isEraser) {
+      eraseInkAlongPoints(ctx, currentStroke, brush, brush * 1.25);
+    } else {
+      strokeTrail.draw(ctx, currentZenStrokeColor, brush);
+      drawZenTraceStroke({
+        points: currentStroke,
+        color: currentZenStrokeColor,
+        size: brush,
+      });
+    }
   }
 
   for (let i = zenRipples.length - 1; i >= 0; i--) {
@@ -1394,10 +1425,25 @@ function drawZenPetal(cx, cy, dist, angle, color, alpha, scale) {
   ctx.restore();
 }
 
+function getZenBrushSize(eraser) {
+  const base = appMode === "zen" ? currentSize || ZEN_BRUSH_SIZE : currentSize;
+  return eraser ? Math.max(base * 2.5, 10) : base;
+}
+
+function setDefaultZenBrushSize() {
+  currentSize = ZEN_BRUSH_SIZE;
+  document.querySelectorAll(".size-dot").forEach((d) => {
+    const w = parseInt(d.style.width, 10);
+    d.classList.toggle("active", w === currentSize);
+  });
+}
+
 function zenGuideMetrics() {
+  const tpl = ZEN_TEMPLATES[zenTemplateId];
   const cx = canvasW / 2;
   const cy = canvasH / 2;
-  const r = Math.min(canvasW, canvasH) * ZEN_GUIDE_RADIUS;
+  const mul = tpl?.guideRadius ?? ZEN_GUIDE_RADIUS;
+  const r = Math.min(canvasW, canvasH) * mul;
   return { cx, cy, r };
 }
 
@@ -1553,24 +1599,13 @@ function drawZenGuide() {
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, canvasW, canvasH);
 
-  const pulse = 0.55 + Math.sin(Date.now() / 800) * 0.28;
-  tpl.steps.forEach((step, i) => {
-    if (i > zenStepIndex) step.draw(cx, cy, r, 0.12, 1.2);
-    else if (i === zenStepIndex) step.draw(cx, cy, r, pulse, 3.2);
-    else step.draw(cx, cy, r, 0.22, 1.5);
+  tpl.steps.forEach((step) => {
+    step.draw(cx, cy, r, ZEN_GUIDE_GHOST_ALPHA, 1.2);
   });
 }
 
 function updateZenStepUI() {
-  const tpl = ZEN_TEMPLATES[zenTemplateId];
-  if (!tpl) return;
-  const total = tpl.steps.length;
-  const step = tpl.steps[zenStepIndex];
-  document.getElementById("zenStepLabel").textContent =
-    "步驟 " + (zenStepIndex + 1) + " / " + total;
-  if (step) document.getElementById("zenHint").textContent = step.hint;
-  const btn = document.getElementById("zenNextBtn");
-  btn.textContent = zenStepIndex >= total - 1 ? "完成了 →" : "跟好了 →";
+  document.getElementById("zenHint").textContent = ZEN_HINT_TEXT;
 }
 
 function advanceZenStep() {
@@ -1590,7 +1625,7 @@ const ZEN_PICKER_ITEMS = [
   { id: "lotus", desc: "經典禪意 · 5 步 · 視覺最豐富" },
   { id: "spiral", desc: "跟呼吸繞圈 · 5 步 · 流動感" },
   { id: "mandala", desc: "神聖壇城 · 5 步 · 專業底稿" },
-  { id: "flower_of_life", desc: "神聖幾何 · 7 步 · 對稱之美" },
+  { id: "flower_of_life", desc: "神聖幾何 · 全螢幕 · 對稱之美" },
   { id: "endless_knot", desc: "因緣交織 · 6 步 · 立體編織" },
   { id: "bodhi_fish", desc: "八吉祥 · 6 步 · 流動和諧" },
 ];
@@ -1607,7 +1642,8 @@ function drawZenTemplatePreview(canvas, templateId) {
   pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const cx = cssSize / 2;
   const cy = cssSize / 2;
-  const r = cssSize * ZEN_GUIDE_RADIUS;
+  const mul = tpl?.guideRadius ?? ZEN_GUIDE_RADIUS;
+  const r = cssSize * mul;
   pctx.fillStyle = "rgba(8, 12, 24, 0.95)";
   pctx.fillRect(0, 0, cssSize, cssSize);
   const glow = pctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.1);
@@ -2369,7 +2405,9 @@ function stopFreeAmbience() {
 function setCanvasModeUI(mode) {
   if (mode === true) mode = "free";
   if (mode === false) mode = "zen";
-  document.getElementById("freeModeUI").style.display = mode === "free" ? "block" : "none";
+  const freeUI = document.getElementById("freeModeUI");
+  freeUI.style.display = mode === "sumi" ? "none" : "block";
+  freeUI.classList.toggle("zen-tools", mode === "zen");
   document.getElementById("zenOverlay").style.display = mode === "zen" ? "block" : "none";
   document.getElementById("sumiUI").style.display = mode === "sumi" ? "flex" : "none";
   document.getElementById("canvasTitle").textContent =
@@ -2442,8 +2480,12 @@ function drawZenTraceStroke(stroke, targetCtx) {
   const c = targetCtx || ctx;
   const pts = stroke.points;
   if (!pts.length) return;
+  if (stroke.eraser) {
+    eraseInkAlongPoints(c, pts, stroke.size, stroke.size * 1.25);
+    return;
+  }
 
-  traceZenStrokePath(c, pts, stroke, Math.max(4, stroke.size * 1.1), 0.2, true);
+  traceZenStrokePath(c, pts, stroke, Math.max(2, stroke.size * 1.1), 0.2, true);
   drawInkAlongPoints(c, pts, stroke.color, stroke.size * 1.25, 0.28, 5);
   drawInkAlongPoints(c, pts, stroke.color, stroke.size, 0.88, 6);
   traceZenStrokePath(c, pts, stroke, Math.max(2, stroke.size * 0.35), 0.5, false);
@@ -2463,7 +2505,10 @@ function renderPureArtwork(targetCtx, w, h) {
     zenTouchStrokes.forEach((s) => drawZenTraceStroke(s, targetCtx));
   } else {
     strokeHistory.forEach((s) => {
-      if (s.eraser) return;
+      if (s.eraser) {
+        eraseInkAlongPoints(targetCtx, s.points, s.size);
+        return;
+      }
       drawInkAlongPoints(targetCtx, s.points, s.color, s.size, 1, 4);
       drawStroke(s, 0.35, targetCtx);
     });
@@ -2493,8 +2538,8 @@ function beginStroke(e) {
   lastInkStampX = pos.x;
   lastInkStampY = pos.y;
   if (appMode === "zen") {
-    currentZenStrokeColor = ZEN_TRACE_COLORS[zenTouchStrokes.length % ZEN_TRACE_COLORS.length];
-    zenTouchSparkle(pos);
+    currentZenStrokeColor = currentColor;
+    if (!isEraser) zenTouchSparkle(pos);
   } else if (appMode === "sumi") {
     sumiLastPos = pos;
     sumiDragDist = 0;
@@ -2511,8 +2556,10 @@ function continueStroke(e) {
   currentStroke.push({ x: pos.x, y: pos.y });
   strokeTrail.add(pos.x, pos.y);
   if (appMode === "zen") {
-    if (Math.random() < 0.22) zenTouchSparkle(pos);
-    stampInkIfMoved(pos.x, pos.y, currentZenStrokeColor, 12, 0.75, 5);
+    if (!isEraser) {
+      if (Math.random() < 0.22) zenTouchSparkle(pos);
+      stampInkIfMoved(pos.x, pos.y, currentZenStrokeColor, getZenBrushSize(false), 0.75, 5);
+    }
   } else if (appMode === "sumi") {
     if (sumiLastPos) {
       const dx = pos.x - sumiLastPos.x;
@@ -2527,8 +2574,6 @@ function continueStroke(e) {
         sumiLastInteraction = Date.now();
       }
     }
-  } else if (!isEraser) {
-    stampInkIfMoved(pos.x, pos.y, currentColor, getBrushSize(false), 0.95, 4);
   }
   if (appMode !== "zen" && !isEraser && particlesEnabled && Math.random() < 0.6) {
     particles.push(new Particle(pos.x, pos.y, currentColor));
@@ -2579,17 +2624,24 @@ function commitStroke() {
       const saved = {
         points: [...currentStroke],
         color: currentZenStrokeColor,
-        size: 12,
+        size: getZenBrushSize(isEraser),
+        eraser: isEraser,
       };
-      zenTouchStrokes.push(saved);
-      persistZenStroke(saved);
-      zenTouchCount++;
+      if (isEraser) {
+        zenTouchStrokes.push(saved);
+        persistZenStroke(saved);
+      } else {
+        zenTouchStrokes.push(saved);
+        persistZenStroke(saved);
+        zenTouchCount++;
+      }
     }
     currentStroke = [];
     strokeTrail.reset();
     return;
   }
-  if (currentStroke.length > 1) {
+  const minStrokePoints = isEraser ? 1 : 2;
+  if (currentStroke.length >= minStrokePoints) {
     strokeHistory.push({
       points: [...currentStroke],
       color: currentColor,
@@ -3004,6 +3056,8 @@ function startZenMode(templateId) {
   zenTemplateId = templateId;
   zenStepIndex = 0;
   setCanvasModeUI(false);
+  setDefaultZenBrushSize();
+  currentZenStrokeColor = ZEN_TRACE_COLORS[0];
   enterCanvasScreen();
   setTimeout(() => {
     resizeCanvas();
@@ -3044,9 +3098,8 @@ function goHome() {
   canvas.classList.remove("eraser-cursor");
   zenTemplateId = "lotus";
   zenStepIndex = 0;
-  document.getElementById("zenHint").textContent = "輕觸並滑動，留下你的色彩痕跡";
-  document.getElementById("zenStepLabel").textContent = "步驟 1 / 4";
-  document.getElementById("zenNextBtn").textContent = "跟好了 →";
+  document.getElementById("zenHint").textContent = ZEN_HINT_TEXT;
+  document.getElementById("freeModeUI").classList.remove("zen-tools");
   showScreen("welcome");
   restartWelcomeEnterAnimation();
 }

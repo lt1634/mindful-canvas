@@ -38,8 +38,8 @@ test.describe("Mindful Canvas", () => {
     await page.locator(".zen-tpl-card").first().click();
     await expect(page.locator("#canvasScreen")).toHaveClass(/active/);
     await expect(page.locator("#zenOverlay")).toBeVisible();
-    await expect(page.locator("#zenStepLabel")).toHaveText("步驟 1 / 4");
-    await expect(page.locator("#zenNextBtn")).toHaveText("跟好了 →");
+    await expect(page.locator("#zenHint")).toHaveText("跟住淺色線條，留下你的色彩痕跡");
+    await expect(page.locator("#eraserBtn")).toBeVisible();
   });
 
   test("starts sumi marbling mode and can drop ink", async ({ page }) => {
