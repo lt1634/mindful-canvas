@@ -1354,6 +1354,40 @@ function eraseInkAlongPoints(targetCtx, points, size, stampBrushSize) {
   targetCtx.restore();
 }
 
+/**
+ * Erase by painting with background color (for save/export only).
+ * Unlike eraseInkAlongPoints which uses destination-out (transparent erase),
+ * this uses source-over to paint the dark background, so saved PNGs stay dark.
+ */
+function eraseToBackground(targetCtx, points, size, bgColor) {
+  if (!points.length) return;
+  const stampRadius = eraseInkRadius(size);
+  const spacing = Math.max(3, size * 0.35);
+  targetCtx.save();
+  targetCtx.globalCompositeOperation = "source-over";
+  targetCtx.fillStyle = bgColor || "#10141c";
+  const stampAt = (x, y) => {
+    targetCtx.beginPath();
+    targetCtx.arc(x, y, stampRadius, 0, Math.PI * 2);
+    targetCtx.fill();
+  };
+  if (points.length === 1) {
+    stampAt(points[0].x, points[0].y);
+  } else {
+    for (let i = 1; i < points.length; i++) {
+      const p0 = points[i - 1];
+      const p1 = points[i];
+      const segLen = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+      const steps = Math.max(1, Math.ceil(segLen / spacing));
+      for (let s = 0; s <= steps; s++) {
+        const t = s / steps;
+        stampAt(p0.x + (p1.x - p0.x) * t, p0.y + (p1.y - p0.y) * t);
+      }
+    }
+  }
+  targetCtx.restore();
+}
+
 function drawEraserAlongPoints(targetCtx, points, size) {
   eraseInkAlongPoints(targetCtx, points, size);
 }
@@ -2535,11 +2569,17 @@ function renderPureArtwork(targetCtx, w, h) {
   if (currentScene === "sumi") {
     drawSumiDrops(targetCtx);
   } else if (currentScene === "zen") {
-    zenTouchStrokes.forEach((s) => drawZenTraceStroke(s, targetCtx));
+    zenTouchStrokes.forEach((s) => {
+      if (s.eraser) {
+        eraseToBackground(targetCtx, s.points, s.size * 1.25, "#f0ebe0");
+      } else {
+        drawZenTraceStroke(s, targetCtx);
+      }
+    });
   } else {
     strokeHistory.forEach((s) => {
       if (s.eraser) {
-        eraseInkAlongPoints(targetCtx, s.points, s.size);
+        eraseToBackground(targetCtx, s.points, s.size, "#10141c");
         return;
       }
       drawInkAlongPoints(targetCtx, s.points, s.color, s.size, 1, 4);
