@@ -1,4 +1,4 @@
-const CACHE = "mindful-canvas-v2-zen-v19";
+const CACHE = "mindful-canvas-v2-zen-v30";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,6 +6,7 @@ const ASSETS = [
   "./js/app.js",
   "./src/logic.js",
   "./manifest.json",
+  "./assets/logo-mark.svg",
   "./icon-192.png",
   "./icon-512.png",
 ];

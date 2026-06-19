@@ -8,21 +8,44 @@
     <title>Mindful Canvas 覺知畫布</title>
     <meta name="copyright" content="© 2026 Tim Yuen / ZenArt Lab. All rights reserved." />
     <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
-    <link rel="stylesheet" href="css/style.css?v=zen-v19" />
+    <link rel="stylesheet" href="css/style.css?v=zen-v29" />
   </head>
   <body>
     <!-- WELCOME -->
     <div id="welcome" class="screen active">
       <canvas id="welcomeAmbient" aria-hidden="true"></canvas>
       <div id="welcomeContent">
-        <h1 id="welcomeLogo" class="welcome-enter welcome-stagger-1">覺知畫布</h1>
-        <p
-          class="welcome-enter welcome-stagger-1"
-          style="font-size: 11px; color: #555; margin-top: -8px"
-        >
-          Mindful Canvas™
-        </p>
+        <div id="welcomeLogo" class="welcome-brand welcome-enter welcome-stagger-1">
+          <span class="welcome-mark" aria-hidden="true">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
+              <line
+                x1="10"
+                y1="10"
+                x2="90"
+                y2="90"
+                stroke="#6e6e7a"
+                stroke-width="4"
+                stroke-linecap="butt"
+              />
+              <circle cx="50" cy="50" r="20.5" fill="#f0c96e" />
+              <line
+                x1="10"
+                y1="90"
+                x2="90"
+                y2="10"
+                stroke="#d4a84f"
+                stroke-width="5.5"
+                stroke-linecap="butt"
+              />
+            </svg>
+          </span>
+          <div class="welcome-brand-text">
+            <h1>覺知畫布</h1>
+            <p class="welcome-brand-en">Mindful Canvas™</p>
+          </div>
+        </div>
         <p class="welcome-enter welcome-stagger-2">從禪繞跟畫開始，與色彩同在</p>
 
         <div class="mode-cards welcome-enter welcome-stagger-3">
@@ -38,7 +61,7 @@
             <div class="mode-desc">
               選一個圖案，跟住金光一步一步畫。輕觸留下你的色彩，跟完按「跟好了」，約 1 分鐘完成。
             </div>
-            <div class="mode-meta">約 1 分鐘 · 分步跟畫 · 10 款圖案</div>
+            <div class="mode-meta">約 1 分鐘 · 分步跟畫 · 12 款圖案</div>
           </button>
           <button
             type="button"
@@ -81,11 +104,6 @@
         <h2 class="zen-picker-title">選一個圖案跟住畫</h2>
         <p class="zen-picker-sub">每個圖案都有預覽；撳圖案跟住淺色線條自由畫</p>
         <div class="zen-template-cards" id="zenTemplateCards"></div>
-        <section class="zen-tangle-guide" id="zenTangleGuide" aria-label="禪繞格紋繪製參考">
-          <h3 class="zen-tangle-title">禪繞格紋參考</h3>
-          <p class="zen-tangle-sub">點開格紋名稱，查看繪製步驟（參考 artifact 唐卡版）</p>
-          <div id="zenTangleList"></div>
-        </section>
       </div>
     </div>
 
@@ -223,7 +241,7 @@
         </div>
         <div class="card-actions" id="cardActions">
           <button class="btn-secondary" onclick="showTerms()">使用條款</button>
-          <button class="btn-secondary" onclick="downloadArtwork()">下載作品</button>
+          <button class="btn-secondary" onclick="saveCard()">儲存卡片</button>
           <button class="btn-primary" onclick="finishFromCard()">返回首頁</button>
         </div>
       </div>

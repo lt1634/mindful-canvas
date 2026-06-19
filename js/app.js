@@ -942,8 +942,165 @@ const ZEN_TEMPLATES = {
       },
     ],
   },
+  dharma_wheel: {
+    id: "dharma_wheel",
+    name: "金法輪",
+    steps: [
+      {
+        hint: "畫外圈法輪圓環",
+        draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.lineWidth = lw;
+          ctx.beginPath();
+          ctx.arc(cx, cy, sz * 0.42, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          ctx.arc(cx, cy, sz * 0.36, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫八條輪輻",
+        draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
+          const outer = sz * 0.36;
+          ctx.save();
+          ctx.strokeStyle = `rgba(44,95,124,${a * 0.85})`;
+          ctx.lineWidth = lw;
+          ctx.lineCap = "round";
+          for (let i = 0; i < 8; i++) {
+            const angle = (i * Math.PI) / 4 - Math.PI / 2;
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(angle) * sz * 0.1, cy + Math.sin(angle) * sz * 0.1);
+            ctx.lineTo(cx + Math.cos(angle) * outer, cy + Math.sin(angle) * outer);
+            ctx.stroke();
+          }
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫中心軸與內圈",
+        draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.lineWidth = lw * 0.9;
+          ctx.beginPath();
+          ctx.arc(cx, cy, sz * 0.1, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(cx, cy, sz * 0.04, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = `rgba(226,181,90,${a * 0.75})`;
+          ctx.beginPath();
+          ctx.arc(cx, cy, sz * 0.02, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        },
+      },
+    ],
+  },
+  treasure_vase: {
+    id: "treasure_vase",
+    name: "甘露寶瓶",
+    guideRadius: 0.44,
+    steps: [
+      {
+        hint: "畫蓮座底座",
+        draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
+          ctx.save();
+          ctx.strokeStyle = `rgba(90,122,90,${a * 0.75})`;
+          ctx.lineWidth = lw;
+          for (let i = 0; i < 8; i++) {
+            const angle = (i * Math.PI) / 4;
+            const x1 = cx + Math.cos(angle) * sz * 0.12;
+            const y1 = cy + sz * 0.22 + Math.sin(angle) * sz * 0.04;
+            const x2 = cx + Math.cos(angle) * sz * 0.22;
+            const y2 = cy + sz * 0.28;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.quadraticCurveTo(cx + Math.cos(angle) * sz * 0.18, cy + sz * 0.3, x2, y2);
+            ctx.stroke();
+          }
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫寶瓶瓶身",
+        draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.lineWidth = lw * 1.1;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.beginPath();
+          ctx.moveTo(cx - sz * 0.18, cy + sz * 0.22);
+          ctx.bezierCurveTo(
+            cx - sz * 0.22,
+            cy + sz * 0.05,
+            cx - sz * 0.16,
+            cy - sz * 0.12,
+            cx - sz * 0.1,
+            cy - sz * 0.22
+          );
+          ctx.bezierCurveTo(
+            cx - sz * 0.06,
+            cy - sz * 0.32,
+            cx + sz * 0.06,
+            cy - sz * 0.32,
+            cx + sz * 0.1,
+            cy - sz * 0.22
+          );
+          ctx.bezierCurveTo(
+            cx + sz * 0.16,
+            cy - sz * 0.12,
+            cx + sz * 0.22,
+            cy + sz * 0.05,
+            cx + sz * 0.18,
+            cy + sz * 0.22
+          );
+          ctx.closePath();
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫瓶頸與寶蓋紋",
+        draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
+          ctx.save();
+          ctx.strokeStyle = `rgba(44,95,124,${a * 0.8})`;
+          ctx.lineWidth = lw * 0.85;
+          ctx.beginPath();
+          ctx.moveTo(cx - sz * 0.1, cy - sz * 0.22);
+          ctx.lineTo(cx - sz * 0.06, cy - sz * 0.34);
+          ctx.lineTo(cx + sz * 0.06, cy - sz * 0.34);
+          ctx.lineTo(cx + sz * 0.1, cy - sz * 0.22);
+          ctx.stroke();
+          ctx.strokeStyle = `rgba(226,181,90,${a * 0.7})`;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(cx - sz * 0.14, cy - sz * 0.02);
+          ctx.quadraticCurveTo(cx, cy - sz * 0.06, cx + sz * 0.14, cy - sz * 0.02);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = `rgba(255,248,220,${a * 0.6})`;
+          ctx.beginPath();
+          ctx.arc(cx, cy - sz * 0.36, sz * 0.03, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        },
+      },
+    ],
+  },
 };
-
 function getDominantColor() {
   if (appMode === "sumi") return sumiDominantColor();
   const painted = strokeHistory.filter((s) => !s.eraser);
@@ -974,7 +1131,7 @@ function restoreCardUI(mode) {
     drawing.style.display = "flex";
     actions.innerHTML = `
       <button class="btn-secondary" onclick="showTerms()">使用條款</button>
-      <button class="btn-secondary" onclick="downloadArtwork()">下載作品</button>
+      <button class="btn-secondary" onclick="saveCard()">儲存卡片</button>
       <button class="btn-primary" onclick="finishFromCard()">返回首頁</button>
     `;
   }
@@ -2204,6 +2361,8 @@ const ZEN_PICKER_ITEMS = [
   { id: "bodhi_fish", desc: "八吉祥 · 6 步 · 流動和諧" },
   { id: "vajra", desc: "密宗法器 · 4 步 · 中軸對稱" },
   { id: "conch", desc: "八吉祥 · 3 步 · 黃金螺旋" },
+  { id: "dharma_wheel", desc: "八吉祥 · 3 步 · 八輻法輪" },
+  { id: "treasure_vase", desc: "八吉祥 · 3 步 · 甘露寶瓶" },
 ];
 
 const ZEN_TEMPLATE_META = {
@@ -2243,54 +2402,19 @@ const ZEN_TEMPLATE_META = {
     timeCost: "約 40 分鐘",
     symbolism: "妙音遠揚、消除愚痴",
   },
-};
-
-const ZENTANGLE_PATTERNS = [
-  {
-    name: "新月 Crescent Moon",
-    symbol: "🌙",
-    desc: "半月形層層外拓線條",
-    difficulty: "⭐",
-    steps: [
-      "畫出基礎半月，並將其塗黑。",
-      "在半月邊緣，以外推方式畫出等距輪廓線。",
-      "重複疊加光環，並可在其間填補細密網點線。",
-    ],
-  },
-  {
-    name: "立體編織 Cadent",
-    symbol: "🧇",
-    desc: "網格與Ｓ型優雅連接線",
-    difficulty: "⭐⭐",
-    steps: [
-      "以等距畫出點狀矩陣網格。",
-      "在點與點之間，用優美的「Ｓ」形弧線相連。",
-      "相鄰行用反向「Ｓ」相連，中間塗黑以顯立體感。",
-    ],
-  },
-  {
-    name: "碎石靜心 Mooka",
-    symbol: "🐚",
-    desc: "流暢如葉芽的圓弧",
+  dharma_wheel: {
+    englishTitle: "The Golden Dharma Wheel",
     difficulty: "⭐⭐⭐",
-    steps: [
-      "畫一條向上拋物線，在頂點往內捲成圓弧。",
-      "順著原路徑往回描摹，加寬基底。",
-      "成組堆疊，讓它們互相依傍簇擁。",
-    ],
+    timeCost: "約 25 分鐘",
+    symbolism: "佛法常轉、智慧不息",
   },
-  {
-    name: "神聖迴圈 Hollibaugh",
-    symbol: "🌉",
-    desc: "交錯穿插的立體緞帶線",
-    difficulty: "⭐⭐",
-    steps: [
-      "任意拉出兩條平行粗線。",
-      "第二組平行線遇到第一組時斷開，假裝從底下穿過。",
-      "重複多組，營造前後空間編織感。",
-    ],
+  treasure_vase: {
+    englishTitle: "The Treasure Vase of Nectar",
+    difficulty: "⭐⭐⭐⭐",
+    timeCost: "約 35 分鐘",
+    symbolism: "福智圓滿、甘露滿盈",
   },
-];
+};
 
 function drawZenTemplatePreview(canvas, templateId) {
   const tpl = ZEN_TEMPLATES[templateId];
@@ -2381,38 +2505,7 @@ function buildZenPickerCards() {
 function openZenPicker() {
   showScreen("zenPickerScreen");
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      buildZenPickerCards();
-      buildZenTangleGuide();
-    });
-  });
-}
-
-function buildZenTangleGuide() {
-  const list = document.getElementById("zenTangleList");
-  if (!list) return;
-  list.innerHTML = "";
-  ZENTANGLE_PATTERNS.forEach((pattern) => {
-    const item = document.createElement("details");
-    item.className = "zen-tangle-item";
-    const summary = document.createElement("summary");
-    summary.innerHTML = `<span class="zen-tangle-symbol">${pattern.symbol}</span><span class="zen-tangle-name">${pattern.name}</span><span class="zen-tangle-diff">${pattern.difficulty}</span>`;
-    const body = document.createElement("div");
-    body.className = "zen-tangle-body";
-    const desc = document.createElement("p");
-    desc.className = "zen-tangle-desc";
-    desc.textContent = pattern.desc;
-    body.appendChild(desc);
-    const ol = document.createElement("ol");
-    ol.className = "zen-tangle-steps";
-    pattern.steps.forEach((step) => {
-      const li = document.createElement("li");
-      li.textContent = step;
-      ol.appendChild(li);
-    });
-    body.appendChild(ol);
-    item.append(summary, body);
-    list.appendChild(item);
+    requestAnimationFrame(() => buildZenPickerCards());
   });
 }
 
@@ -3928,180 +4021,147 @@ function generateInterpretation() {
   // ===== 2. AFFIRMATION POOL (10 per scene, 80 total) =====
   const affirmations = {
     anxious: [
-      "你選擇面對，而不是逃避。這一步已經很好。",
-      "焦慮不是敵人，是身體在告訴你：這件事對你很重要。",
-      "每一筆不完美的線條，都是你面對空白的證明。",
-      "白紙曾經讓你害怕，但你動筆了。這就夠了。",
-      "帶著焦慮動筆，焦慮會在色彩中慢慢融化。",
-      "你把看不見的壓力，變成了看得見的色彩。",
-      "深呼吸。你現在在這裡，在色彩裡，在安全的地方。",
+      "你動筆了，這就夠了。",
+      "焦慮在色彩裡慢慢融化。",
+      "你在這裡，很安全。",
+      "面對空白，你已經很勇敢。",
+      "深呼吸，此刻與你同在。",
     ],
     chaotic: [
-      "混亂不是錯誤，是創造力正在湧動。",
-      "腦袋很亂的時候，畫出來就是一種整理。",
-      "混亂的線條是情緒最誠實的模樣。",
-      "不需要想清楚才能畫，有時候畫了才會想清楚。",
-      "讓線條自己找到出路。你不需要為它們規劃路線。",
+      "混亂也是創造力。",
+      "畫出來，就是一種整理。",
+      "讓線條自己找路。",
+      "不必想清楚才動筆。",
+      "情緒誠實地留在紙上。",
     ],
     stuck: [
-      "留白也是創作的一部分。不落一筆，也是一種圓滿。",
-      "停下來不是放棄，有時候才是最勇敢的選擇。",
-      "空白不是空虛，是你給自己的禮物。",
-      "當你準備好，下一步自然會來。不急。",
-      "你給了自己一個喘息的空間。這份溫柔，你值得擁有。",
+      "留白也是創作。",
+      "停下來，也是溫柔。",
+      "不急，下一步會來。",
+      "你給了自己空間。",
+      "空白是給自己的禮物。",
     ],
     free: [
-      "不追求結果的創作，才是最純粹的表達。",
-      "沒有規則，沒有對錯。你的手知道要去哪裡。",
-      "你在這裡，在畫布前，在呼吸裡。這就是全部。",
-      "每一筆都在消失，每一筆都是全新的開始。",
-      "線條會消失，但體驗不會。專注的當下已經留在身體裡。",
+      "沒有對錯，只有當下。",
+      "你的手知道要去哪。",
+      "你在這裡，這就夠了。",
+      "每一筆都是新的開始。",
+      "專注的當下已留在身上。",
     ],
     metta: [
-      "慈是：我希望你快樂。你剛才用色彩說了這句話。",
-      "善意不需要言語，色彩就是它的語言。",
-      "你為他人送上祝福，而祝福首先溫暖的是你自己。",
-      "不需要見到對方，善意就能穿越距離。",
-      "為他人畫畫的時候，你自己的心也會變得柔軟。",
+      "你用色彩送上祝福。",
+      "善意先溫暖了自己。",
+      "祝福穿越了距離。",
+      "柔軟的心正在綻放。",
+      "慈心已經完成。",
     ],
     karuna: [
-      "悲不是同情，是「我願意和你一起承受」。",
-      "不需要做什麼。你的畫筆已經替你說了最溫柔的話。",
-      "你為他人的痛苦騰出了一個空間。這份空間，就是慈悲。",
-      "每一筆都在說：「你在這裡，你不孤單。」",
-      "你選擇了陪伴而不是逃避。這份勇氣，本身就是慈悲。",
+      "你願意一起承受。",
+      "畫筆說了最溫柔的話。",
+      "你為痛苦騰出空間。",
+      "你在這裡，你不孤單。",
+      "陪伴本身就是慈悲。",
     ],
     mudita: [
-      "喜是：你的快樂就是我的快樂。",
-      "為別人成就感到高興，是一種稀缺的能力。你做到了。",
-      "嫉妒消耗能量，隨喜創造能量。你剛才做了一件有力量的事。",
-      "你為他人的幸福真心高興。這份心，很珍貴。",
-      "你剛才畫的這幅畫，是為一個人的笑容而存在的。",
+      "為他人歡喜，心更豐盛。",
+      "隨喜是一種力量。",
+      "你為笑容留了一筆。",
+      "這份心，很珍貴。",
+      "喜心已經完成。",
     ],
     upekkha: [
-      "每一筆都會消失，就像生命中的一切。你接受了，就是自由。",
-      "不追好、不避壞。你剛才練習了平等心。",
-      "放下不是放棄。是「我看見了，我接受了，我繼續前行」。",
-      "你在畫布上練習了最重要的一課：不執著。",
-      "線條來了又走，色彩亮了又暗。你只是靜靜地看著。這就是修行。",
+      "不執著，就是自由。",
+      "你練習了平等心。",
+      "看見，接受，前行。",
+      "線條來了又走。",
+      "靜靜地看，就是修行。",
     ],
     zen: [
-      "你跟隨節奏，讓唐卡在眼前綻放。這份耐心，就是修行。",
-      "輕觸之間，光暈散開。你與畫面同在，這就是覺知。",
-      "一分鐘很短，但足夠讓心靜下來。你給了自己一份禮物。",
-      "你不需要畫得好，只需要在場。剛才那一分鐘，你做到了。",
-      "光暈散開的瞬間，你已經與當下合一。",
+      "你跟隨節奏，心在場。",
+      "輕觸之間，覺知同在。",
+      "一分鐘，足夠靜下來。",
+      "不需要畫得好。",
+      "你已與當下合一。",
     ],
     sumi: [
-      "墨滴落水，自己會找到形狀。你只需要放手。",
-      "你攪動的水流，每一道紋路都係獨一無二。",
-      "你冇控制結果，但結果好美。放下控制就係答案。",
-      "水面承載得起所有墨色，就好似呢一刻承載得起你所有思緒。",
-      "水唔會急，墨唔會趕。你都可以慢慢嚟。",
+      "墨會自己找形狀。",
+      "每一道紋路都獨一無二。",
+      "放下控制，結果很美。",
+      "水面承載得住思緒。",
+      "水不急，墨不趕。",
     ],
   };
 
   // ===== 3. COLOR DESCRIPTIONS (now connected) =====
   const colorDescriptions = {
-    "#e2b55a": {
-      name: "金光",
-      meaning: "你選擇了金色，代表你內心正在尋找溫暖與智慧。",
-      phrase: "金色的光芒",
-    },
-    "#2c5f7c": {
-      name: "深海",
-      meaning: "你選擇了深藍，代表你內心雖然澎湃，但依舊尋求平靜。",
-      phrase: "深海的沉澱",
-    },
-    "#8b5e83": {
-      name: "暮色",
-      meaning: "你選擇了紫色，代表你正在經歷一次內在的轉化。",
-      phrase: "暮色的直覺",
-    },
-    "#a0826d": {
-      name: "枯葉",
-      meaning: "你選擇了大地色，代表你需要穩定與根基。",
-      phrase: "大地的穩定",
-    },
-    "#d4d0c8": {
-      name: "霧白",
-      meaning: "你選擇了白色，代表你在留白中尋找可能性。",
-      phrase: "霧白的留白",
-    },
-    "#5a7a5a": {
-      name: "翠竹",
-      meaning: "你選擇了綠色，代表你內心渴望成長與療癒。",
-      phrase: "翠竹的生長",
-    },
-    "#c46b4a": {
-      name: "晚霞",
-      meaning: "你選擇了橘色，代表你內心有強烈的生命力正在湧動。",
-      phrase: "晚霞的熱情",
-    },
-    "#3a3a4a": {
-      name: "墨色",
-      meaning: "你選擇了墨色，代表你正在向內探索深處。",
-      phrase: "墨色的內省",
-    },
+    "#e2b55a": { name: "金光", meaning: "金色，溫暖智慧。" },
+    "#2c5f7c": { name: "深海", meaning: "深藍，尋找平靜。" },
+    "#8b5e83": { name: "暮色", meaning: "紫色，內在轉化。" },
+    "#a0826d": { name: "枯葉", meaning: "大地色，穩定根基。" },
+    "#d4d0c8": { name: "霧白", meaning: "留白，保留可能。" },
+    "#5a7a5a": { name: "翠竹", meaning: "綠色，渴望療癒。" },
+    "#c46b4a": { name: "晚霞", meaning: "橘色，生命力湧動。" },
+    "#3a3a4a": { name: "墨色", meaning: "墨色，向內探索。" },
   };
 
-  // ===== 4. REFLECTION ENGINE (concise) =====
+  // ===== 4. REFLECTION ENGINE（簡短版，儲存卡片用）=====
   const dominantColor = getDominantColor();
   const colorInfo = colorDescriptions[dominantColor] ||
-    colorDescriptions[currentColor] || { meaning: "", phrase: "" };
+    colorDescriptions[currentColor] || { meaning: "" };
 
-  // Module A: stroke count (shorter)
   let strokePart = "";
   if (strokeCount < 5) {
-    strokePart = `${strokeCount} 筆，留白很多`;
+    strokePart = `${strokeCount} 筆，留白多`;
   } else if (strokeCount < 30) {
-    strokePart = `${strokeCount} 筆勾勒了此刻的心境`;
+    strokePart = `${strokeCount} 筆勾勒心境`;
   } else if (strokeCount < 100) {
-    strokePart = `${strokeCount} 筆層層疊疊`;
+    strokePart = `${strokeCount} 筆層層疊加`;
   } else {
-    strokePart = `超過 ${strokeCount} 筆的釋放`;
+    strokePart = `${strokeCount} 筆的釋放`;
   }
 
-  // Module B: silence (shorter)
   let silencePart = "";
   if (totalSilence > 60) {
-    silencePart = "中間有段超過一分鐘的深層寂靜";
+    silencePart = "曾有深層寂靜";
   } else if (totalSilence > 30) {
-    silencePart = `有 ${Math.round(totalSilence)} 秒的深度停頓`;
+    silencePart = `停頓約 ${Math.round(totalSilence)} 秒`;
   } else if (totalSilence > 5) {
-    silencePart = `有 ${Math.round(totalSilence)} 秒的寂靜`;
+    silencePart = `寂靜 ${Math.round(totalSilence)} 秒`;
   } else {
     silencePart = "節奏流暢";
   }
 
-  // Module C: color (shorter)
-  let colorPart = colorInfo.meaning || "";
+  const colorPart = colorInfo.meaning || "";
 
-  // Module D: scene-specific ending (shorter)
   const sceneEndings = {
-    anxious: "帶住這份覺察，回到日常吧。",
-    chaotic: "每一筆的消逝，都帶走了一小部分重量。",
-    stuck: "當你準備好時，下一步自然會來。",
-    free: "不追憶過去，不預期未來，只是純粹地創作。",
-    metta: "善意已經完成。帶住這份溫暖，回到日常。",
-    karuna: "這份陪伴，就是你能做的最好的事。",
-    mudita: "為他人歡喜，你自己也變得更豐盛。",
-    upekkha: "每一筆都會消失，而你平靜地接受了這件事。",
-    zen: "圖案已綻放，你的心也安定了。帶走這份感受。",
+    anxious: "帶著覺察回到日常。",
+    chaotic: "重量又輕了一點。",
+    stuck: "準備好時，下一步會來。",
+    free: "只專注此刻的創作。",
+    metta: "帶走這份溫暖。",
+    karuna: "陪伴已經完成。",
+    mudita: "隨喜讓心更豐盛。",
+    upekkha: "平靜地接受消逝。",
+    zen: "帶走這份安定。",
+    sumi: "讓水繼續流動。",
   };
   let endingPart = sceneEndings[currentScene] || sceneEndings.free;
 
   if (currentScene === "zen") {
     strokePart =
-      zenTouchStrokes.length > 0
-        ? `你在禪繞過程中留下了 ${zenTouchStrokes.length} 道色彩痕跡，每一筆都是與畫面的對話`
-        : "你安靜地跟隨圖案綻放，讓節奏帶領你完成這幅畫";
-    silencePart = "這一分鐘裡，你與音樂和圖案同在";
-    colorPart = "金色的光暈貫穿整幅唐卡，象徵內心的溫暖與覺醒。";
+      zenTouchStrokes.length > 0 ? `${zenTouchStrokes.length} 道色彩痕跡` : "安靜跟隨完成";
+    silencePart = "與節奏同在";
+    endingPart = sceneEndings.zen;
   }
 
-  // Assemble reflection
-  const reflection = `${strokePart}，${silencePart}。${colorPart}${colorPart ? "。" : ""}${endingPart}`;
+  if (currentScene === "sumi") {
+    strokePart = strokeCount > 0 ? `${strokeCount} 次與水互動` : "靜觀墨流";
+    silencePart = "水流自有節奏";
+    endingPart = sceneEndings.sumi;
+  }
+
+  const reflectionParts = [strokePart, silencePart, colorPart, endingPart].filter(Boolean);
+  const reflection = reflectionParts.slice(0, 3).join("，") + "。";
 
   // ===== 5. PICK AFFIRMATION =====
   const sceneAffirmations = affirmations[currentScene] || affirmations.free;
@@ -4157,22 +4217,22 @@ async function generateInterpretationAI() {
     "#3a3a4a": "墨色",
   };
 
-  const prompt = `你是一位資深視藝教育家與東方禪學導師。語氣溫和、詩意、簡潔。
+  const prompt = `你是一位資深視藝教育家與東方禪學導師。語氣溫和、簡潔。
 【避免】宗教教條、商業療癒口吻。請用繁體中文/粵語港式文風。
 
 用戶情緒：${OLLAMA_SCENE_MAP[currentScene] || "自由書寫"}
 繪畫：${strokeCount} 筆，停頓 ${Math.round(totalSilence)} 秒，主要色彩 ${colorNames[dominantColor] || colorNames[currentColor] || "未指定"}
 
-請生成：
-1. 【禪意題字】（1 句，10 字以內）
-2. 【心境解讀】（50-80 字，點出筆數→停頓→色彩→一句溫柔收尾）
+請生成（務必簡短，適合手機卡片）：
+1. 【禪意題字】（1 句，8 字以內）
+2. 【心境解讀】（1-2 句，共 20-35 字）
 
 格式：
 題字：
 （1 句）
 
 解讀：
-（50-80 字）`;
+（20-35 字）`;
 
   try {
     const response = await fetch(OLLAMA_URL, {
@@ -4183,7 +4243,7 @@ async function generateInterpretationAI() {
         model: OLLAMA_MODEL,
         prompt: prompt,
         stream: false,
-        options: { temperature: 0.8, num_predict: 160 },
+        options: { temperature: 0.8, num_predict: 100 },
       }),
     });
 
@@ -4216,32 +4276,134 @@ async function generateInterpretationAI() {
   }
 }
 
-// ===== DOWNLOAD ARTWORK (raw drawing, no card text) =====
-function downloadArtwork() {
-  const dpr = window.devicePixelRatio || 1;
-  const temp = document.createElement("canvas");
-  temp.width = canvasW * dpr;
-  temp.height = canvasH * dpr;
-  const tctx = temp.getContext("2d");
-  tctx.setTransform(1, 0, 0, 1, 0, 0);
-  tctx.scale(dpr, dpr);
-  renderPureArtwork(tctx, canvasW, canvasH);
+// ===== SAVE CARD =====
+function drawLogoMark(ctx, x, y, size) {
+  const u = size / 100;
+  ctx.save();
+  ctx.strokeStyle = "#6e6e7a";
+  ctx.lineWidth = 4 * u;
+  ctx.lineCap = "butt";
+  ctx.beginPath();
+  ctx.moveTo(x + 10 * u, y + 10 * u);
+  ctx.lineTo(x + 90 * u, y + 90 * u);
+  ctx.stroke();
+  ctx.fillStyle = "#f0c96e";
+  ctx.beginPath();
+  ctx.arc(x + 50 * u, y + 50 * u, 20.5 * u, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#d4a84f";
+  ctx.lineWidth = 5.5 * u;
+  ctx.beginPath();
+  ctx.moveTo(x + 10 * u, y + 90 * u);
+  ctx.lineTo(x + 90 * u, y + 10 * u);
+  ctx.stroke();
+  ctx.restore();
+}
 
-  temp.toBlob((blob) => {
-    if (navigator.share && navigator.canShare) {
-      const file = new File([blob], "mindful-canvas-artwork.png", { type: "image/png" });
-      if (navigator.canShare({ files: [file] })) {
-        navigator.share({ files: [file], title: "覺知畫布作品" }).catch(() => {});
-        return;
+function drawCardBrandFooter(sctx, w, isZenCard) {
+  const footBaseY = 1372;
+  const logoSize = 50;
+  const gap = 14;
+  const line1 = "覺知畫布";
+  const line2 = "Mindful Canvas™";
+
+  sctx.textAlign = "left";
+  sctx.textBaseline = "alphabetic";
+  sctx.font = "400 26px -apple-system, PingFang HK, sans-serif";
+  const w1 = sctx.measureText(line1).width;
+  sctx.font = "300 17px -apple-system, PingFang HK, sans-serif";
+  const w2 = sctx.measureText(line2).width;
+  const textW = Math.max(w1, w2);
+  const groupW = logoSize + gap + textW;
+  let x = (w - groupW) / 2;
+
+  drawLogoMark(sctx, x, footBaseY - logoSize + 6, logoSize);
+  x += logoSize + gap;
+
+  sctx.fillStyle = isZenCard ? "#6b4f2a" : "#e2b55a";
+  sctx.font = "400 26px -apple-system, PingFang HK, sans-serif";
+  sctx.fillText(line1, x, footBaseY - 6);
+  sctx.fillStyle = isZenCard ? "#8a7a68" : "#888898";
+  sctx.font = "300 17px -apple-system, PingFang HK, sans-serif";
+  sctx.fillText(line2, x, footBaseY + 16);
+}
+
+function saveCard() {
+  const saveCanvas = document.createElement("canvas");
+  const w = 1080;
+  const h = 1440;
+  saveCanvas.width = w;
+  saveCanvas.height = h;
+  const sctx = saveCanvas.getContext("2d");
+
+  const cardMode = pendingSession?.mode || appMode;
+  const isZenCard = cardMode === "zen" || cardMode === "sumi";
+  sctx.fillStyle = isZenCard ? "#ebe4d6" : "#1a1a2e";
+  sctx.fillRect(0, 0, w, h);
+  if (isZenCard) {
+    const tex = ensureWashiTexture();
+    sctx.save();
+    sctx.globalAlpha = 0.55;
+    sctx.fillStyle = sctx.createPattern(tex, "repeat");
+    sctx.fillRect(0, 0, w, h);
+    sctx.restore();
+  }
+
+  const artworkImg = new Image();
+  artworkImg.onload = () => {
+    const drawH = 720;
+    const pad = isZenCard ? 36 : 0;
+    sctx.drawImage(artworkImg, pad, 80 + pad * 0.5, w - pad * 2, drawH - pad);
+
+    sctx.fillStyle = isZenCard ? "#6b4f2a" : "#e2b55a";
+    sctx.font = "500 36px -apple-system, PingFang HK, sans-serif";
+    sctx.textAlign = "center";
+    wrapText(sctx, document.getElementById("cardAffirmation").textContent, w / 2, 860, w - 120, 48);
+
+    sctx.fillStyle = isZenCard ? "#5a5048" : "#a0a0b0";
+    sctx.font = "300 26px -apple-system, PingFang HK, sans-serif";
+    wrapText(sctx, document.getElementById("cardReflection").textContent, w / 2, 1100, w - 120, 38);
+
+    drawCardBrandFooter(sctx, w, isZenCard);
+
+    saveCanvas.toBlob(async (blob) => {
+      if (navigator.share && navigator.canShare) {
+        const file = new File([blob], "mindful-canvas-card.png", { type: "image/png" });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: "覺知畫布 Mindful Canvas" });
+            showToast("已分享");
+            return;
+          } catch (e) {}
+        }
       }
+      const link = document.createElement("a");
+      link.download = "mindful-canvas-card.png";
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
+      showToast("卡片已儲存");
+    }, "image/png");
+  };
+  artworkImg.src = document.getElementById("cardImage").src;
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const chars = text.split("");
+  let line = "";
+  let currentY = y;
+  for (let i = 0; i < chars.length; i++) {
+    const testLine = line + chars[i];
+    const metrics = ctx.measureText(testLine);
+    if (metrics.width > maxWidth && line.length > 0) {
+      ctx.fillText(line, x, currentY);
+      line = chars[i];
+      currentY += lineHeight;
+    } else {
+      line = testLine;
     }
-    const link = document.createElement("a");
-    link.download = "mindful-canvas-artwork.png";
-    link.href = URL.createObjectURL(blob);
-    link.click();
-    URL.revokeObjectURL(link.href);
-    showToast("作品已下載");
-  }, "image/png");
+  }
+  ctx.fillText(line, x, currentY);
 }
 
 // ===== TERMS =====
@@ -4377,6 +4539,6 @@ window.toggleEraser = toggleEraser;
 window.toggleZenTikseGrid = toggleZenTikseGrid;
 window.undoLastAction = undoLastAction;
 window.showTerms = showTerms;
-window.downloadArtwork = downloadArtwork;
+window.saveCard = saveCard;
 window.finishFromCard = finishFromCard;
 window.closeTerms = closeTerms;
