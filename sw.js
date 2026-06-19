@@ -1,4 +1,4 @@
-const CACHE = "mindful-canvas-v2-zen-v8";
+const CACHE = "mindful-canvas-v2-zen-v11";
 const ASSETS = [
   "./",
   "./index.html",

@@ -596,13 +596,17 @@ body {
 .color-bar {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
   padding: 6px 8px;
   background: var(--surface);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-width: 0;
 }
 .color-dot {
+  flex-shrink: 0;
   width: 36px;
   height: 36px;
   border-radius: 50%;

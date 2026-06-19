@@ -8,7 +8,7 @@ import {
 } from "../src/logic.js";
 
 let currentScene = "free";
-let currentColor = "#e2b55a";
+let currentColor = "#ddb565";
 let currentSize = 8;
 let strokeHistory = [];
 let currentStroke = [];
@@ -70,22 +70,22 @@ const AMBIENCE_SONGS = [
 const SONG_FADE_IN_SEC = 2.8;
 const SONG_FADE_OUT_SEC = 2.8;
 const ZEN_TRACE_COLORS = [
-  "#f0c674",
-  "#e8a87c",
-  "#f5e6d3",
-  "#f0d9a8",
-  "#d4d0c8",
-  "#d4a5ff",
-  "#7ec8b8",
-  "#e2b55a",
-  "#c9b08a",
-  "#a0826d",
-  "#8b7355",
-  "#b8734a",
-  "#5a7a5a",
-  "#2c5f7c",
-  "#8b5e83",
-  "#3a3a4a",
+  "#ddb565",
+  "#c83637",
+  "#de7b4a",
+  "#44965d",
+  "#53add0",
+  "#356fb5",
+  "#9d73b9",
+  "#63b49a",
+  "#dd638a",
+  "#c4af3f",
+  "#77528b",
+  "#9c7956",
+  "#e9a3aa",
+  "#4c5891",
+  "#315e49",
+  "#234f6b",
 ];
 
 // 墨流調色：淺染／深色墨／大地色
@@ -748,25 +748,29 @@ function restoreCardUI(mode) {
   }
 }
 
-// Colors — 淺色／大地／深色
+// Colors — 原本色相，每色向亮度中性灰混入 12%
 const COLORS = [
-  { name: "雪白", hex: "#f5f0e8" },
-  { name: "薄霧", hex: "#e4dfd6" },
-  { name: "淡金", hex: "#f0d9a8" },
-  { name: "浅樱", hex: "#f0c8c0" },
-  { name: "朱砂", hex: "#c0392b" },
-  { name: "晚霞", hex: "#c46b4a" },
-  { name: "赭石", hex: "#b8734a" },
-  { name: "枯葉", hex: "#a0826d" },
-  { name: "土褐", hex: "#8b7355" },
-  { name: "沙褐", hex: "#c9b08a" },
-  { name: "金光", hex: "#e2b55a" },
-  { name: "翠竹", hex: "#5a7a5a" },
-  { name: "暮色", hex: "#8b5e83" },
-  { name: "深海", hex: "#2c5f7c" },
-  { name: "墨松", hex: "#3d5248" },
-  { name: "墨色", hex: "#3a3a4a" },
-  { name: "深夜", hex: "#1e2838" },
+  { name: "雪白", hex: "#f5f0e9" },
+  { name: "薄霧", hex: "#c8c4bd" },
+  { name: "浅樱", hex: "#e9a3aa" },
+  { name: "玫瑰", hex: "#dd638a" },
+  { name: "朱砂", hex: "#c83637" },
+  { name: "晚霞", hex: "#de7b4a" },
+  { name: "金光", hex: "#ddb565" },
+  { name: "柠黄", hex: "#c4af3f" },
+  { name: "薄荷", hex: "#63b49a" },
+  { name: "翠竹", hex: "#44965d" },
+  { name: "墨松", hex: "#315e49" },
+  { name: "天青", hex: "#53add0" },
+  { name: "钴蓝", hex: "#356fb5" },
+  { name: "靛青", hex: "#4c5891" },
+  { name: "紫罗兰", hex: "#9d73b9" },
+  { name: "暮色", hex: "#77528b" },
+  { name: "赭石", hex: "#9c7956" },
+  { name: "深海", hex: "#234f6b" },
+  { name: "墨色", hex: "#4a4a57" },
+  { name: "深夜", hex: "#1f2836" },
+  { name: "纯墨", hex: "#0c0c13" },
 ];
 
 const SIZES = [4, 8, 14, 22];
