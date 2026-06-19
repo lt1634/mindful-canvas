@@ -18,6 +18,8 @@ test.describe("Mindful Canvas", () => {
     await expect(page.locator("#welcome")).toBeVisible();
     await expect(page.getByRole("heading", { name: "覺知畫布" })).toBeVisible();
     await expect(page.locator(".mode-card")).toHaveCount(3);
+    await expect(page.locator("#galleryOpenBtn")).toBeVisible();
+    await expect(page.locator("#galleryOpenBtn")).toContainText("心靈藝廊");
     await expect(page.locator("#welcomeContent .mode-title").first()).toHaveText("禪繞唐卡");
     await expect(page.locator("#welcomeContent .mode-title").nth(1)).toHaveText("墨流畫布");
     await expect(page.locator("#welcomeContent .mode-title").nth(2)).toHaveText("自由畫布");
@@ -33,8 +35,8 @@ test.describe("Mindful Canvas", () => {
     await page.locator(".mode-card.zen").click();
     await expect(page.locator("#zenPickerScreen")).toHaveClass(/active/);
     await expect(page.getByRole("heading", { name: "選一個圖案跟住畫" })).toBeVisible();
-    await expect(page.locator(".zen-tpl-card")).toHaveCount(7);
-    await expect(page.locator(".zen-tpl-preview canvas")).toHaveCount(7);
+    await expect(page.locator(".zen-tpl-card")).toHaveCount(12);
+    await expect(page.locator(".zen-tpl-preview canvas")).toHaveCount(12);
     await page.locator(".zen-tpl-card").first().click();
     await expect(page.locator("#canvasScreen")).toHaveClass(/active/);
     await expect(page.locator("#zenOverlay")).toBeVisible();
