@@ -173,6 +173,11 @@ body {
     transform 0.35s ease,
     border-color 0.35s,
     box-shadow 0.35s;
+  /* Button reset */
+  font: inherit;
+  color: inherit;
+  width: 100%;
+  box-sizing: border-box;
 }
 .mode-card:active {
   transform: scale(0.98);
@@ -994,4 +999,58 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ===== TUTORIAL OVERLAY ===== */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.tutorial-card {
+  background: #1a1a2e;
+  border: 1px solid rgba(226, 181, 90, 0.3);
+  border-radius: 20px;
+  padding: 40px 32px 28px;
+  max-width: 320px;
+  text-align: center;
+}
+.tutorial-emoji {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+.tutorial-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #e2b55a;
+  margin-bottom: 12px;
+}
+.tutorial-desc {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #a0a0b0;
+  margin-bottom: 24px;
+}
+.tutorial-next-btn {
+  background: rgba(226, 181, 90, 0.15);
+  border: 1px solid rgba(226, 181, 90, 0.4);
+  color: #e2b55a;
+  border-radius: 12px;
+  padding: 12px 32px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+.tutorial-next-btn:hover {
+  background: rgba(226, 181, 90, 0.25);
+  border-color: rgba(226, 181, 90, 0.6);
 }

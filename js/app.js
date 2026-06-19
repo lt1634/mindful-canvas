@@ -3099,7 +3099,7 @@ function startFreeMode() {
   setTimeout(() => {
     resizeCanvas();
     startFreeAmbience();
-    showToast(SCENE_GUIDANCE.free);
+    showToast(SCENE_GUIDANCE.free, 8000);
     startFadeEffect();
     touchToolsActivity();
   }, 100);
@@ -3116,7 +3116,7 @@ function startSumiMode() {
   setTimeout(() => {
     resizeCanvas();
     startFreeAmbience();
-    showToast(SCENE_GUIDANCE.sumi);
+    showToast(SCENE_GUIDANCE.sumi, 8000);
     startCanvasLoop();
   }, 100);
 }
@@ -3140,7 +3140,7 @@ function startZenMode(templateId) {
     zenStartTime = Date.now();
     updateZenStepUI();
     startZenAmbience();
-    showToast(SCENE_GUIDANCE.zen);
+    showToast(SCENE_GUIDANCE.zen, 8000);
     startCanvasLoop();
   }, 100);
 }
@@ -3479,7 +3479,7 @@ function generateInterpretation() {
 const OLLAMA_URL = "http://localhost:11434/api/generate";
 const OLLAMA_MODEL = "gemma4:12b";
 const OLLAMA_HEALTH_MS = 1500;
-const OLLAMA_GENERATE_MS = 8000;
+const OLLAMA_GENERATE_MS = 5000;
 
 function shouldUseOllama() {
   return new URLSearchParams(location.search).get("ai") === "1";
@@ -3562,6 +3562,17 @@ async function generateInterpretationAI() {
     const affirmationMatch = output.match(/題字[：:]\s*\n?(.*?)(?=\n\n|解讀)/s);
     const reflectionMatch = output.match(/解讀[：:]\s*\n?(.*)/s);
 
+    // Safety check on AI response content
+    const aiText =
+      (affirmationMatch ? affirmationMatch[1] : "") +
+      " " +
+      (reflectionMatch ? reflectionMatch[1] : output);
+    const aiSafety = checkSafety(aiText, 0, Infinity);
+    if (aiSafety) {
+      console.warn("Ollama response flagged by safety check, falling back to template");
+      return templateInterpretation();
+    }
+
     return {
       affirmation: affirmationMatch ? affirmationMatch[1].trim() : output.split("\n\n")[0],
       reflection: reflectionMatch ? reflectionMatch[1].trim() : output.split("\n\n")[1] || output,
@@ -3616,12 +3627,28 @@ function saveCard() {
     sctx.font = "300 20px -apple-system, PingFang HK, sans-serif";
     sctx.fillText("覺知畫布 Mindful Canvas", w / 2, 1380);
 
-    // Download
-    const link = document.createElement("a");
-    link.download = "mindful-canvas-card.png";
-    link.href = saveCanvas.toDataURL("image/png");
-    link.click();
-    showToast("卡片已儲存");
+    // Share or Download
+    saveCanvas.toBlob(async (blob) => {
+      if (navigator.share && navigator.canShare) {
+        const file = new File([blob], "mindful-canvas-card.png", { type: "image/png" });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: "覺知畫布 Mindful Canvas" });
+            showToast("已分享");
+            return;
+          } catch (e) {
+            // User cancelled or share failed, fall through to download
+          }
+        }
+      }
+      // Fallback: download
+      const link = document.createElement("a");
+      link.download = "mindful-canvas-card.png";
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
+      showToast("卡片已儲存");
+    }, "image/png");
   };
   img.src = document.getElementById("cardImage").src;
 }
@@ -3660,11 +3687,13 @@ function closeTerms() {
 }
 
 // ===== TOAST =====
-function showToast(msg) {
+function showToast(msg, durationMs) {
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 3000);
+  const dur = durationMs || 3000;
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(() => t.classList.remove("show"), dur);
 }
 
 // ===== SESSION STORAGE (教師長按匯出) =====
@@ -3750,6 +3779,40 @@ initTeacherExport();
 initParticleToggle();
 registerServiceWorker();
 startWelcomeAmbient();
+
+// ===== TUTORIAL =====
+let tutorialStep = 0;
+
+function showTutorial() {
+  if (localStorage.getItem("mc_tutorial_done")) return;
+  tutorialStep = 1;
+  document.getElementById("tutorialOverlay").style.display = "flex";
+  document.getElementById("tutorialStep1").style.display = "block";
+  document.getElementById("tutorialStep2").style.display = "none";
+  document.getElementById("tutorialStep3").style.display = "none";
+  document.getElementById("tutorialNextBtn").textContent = "繼續 →";
+}
+
+function advanceTutorial() {
+  tutorialStep++;
+  if (tutorialStep === 2) {
+    document.getElementById("tutorialStep1").style.display = "none";
+    document.getElementById("tutorialStep2").style.display = "block";
+  } else if (tutorialStep === 3) {
+    document.getElementById("tutorialStep2").style.display = "none";
+    document.getElementById("tutorialStep3").style.display = "block";
+    document.getElementById("tutorialNextBtn").textContent = "開始畫畫 ✨";
+  } else {
+    document.getElementById("tutorialOverlay").style.display = "none";
+    localStorage.setItem("mc_tutorial_done", "1");
+  }
+}
+
+window.advanceTutorial = advanceTutorial;
+
+// Show tutorial on first visit
+showTutorial();
+
 window.addEventListener("resize", () => {
   if (document.getElementById("welcome").classList.contains("active")) {
     resizeWelcomeAmbient();

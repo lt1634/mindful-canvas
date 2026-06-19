@@ -2,10 +2,7 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Mindful Canvas 覺知畫布</title>
@@ -29,7 +26,12 @@
         <p class="welcome-enter welcome-stagger-2">從禪繞跟畫開始，與色彩同在</p>
 
         <div class="mode-cards welcome-enter welcome-stagger-3">
-          <div class="mode-card zen featured" onclick="openZenPicker()">
+          <button
+            type="button"
+            class="mode-card zen featured"
+            onclick="openZenPicker()"
+            aria-label="禪繞唐卡模式：選一個圖案跟住畫"
+          >
             <canvas class="mode-card-preview" id="previewZen" aria-hidden="true"></canvas>
             <div class="mode-emoji">🪷</div>
             <div class="mode-title">禪繞唐卡</div>
@@ -37,8 +39,13 @@
               選一個圖案，跟住金光一步一步畫。輕觸留下你的色彩，跟完按「跟好了」，約 1 分鐘完成。
             </div>
             <div class="mode-meta">約 1 分鐘 · 分步跟畫 · 7 款圖案</div>
-          </div>
-          <div class="mode-card sumi" onclick="startSumiMode()">
+          </button>
+          <button
+            type="button"
+            class="mode-card sumi"
+            onclick="startSumiMode()"
+            aria-label="墨流畫布模式：日式墨流滴墨攪水"
+          >
             <canvas class="mode-card-preview" id="previewSumi" aria-hidden="true"></canvas>
             <div class="mode-emoji">🌊</div>
             <div class="mode-title">墨流畫布</div>
@@ -46,8 +53,13 @@
               日式墨流（Suminagashi）。輕點滴墨，墨色喺水面慢慢暈開；拖曳攪水，拉出流線與漩渦。
             </div>
             <div class="mode-meta">約 3 分鐘 · 滴墨 + 攪水 · 自己決定幾時完成</div>
-          </div>
-          <div class="mode-card free-secondary" onclick="startFreeMode()">
+          </button>
+          <button
+            type="button"
+            class="mode-card free-secondary"
+            onclick="startFreeMode()"
+            aria-label="自由畫布模式：自由塗抹無規則"
+          >
             <canvas class="mode-card-preview" id="previewFree" aria-hidden="true"></canvas>
             <div class="mode-emoji">🎨</div>
             <div class="mode-title">自由畫布</div>
@@ -55,7 +67,7 @@
               冇規則、冇對錯。用手指自由塗抹，每一筆都會慢慢消失，讓情緒自然流走。
             </div>
             <div class="mode-meta">約 5 分鐘 · 自己決定幾時完成</div>
-          </div>
+          </button>
         </div>
       </div>
     </div>
@@ -135,7 +147,7 @@
       <div class="card-container">
         <div class="card">
           <div class="card-drawing">
-            <img id="cardImage" src="" />
+            <img id="cardImage" src="" alt="你的繪畫作品" />
           </div>
           <div class="card-body">
             <div class="card-affirmation" id="cardAffirmation"></div>
@@ -151,13 +163,39 @@
     </div>
 
     <!-- Loading -->
-    <div class="loading-overlay" id="loading">
+    <div class="loading-overlay" id="loading" role="status" aria-live="polite">
       <div class="loading-spinner"></div>
       <div class="loading-text" id="loadingText">正在為你生成心靈解讀...</div>
     </div>
 
+    <!-- FIRST-TIME TUTORIAL -->
+    <div class="tutorial-overlay" id="tutorialOverlay" style="display: none">
+      <div class="tutorial-card">
+        <div class="tutorial-step" id="tutorialStep1">
+          <div class="tutorial-emoji">🪷</div>
+          <div class="tutorial-title">選擇一個模式</div>
+          <div class="tutorial-desc">禪繞唐卡・墨流畫布・自由畫布<br />每個模式都有不同嘅體驗</div>
+        </div>
+        <div class="tutorial-step" id="tutorialStep2" style="display: none">
+          <div class="tutorial-emoji">✨</div>
+          <div class="tutorial-title">用手指畫畫</div>
+          <div class="tutorial-desc">
+            輕觸留下色彩，拖曳拉出線條<br />每一筆都會慢慢消失，唔使擔心畫錯
+          </div>
+        </div>
+        <div class="tutorial-step" id="tutorialStep3" style="display: none">
+          <div class="tutorial-emoji">💚</div>
+          <div class="tutorial-title">完成後儲存</div>
+          <div class="tutorial-desc">撳「完成」會為你生成心靈解讀<br />可以儲存或分享你嘅作品</div>
+        </div>
+        <button class="tutorial-next-btn" id="tutorialNextBtn" onclick="advanceTutorial()">
+          繼續 →
+        </button>
+      </div>
+    </div>
+
     <!-- TOAST -->
-    <div class="toast" id="toast"></div>
+    <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
 
     <!-- TERMS OF USE -->
     <div id="termsScreen" class="screen">
