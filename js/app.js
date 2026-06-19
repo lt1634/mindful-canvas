@@ -25,6 +25,7 @@ let zenDuration = 120000;
 let zenProgress = 0;
 let zenTemplateId = "lotus";
 let zenStepIndex = 0;
+let showZenTikseGrid = false;
 let zenFinished = false;
 let zenTouchCount = 0;
 let zenTouchStrokes = [];
@@ -57,6 +58,7 @@ let sumiLastFlowDy = 0;
 let sumiAutoMawariAngle = 0;
 let sumiAnimFrame = 0;
 let sumiBgCache = null;
+let sumiUndoStack = [];
 
 const BREATH_CYCLE_MS = 8000;
 const TOOLS_IDLE_MS = 3000;
@@ -710,6 +712,236 @@ const ZEN_TEMPLATES = {
       },
     ],
   },
+  lotus_mantha: {
+    id: "lotus_mantha",
+    name: "六字真言八瓣蓮",
+    steps: [
+      {
+        hint: "畫外圈引導圓",
+        draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
+          ctx.save();
+          ctx.strokeStyle = `rgba(44,95,124,${a * 0.75})`;
+          ctx.lineWidth = lw;
+          ctx.setLineDash([2, 2]);
+          ctx.beginPath();
+          ctx.arc(cx, cy, sz * 0.45, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.beginPath();
+          ctx.arc(cx, cy, sz * 0.4, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫外層八瓣蓮",
+        draw(cx, cy, r, a, lw) {
+          drawZenLotusManthaPetals(cx, cy, r, 0, 0.38, 1, a, lw);
+        },
+      },
+      {
+        hint: "畫內層八瓣蓮",
+        draw(cx, cy, r, a, lw) {
+          drawZenLotusManthaPetals(cx, cy, r, Math.PI / 8, 0.3, 0.55, a, lw);
+        },
+      },
+      {
+        hint: "畫蓮蓬與蓮子",
+        draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.lineWidth = lw;
+          ctx.beginPath();
+          ctx.arc(cx, cy, sz * 0.08, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = `rgba(226,181,90,${a * 0.85})`;
+          for (let i = 0; i < 7; i++) {
+            const seedAngle = (i * Math.PI) / 3;
+            const seedX = cx + (i === 0 ? 0 : Math.cos(seedAngle) * sz * 0.04);
+            const seedY = cy + (i === 0 ? 0 : Math.sin(seedAngle) * sz * 0.04);
+            ctx.beginPath();
+            ctx.arc(seedX, seedY, sz * 0.008, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        },
+      },
+    ],
+  },
+  vajra: {
+    id: "vajra",
+    name: "智慧五股金剛杵",
+    guideRadius: 0.42,
+    steps: [
+      {
+        hint: "畫背景神聖圓環",
+        draw(cx, cy, r, a, lw) {
+          const sz = zenArtSize(r);
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a * 0.45})`;
+          ctx.lineWidth = lw * 0.8;
+          ctx.setLineDash([10, 12]);
+          ctx.beginPath();
+          ctx.arc(cx, cy, sz * 0.42, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫中心摩尼寶珠",
+        draw(cx, cy, r, a, lw) {
+          const u = zenArtSize(r) / 600;
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.lineWidth = lw;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 32 * u, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(cx, cy, 8 * u, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫上半金剛杵",
+        draw(cx, cy, r, a, lw) {
+          drawZenHalfVajra(cx, cy, zenArtSize(r) / 600, true, a, lw);
+        },
+      },
+      {
+        hint: "畫下半金剛杵",
+        draw(cx, cy, r, a, lw) {
+          drawZenHalfVajra(cx, cy, zenArtSize(r) / 600, false, a, lw);
+        },
+      },
+    ],
+  },
+  conch: {
+    id: "conch",
+    name: "吉祥右旋白法螺",
+    guideRadius: 0.48,
+    steps: [
+      {
+        hint: "畫法螺主體輪廓",
+        draw(cx, cy, r, a, lw) {
+          const u = zenArtSize(r) / 600;
+          ctx.save();
+          ctx.strokeStyle = `rgba(44,95,124,${a * 0.85})`;
+          ctx.lineWidth = lw * 1.1;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.beginPath();
+          ctx.moveTo(cx - 20 * u, cy - 130 * u);
+          ctx.bezierCurveTo(
+            cx + 130 * u,
+            cy - 180 * u,
+            cx + 190 * u,
+            cy + 30 * u,
+            cx + 50 * u,
+            cy + 160 * u
+          );
+          ctx.bezierCurveTo(
+            cx - 10 * u,
+            cy + 220 * u,
+            cx - 160 * u,
+            cy + 140 * u,
+            cx - 110 * u,
+            cy - 10 * u
+          );
+          ctx.bezierCurveTo(
+            cx - 80 * u,
+            cy - 100 * u,
+            cx - 50 * u,
+            cy - 110 * u,
+            cx - 20 * u,
+            cy - 130 * u
+          );
+          ctx.closePath();
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫右旋螺旋核心",
+        draw(cx, cy, r, a, lw) {
+          const u = zenArtSize(r) / 600;
+          ctx.save();
+          ctx.strokeStyle = `rgba(226,181,90,${a})`;
+          ctx.lineWidth = lw;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(cx - 20 * u, cy - 130 * u);
+          ctx.bezierCurveTo(
+            cx + 50 * u,
+            cy - 90 * u,
+            cx + 60 * u,
+            cy + 20 * u,
+            cx - 20 * u,
+            cy + 60 * u
+          );
+          ctx.bezierCurveTo(
+            cx - 70 * u,
+            cy + 80 * u,
+            cx - 110 * u,
+            cy + 10 * u,
+            cx - 60 * u,
+            cy - 40 * u
+          );
+          ctx.bezierCurveTo(
+            cx - 20 * u,
+            cy - 60 * u,
+            cx + 10 * u,
+            cy - 10 * u,
+            cx - 10 * u,
+            cy + 20 * u
+          );
+          ctx.bezierCurveTo(
+            cx - 20 * u,
+            cy + 30 * u,
+            cx - 40 * u,
+            cy + 10 * u,
+            cx - 30 * u,
+            cy - 10 * u
+          );
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+      {
+        hint: "畫飄帶與螺頂",
+        draw(cx, cy, r, a, lw) {
+          const u = zenArtSize(r) / 600;
+          ctx.save();
+          ctx.strokeStyle = `rgba(90,122,90,${a * 0.7})`;
+          ctx.lineWidth = lw * 0.85;
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath();
+          ctx.moveTo(cx - 100 * u, cy + 120 * u);
+          ctx.quadraticCurveTo(cx - 200 * u, cy + 200 * u, cx - 130 * u, cy + 250 * u);
+          ctx.quadraticCurveTo(cx - 180 * u, cy + 220 * u, cx - 220 * u, cy + 160 * u);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(cx + 100 * u, cy + 100 * u);
+          ctx.quadraticCurveTo(cx + 220 * u, cy + 180 * u, cx + 160 * u, cy + 250 * u);
+          ctx.quadraticCurveTo(cx + 200 * u, cy + 200 * u, cx + 240 * u, cy + 150 * u);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.strokeStyle = `rgba(226,181,90,${a * 0.75})`;
+          ctx.beginPath();
+          ctx.moveTo(cx - 20 * u, cy - 130 * u);
+          ctx.lineTo(cx - 35 * u, cy - 170 * u);
+          ctx.quadraticCurveTo(cx - 20 * u, cy - 190 * u, cx - 10 * u, cy - 165 * u);
+          ctx.closePath();
+          ctx.stroke();
+          ctx.restore();
+        },
+      },
+    ],
+  },
 };
 
 function getDominantColor() {
@@ -825,6 +1057,7 @@ function selectColor(hex, el) {
   currentColor = hex;
   if (appMode === "zen") currentZenStrokeColor = hex;
   document.getElementById("eraserBtn").classList.remove("active");
+  document.getElementById("eraserBtn").setAttribute("aria-pressed", "false");
   canvas.classList.remove("eraser-cursor");
   document.querySelectorAll(".color-dot").forEach((d) => d.classList.remove("active"));
   el.classList.add("active");
@@ -833,7 +1066,10 @@ function selectColor(hex, el) {
 
 function toggleEraser() {
   isEraser = !isEraser;
-  document.getElementById("eraserBtn").classList.toggle("active", isEraser);
+  if (!isEraser) eraserHoverPos = null;
+  const eraserBtn = document.getElementById("eraserBtn");
+  eraserBtn.classList.toggle("active", isEraser);
+  eraserBtn.setAttribute("aria-pressed", String(isEraser));
   canvas.classList.toggle("eraser-cursor", isEraser);
   touchToolsActivity();
   if (isEraser) {
@@ -843,6 +1079,69 @@ function toggleEraser() {
       if (COLORS[i].hex === currentColor) d.classList.add("active");
     });
   }
+}
+
+function cloneSumiDrops(drops) {
+  return drops.map((d) => ({
+    color: d.color,
+    verts: d.verts.map((v) => ({ x: v.x, y: v.y })),
+  }));
+}
+
+function resetSumiUndoStack() {
+  sumiUndoStack = [cloneSumiDrops(sumiDrops)];
+  updateUndoButton();
+}
+
+function pushSumiUndoState() {
+  sumiUndoStack.push(cloneSumiDrops(sumiDrops));
+  if (sumiUndoStack.length > 48) sumiUndoStack.shift();
+  updateUndoButton();
+}
+
+function canUndo() {
+  if (appMode === "sumi") return sumiUndoStack.length > 1;
+  if (appMode === "zen") return zenTouchStrokes.length > 0;
+  return strokeHistory.length > 0;
+}
+
+function updateUndoButton() {
+  const enabled = canUndo();
+  const undoBtn = document.getElementById("undoBtn");
+  const sumiUndoBtn = document.getElementById("sumiUndoBtn");
+  if (undoBtn) undoBtn.disabled = !enabled;
+  if (sumiUndoBtn) sumiUndoBtn.disabled = !enabled;
+}
+
+function undoLastAction() {
+  if (drawing) commitStroke();
+  if (!canUndo()) {
+    showToast("沒有可撤銷的步驟");
+    return;
+  }
+  if (appMode === "sumi") {
+    sumiUndoStack.pop();
+    sumiDrops = cloneSumiDrops(sumiUndoStack[sumiUndoStack.length - 1]);
+    sumiFlowImpulses = [];
+    sumiRipples = [];
+    strokeCount = sumiDrops.length ? Math.max(1, strokeCount - 1) : 0;
+    showToast("已撤銷上一步");
+    updateUndoButton();
+    return;
+  }
+  if (appMode === "zen") {
+    const last = zenTouchStrokes.pop();
+    if (last && !last.eraser) zenTouchCount = Math.max(0, zenTouchCount - 1);
+    redrawZenTraceLayer();
+    showToast("已撤銷上一步");
+    updateUndoButton();
+    return;
+  }
+  const last = strokeHistory.pop();
+  if (last && !last.eraser) strokeCount = Math.max(0, strokeCount - 1);
+  redrawFreeArtLayer();
+  showToast("已撤銷上一步");
+  updateUndoButton();
 }
 
 function getBreathValue() {
@@ -922,6 +1221,7 @@ let totalSilence = 0;
 let canvasW = 0,
   canvasH = 0;
 let isEraser = false;
+let eraserHoverPos = null;
 
 class ZenRipple {
   constructor(x, y) {
@@ -1397,6 +1697,50 @@ function drawEraserAlongPoints(targetCtx, points, size) {
   eraseInkAlongPoints(targetCtx, points, size);
 }
 
+function drawEraserRangePreview(targetCtx, points, size, stampBrushSize) {
+  if (!points.length) return;
+  const stampRadius = eraseInkRadius(stampBrushSize || size);
+  const spacing = Math.max(3, size * 0.35);
+  targetCtx.save();
+  targetCtx.globalCompositeOperation = "source-over";
+  targetCtx.fillStyle = "rgba(226, 181, 90, 0.16)";
+  targetCtx.strokeStyle = "rgba(226, 181, 90, 0.78)";
+  targetCtx.lineWidth = 1.5;
+  targetCtx.setLineDash([4, 3]);
+  const stampAt = (x, y) => {
+    targetCtx.beginPath();
+    targetCtx.arc(x, y, stampRadius, 0, Math.PI * 2);
+    targetCtx.fill();
+    targetCtx.stroke();
+  };
+  if (points.length === 1) {
+    stampAt(points[0].x, points[0].y);
+  } else {
+    for (let i = 1; i < points.length; i++) {
+      const p0 = points[i - 1];
+      const p1 = points[i];
+      const segLen = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+      const steps = Math.max(1, Math.ceil(segLen / spacing));
+      for (let s = 0; s <= steps; s++) {
+        const t = s / steps;
+        stampAt(p0.x + (p1.x - p0.x) * t, p0.y + (p1.y - p0.y) * t);
+      }
+    }
+  }
+  targetCtx.restore();
+}
+
+function paintEraserRangeIndicator() {
+  if (!isEraser || appMode === "sumi") return;
+  const brush = appMode === "zen" ? getZenBrushSize(true) : getBrushSize(true);
+  const stamp = appMode === "zen" ? brush * 1.25 : brush;
+  if (drawing && currentStroke.length) {
+    drawEraserRangePreview(ctx, currentStroke, brush, stamp);
+  } else if (eraserHoverPos) {
+    drawEraserRangePreview(ctx, [eraserHoverPos], brush, stamp);
+  }
+}
+
 function animateFreeFrame() {
   fadePhase += 0.05;
   drawPaperBackground();
@@ -1415,6 +1759,7 @@ function animateFreeFrame() {
   if (drawing && !isEraser && currentStroke.length > 1) {
     strokeTrail.draw(ctx, currentColor, getBrushSize(false));
   }
+  paintEraserRangeIndicator();
   drawParticles();
 }
 
@@ -1457,6 +1802,7 @@ function animateZenFrame() {
       size: brush,
     });
   }
+  paintEraserRangeIndicator();
 
   for (let i = zenRipples.length - 1; i >= 0; i--) {
     zenRipples[i].update();
@@ -1661,7 +2007,162 @@ function drawZenFish(cx, cy, scale, angleDeg, reversed, a, lw) {
   ctx.restore();
 }
 
+function drawZenLotusManthaPetals(cx, cy, r, offsetAngle, scale, opacityMul, a, lw) {
+  const sz = zenArtSize(r);
+  ctx.save();
+  ctx.strokeStyle = `rgba(226,181,90,${a * opacityMul})`;
+  ctx.lineWidth = lw;
+  ctx.lineCap = "round";
+  for (let i = 0; i < 8; i++) {
+    const angle = (i * Math.PI) / 4 + offsetAngle;
+    const xStart = cx + Math.cos(angle) * sz * 0.06;
+    const yStart = cy + Math.sin(angle) * sz * 0.06;
+    const xEnd = cx + Math.cos(angle) * sz * scale;
+    const yEnd = cy + Math.sin(angle) * sz * scale;
+    const cpAngle1 = angle - 0.28;
+    const cpAngle2 = angle + 0.28;
+    const cp1x = cx + Math.cos(cpAngle1) * sz * scale * 0.7;
+    const cp1y = cy + Math.sin(cpAngle1) * sz * scale * 0.7;
+    const cp2x = cx + Math.cos(cpAngle2) * sz * scale * 0.7;
+    const cp2y = cy + Math.sin(cpAngle2) * sz * scale * 0.7;
+    ctx.beginPath();
+    ctx.moveTo(xStart, yStart);
+    ctx.bezierCurveTo(cp1x, cp1y, cp1x, cp1y, xEnd, yEnd);
+    ctx.bezierCurveTo(cp2x, cp2y, cp2x, cp2y, xStart, yStart);
+    ctx.stroke();
+    const midX = cx + Math.cos(angle) * sz * scale * 0.6;
+    const midY = cy + Math.sin(angle) * sz * scale * 0.6;
+    ctx.strokeStyle = `rgba(90,122,90,${a * opacityMul * 0.5})`;
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath();
+    ctx.moveTo(xStart, yStart);
+    ctx.lineTo(midX, midY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle = `rgba(226,181,90,${a * opacityMul})`;
+  }
+  ctx.restore();
+}
+
+function drawZenHalfVajra(cx, cy, unit, isUpper, a, lw) {
+  const sign = isUpper ? -1 : 1;
+  const offset = cy + sign * 32 * unit;
+  const u = sign * unit;
+  ctx.save();
+  ctx.strokeStyle = `rgba(226,181,90,${a})`;
+  ctx.lineWidth = lw;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(cx - 50 * unit, offset);
+  ctx.quadraticCurveTo(cx, offset + 25 * u, cx + 50 * unit, offset);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx - 65 * unit, offset + 28 * u);
+  ctx.bezierCurveTo(
+    cx - 40 * unit,
+    offset + 5 * u,
+    cx + 40 * unit,
+    offset + 5 * u,
+    cx + 65 * unit,
+    offset + 28 * u
+  );
+  ctx.closePath();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx - 10 * unit, offset + 28 * u);
+  ctx.lineTo(cx, offset + 195 * u);
+  ctx.lineTo(cx + 10 * unit, offset + 28 * u);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx - 45 * unit, offset + 28 * u);
+  ctx.bezierCurveTo(
+    cx - 100 * unit,
+    offset + 100 * u,
+    cx - 50 * unit,
+    offset + 175 * u,
+    cx,
+    offset + 195 * u
+  );
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 45 * unit, offset + 28 * u);
+  ctx.bezierCurveTo(
+    cx + 100 * unit,
+    offset + 100 * u,
+    cx + 50 * unit,
+    offset + 175 * u,
+    cx,
+    offset + 195 * u
+  );
+  ctx.stroke();
+  ctx.strokeStyle = `rgba(44,95,124,${a * 0.65})`;
+  ctx.setLineDash([2, 2]);
+  ctx.beginPath();
+  ctx.moveTo(cx - 25 * unit, offset + 28 * u);
+  ctx.bezierCurveTo(
+    cx - 55 * unit,
+    offset + 80 * u,
+    cx - 25 * unit,
+    offset + 140 * u,
+    cx,
+    offset + 155 * u
+  );
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 25 * unit, offset + 28 * u);
+  ctx.bezierCurveTo(
+    cx + 55 * unit,
+    offset + 80 * u,
+    cx + 25 * unit,
+    offset + 140 * u,
+    cx,
+    offset + 155 * u
+  );
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawZenTikseGrid(alpha) {
+  const size = Math.min(canvasW, canvasH);
+  const cx = canvasW / 2;
+  const cy = canvasH / 2;
+  const a = alpha ?? 0.32;
+  ctx.save();
+  ctx.strokeStyle = `rgba(217, 119, 6, ${a})`;
+  ctx.lineWidth = 1.1;
+  ctx.setLineDash([2, 6]);
+  ctx.beginPath();
+  ctx.moveTo(cx, 0);
+  ctx.lineTo(cx, canvasH);
+  ctx.moveTo(0, cy);
+  ctx.lineTo(canvasW, cy);
+  ctx.stroke();
+  ctx.setLineDash([1, 8]);
+  ctx.lineWidth = 0.9;
+  ctx.beginPath();
+  ctx.moveTo(cx - size / 2, cy - size / 2);
+  ctx.lineTo(cx + size / 2, cy + size / 2);
+  ctx.moveTo(cx + size / 2, cy - size / 2);
+  ctx.lineTo(cx - size / 2, cy + size / 2);
+  ctx.stroke();
+  ctx.setLineDash([4, 6]);
+  ctx.lineWidth = 1;
+  const inset = size * 0.08;
+  ctx.strokeRect(cx - size / 2 + inset, cy - size / 2 + inset, size - inset * 2, size - inset * 2);
+  ctx.setLineDash([2, 4]);
+  ctx.lineWidth = 0.85;
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.16, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.32, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawZenGuide() {
+  if (showZenTikseGrid) drawZenTikseGrid(0.28);
   const tpl = ZEN_TEMPLATES[zenTemplateId];
   if (!tpl) return;
   const { cx, cy, r } = zenGuideMetrics();
@@ -1695,11 +2196,100 @@ function advanceZenStep() {
 const ZEN_PICKER_ITEMS = [
   { id: "circle", desc: "最簡單 · 4 步 · 適合第一次" },
   { id: "lotus", desc: "經典禪意 · 5 步 · 視覺最豐富" },
+  { id: "lotus_mantha", desc: "觀音慈悲 · 4 步 · 雙層八瓣蓮" },
   { id: "spiral", desc: "跟呼吸繞圈 · 5 步 · 流動感" },
   { id: "mandala", desc: "神聖壇城 · 5 步 · 專業底稿" },
   { id: "flower_of_life", desc: "神聖幾何 · 全螢幕 · 對稱之美" },
   { id: "endless_knot", desc: "因緣交織 · 6 步 · 立體編織" },
   { id: "bodhi_fish", desc: "八吉祥 · 6 步 · 流動和諧" },
+  { id: "vajra", desc: "密宗法器 · 4 步 · 中軸對稱" },
+  { id: "conch", desc: "八吉祥 · 3 步 · 黃金螺旋" },
+];
+
+const ZEN_TEMPLATE_META = {
+  mandala: {
+    englishTitle: "Vairocana Great Mandala",
+    difficulty: "⭐⭐⭐⭐⭐",
+    timeCost: "約 45 分鐘",
+    symbolism: "圓滿、專注、降伏雜念",
+  },
+  lotus_mantha: {
+    englishTitle: "Sacred Lotus of Compassion",
+    difficulty: "⭐⭐⭐⭐",
+    timeCost: "約 30 分鐘",
+    symbolism: "純潔、慈悲、出淤泥而不染",
+  },
+  bodhi_fish: {
+    englishTitle: "The Golden Auspicious Fish",
+    difficulty: "⭐⭐⭐⭐",
+    timeCost: "約 35 分鐘",
+    symbolism: "自由無礙、豐饒喜樂",
+  },
+  endless_knot: {
+    englishTitle: "The Eternal Shrivatsa Knot",
+    difficulty: "⭐⭐⭐⭐⭐",
+    timeCost: "約 50 分鐘",
+    symbolism: "長壽、無窮智慧、和諧因緣",
+  },
+  vajra: {
+    englishTitle: "The Five-Pronged Vajra",
+    difficulty: "⭐⭐⭐⭐⭐",
+    timeCost: "約 55 分鐘",
+    symbolism: "斷除執著、摧破心魔",
+  },
+  conch: {
+    englishTitle: "The Sacred White Conch",
+    difficulty: "⭐⭐⭐⭐",
+    timeCost: "約 40 分鐘",
+    symbolism: "妙音遠揚、消除愚痴",
+  },
+};
+
+const ZENTANGLE_PATTERNS = [
+  {
+    name: "新月 Crescent Moon",
+    symbol: "🌙",
+    desc: "半月形層層外拓線條",
+    difficulty: "⭐",
+    steps: [
+      "畫出基礎半月，並將其塗黑。",
+      "在半月邊緣，以外推方式畫出等距輪廓線。",
+      "重複疊加光環，並可在其間填補細密網點線。",
+    ],
+  },
+  {
+    name: "立體編織 Cadent",
+    symbol: "🧇",
+    desc: "網格與Ｓ型優雅連接線",
+    difficulty: "⭐⭐",
+    steps: [
+      "以等距畫出點狀矩陣網格。",
+      "在點與點之間，用優美的「Ｓ」形弧線相連。",
+      "相鄰行用反向「Ｓ」相連，中間塗黑以顯立體感。",
+    ],
+  },
+  {
+    name: "碎石靜心 Mooka",
+    symbol: "🐚",
+    desc: "流暢如葉芽的圓弧",
+    difficulty: "⭐⭐⭐",
+    steps: [
+      "畫一條向上拋物線，在頂點往內捲成圓弧。",
+      "順著原路徑往回描摹，加寬基底。",
+      "成組堆疊，讓它們互相依傍簇擁。",
+    ],
+  },
+  {
+    name: "神聖迴圈 Hollibaugh",
+    symbol: "🌉",
+    desc: "交錯穿插的立體緞帶線",
+    difficulty: "⭐⭐",
+    steps: [
+      "任意拉出兩條平行粗線。",
+      "第二組平行線遇到第一組時斷開，假裝從底下穿過。",
+      "重複多組，營造前後空間編織感。",
+    ],
+  },
 ];
 
 function drawZenTemplatePreview(canvas, templateId) {
@@ -1754,10 +2344,31 @@ function buildZenPickerCards() {
     const name = document.createElement("div");
     name.className = "zen-tpl-name";
     name.textContent = tpl.name;
+    const meta = ZEN_TEMPLATE_META[item.id];
+    const parts = [preview, name];
+    if (meta?.englishTitle) {
+      const en = document.createElement("div");
+      en.className = "zen-tpl-en";
+      en.textContent = meta.englishTitle;
+      parts.push(en);
+    }
     const desc = document.createElement("div");
     desc.className = "zen-tpl-desc";
     desc.textContent = item.desc || `${tpl.steps.length} 步跟畫`;
-    card.append(preview, name, desc);
+    parts.push(desc);
+    if (meta?.symbolism) {
+      const sym = document.createElement("div");
+      sym.className = "zen-tpl-symbolism";
+      sym.textContent = meta.symbolism;
+      parts.push(sym);
+    }
+    if (meta?.difficulty) {
+      const badge = document.createElement("div");
+      badge.className = "zen-tpl-meta";
+      badge.textContent = `${meta.difficulty} · ${meta.timeCost}`;
+      parts.push(badge);
+    }
+    card.append(...parts);
     container.appendChild(card);
     try {
       drawZenTemplatePreview(canvas, item.id);
@@ -1770,8 +2381,48 @@ function buildZenPickerCards() {
 function openZenPicker() {
   showScreen("zenPickerScreen");
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => buildZenPickerCards());
+    requestAnimationFrame(() => {
+      buildZenPickerCards();
+      buildZenTangleGuide();
+    });
   });
+}
+
+function buildZenTangleGuide() {
+  const list = document.getElementById("zenTangleList");
+  if (!list) return;
+  list.innerHTML = "";
+  ZENTANGLE_PATTERNS.forEach((pattern) => {
+    const item = document.createElement("details");
+    item.className = "zen-tangle-item";
+    const summary = document.createElement("summary");
+    summary.innerHTML = `<span class="zen-tangle-symbol">${pattern.symbol}</span><span class="zen-tangle-name">${pattern.name}</span><span class="zen-tangle-diff">${pattern.difficulty}</span>`;
+    const body = document.createElement("div");
+    body.className = "zen-tangle-body";
+    const desc = document.createElement("p");
+    desc.className = "zen-tangle-desc";
+    desc.textContent = pattern.desc;
+    body.appendChild(desc);
+    const ol = document.createElement("ol");
+    ol.className = "zen-tangle-steps";
+    pattern.steps.forEach((step) => {
+      const li = document.createElement("li");
+      li.textContent = step;
+      ol.appendChild(li);
+    });
+    body.appendChild(ol);
+    item.append(summary, body);
+    list.appendChild(item);
+  });
+}
+
+function toggleZenTikseGrid() {
+  showZenTikseGrid = !showZenTikseGrid;
+  const btn = document.getElementById("zenTikseBtn");
+  if (btn) {
+    btn.classList.toggle("active", showZenTikseGrid);
+    btn.setAttribute("aria-pressed", String(showZenTikseGrid));
+  }
 }
 
 // ===== SUMI ENGINE（數學墨流，Lu & Jaffer 2012）=====
@@ -2134,6 +2785,7 @@ function clearSumiCanvas() {
   sumiRipples = [];
   sumiAutoMawariAngle = 0;
   strokeCount = 0;
+  resetSumiUndoStack();
   showToast("水面已洗淨，重新開始");
 }
 
@@ -2481,6 +3133,8 @@ function setCanvasModeUI(mode) {
   freeUI.style.display = mode === "sumi" ? "none" : "block";
   freeUI.classList.toggle("zen-tools", mode === "zen");
   document.getElementById("zenOverlay").style.display = mode === "zen" ? "block" : "none";
+  const tikseBtn = document.getElementById("zenTikseBtn");
+  if (tikseBtn) tikseBtn.style.display = mode === "zen" ? "inline-flex" : "none";
   document.getElementById("sumiUI").style.display = mode === "sumi" ? "flex" : "none";
   document.getElementById("canvasTitle").textContent =
     mode === "zen" ? "禪繞唐卡" : mode === "sumi" ? "墨流畫布" : "自由畫布";
@@ -2695,6 +3349,7 @@ function commitStroke() {
     sumiLastInteraction = Date.now();
     currentStroke = [];
     strokeTrail.reset();
+    pushSumiUndoState();
     return;
   }
   if (appMode === "zen") {
@@ -2716,6 +3371,7 @@ function commitStroke() {
     }
     currentStroke = [];
     strokeTrail.reset();
+    updateUndoButton();
     return;
   }
   const minStrokePoints = isEraser ? 1 : 2;
@@ -2731,6 +3387,7 @@ function commitStroke() {
   }
   currentStroke = [];
   strokeTrail.reset();
+  updateUndoButton();
   const silenceDur = (Date.now() - silenceStart) / 1000;
   if (silenceDur > 3) totalSilence += silenceDur;
 }
@@ -2781,6 +3438,13 @@ canvas.addEventListener("pointermove", onPointerMove);
 canvas.addEventListener("pointerup", onPointerUp);
 canvas.addEventListener("pointercancel", onPointerUp);
 canvas.addEventListener("lostpointercapture", onPointerLost);
+canvas.addEventListener("pointermove", (e) => {
+  if (!isEraser || drawing || appMode === "sumi") return;
+  eraserHoverPos = getPointerPos(e);
+});
+canvas.addEventListener("pointerleave", () => {
+  eraserHoverPos = null;
+});
 
 function startFadeEffect() {
   stopCanvasLoop();
@@ -3085,11 +3749,13 @@ function resetCanvasState() {
   sumiAutoMawariAngle = 0;
   sumiAnimFrame = 0;
   sumiBgCache = null;
+  sumiUndoStack = [];
   drawing = false;
   activePointerId = null;
   currentStroke = [];
   isEraser = false;
   document.getElementById("eraserBtn").classList.remove("active");
+  document.getElementById("eraserBtn").setAttribute("aria-pressed", "false");
   canvas.classList.remove("eraser-cursor");
 }
 
@@ -3107,6 +3773,7 @@ function startFreeMode() {
     showToast(SCENE_GUIDANCE.free, 8000);
     startFadeEffect();
     touchToolsActivity();
+    updateUndoButton();
   }, 100);
 }
 
@@ -3122,7 +3789,9 @@ function startSumiMode() {
     resizeCanvas();
     startFreeAmbience();
     showToast(SCENE_GUIDANCE.sumi, 8000);
+    resetSumiUndoStack();
     startCanvasLoop();
+    updateUndoButton();
   }, 100);
 }
 
@@ -3130,6 +3799,12 @@ function startZenMode(templateId) {
   if (!templateId || !ZEN_TEMPLATES[templateId]) templateId = "lotus";
   zenTemplateId = templateId;
   zenStepIndex = 0;
+  showZenTikseGrid = false;
+  const tikseBtn = document.getElementById("zenTikseBtn");
+  if (tikseBtn) {
+    tikseBtn.classList.remove("active");
+    tikseBtn.setAttribute("aria-pressed", "false");
+  }
   appMode = "zen";
   currentScene = "zen";
   resetCanvasState();
@@ -3147,6 +3822,7 @@ function startZenMode(templateId) {
     startZenAmbience();
     showToast(SCENE_GUIDANCE.zen, 8000);
     startCanvasLoop();
+    updateUndoButton();
   }, 100);
 }
 
@@ -3175,6 +3851,7 @@ function goHome() {
   zenFinished = false;
   isEraser = false;
   document.getElementById("eraserBtn").classList.remove("active");
+  document.getElementById("eraserBtn").setAttribute("aria-pressed", "false");
   canvas.classList.remove("eraser-cursor");
   zenTemplateId = "lotus";
   zenStepIndex = 0;
@@ -3251,124 +3928,76 @@ function generateInterpretation() {
   // ===== 2. AFFIRMATION POOL (10 per scene, 80 total) =====
   const affirmations = {
     anxious: [
-      "你將未知的焦慮，溫柔地化作了色彩的流動。緊繃的背後，是你對生命的敬畏。",
-      "每一筆不完美的線條，都是你勇敢面對空白的證明。",
-      "你沒有逃避這張白紙，你選擇了與它對話。這份勇氣，本身就是平靜的開始。",
-      "焦慮不是你的敵人，它是身體在提醒你：這件事對你很重要。",
-      "你把看不見的壓力，變成了看得見的色彩。這份轉化，本身就是力量。",
+      "你選擇面對，而不是逃避。這一步已經很好。",
+      "焦慮不是敵人，是身體在告訴你：這件事對你很重要。",
+      "每一筆不完美的線條，都是你面對空白的證明。",
       "白紙曾經讓你害怕，但你動筆了。這就夠了。",
-      "你的手在顫抖，但你依然在畫。這份堅持，比任何一幅完美作品都珍貴。",
-      "不需要平靜才能開始。帶著焦慮動筆，焦慮會在色彩中慢慢融化。",
-      "你選擇面對，而不是逃避。這一步，已經比昨天更勇敢。",
+      "帶著焦慮動筆，焦慮會在色彩中慢慢融化。",
+      "你把看不見的壓力，變成了看得見的色彩。",
       "深呼吸。你現在在這裡，在色彩裡，在安全的地方。",
     ],
     chaotic: [
-      "混亂不是錯誤，是創造力正在湧動的跡象。",
-      "你把腦中的風暴，輕輕地釋放在畫布上。紙承載得起你所有的思緒。",
-      "思緒如雲，飄過就飄過了。你剛才做的，是讓它們有了一个温柔的出口。",
-      "腦袋很亂的時候，不需要整理。畫出來，就是一種整理。",
-      "混亂的線條是情緒最誠實的模樣。不需要美化，不需要解釋。",
-      "你的思緒像一條湍急的河流。畫布是河岸，讓它流過。",
-      "不需要想清楚才能畫。有時候，畫了才會想清楚。",
-      "那些糾纏在一起的念頭，現在出現在紙上了。它們不再只困在你的腦袋裡。",
-      "混亂代表你正在處理很多東西。這不是弱點，這是韌性。",
+      "混亂不是錯誤，是創造力正在湧動。",
+      "腦袋很亂的時候，畫出來就是一種整理。",
+      "混亂的線條是情緒最誠實的模樣。",
+      "不需要想清楚才能畫，有時候畫了才會想清楚。",
       "讓線條自己找到出路。你不需要為它們規劃路線。",
     ],
     stuck: [
-      "停頓不是停滯，是土壤在安靜地準備下一次綻放。",
-      "你選擇了與此刻的自己共處，不催促、不批判。這本身就是最深的覺知。",
       "留白也是創作的一部分。不落一筆，也是一種圓滿。",
-      "停下來不是放棄。有時候，停下來才是最勇敢的選擇。",
-      "你的手停住了，但你的心依然在感受。這份感受，比任何筆觸都重要。",
-      "音樂最美的部分，往往是休止符。你的停頓，也是。",
-      "不需要一直前進。在原地站一會兒，也是一種移動。",
-      "你給了自己一個喘息的空間。這份溫柔，你值得擁有。",
-      "空白不是空虛。它是可能性，是安靜，是你給自己的禮物。",
+      "停下來不是放棄，有時候才是最勇敢的選擇。",
+      "空白不是空虛，是你給自己的禮物。",
       "當你準備好，下一步自然會來。不急。",
+      "你給了自己一個喘息的空間。這份溫柔，你值得擁有。",
     ],
     free: [
-      "你讓手自由地舞動，讓色彩自己說話。這一刻，你與創作合為一體。",
-      "不追求結果的創作，才是最純粹的表達。你做得很好。",
-      "每一筆都在消失，每一筆都是全新的開始。享受這個流動的當下。",
+      "不追求結果的創作，才是最純粹的表達。",
       "沒有規則，沒有對錯。你的手知道要去哪裡。",
-      "讓顏色帶領你。你不需要為它們做決定。",
-      "這是你和色彩之間的對話。不需要旁觀者，不需要評分。",
       "你在這裡，在畫布前，在呼吸裡。這就是全部。",
-      "你的手指是畫筆，你的心是顏料。這幅畫，是你此刻最真實的樣子。",
-      "不需要畫出什麼。拿起筆，就是創作的開始。",
-      "線條會消失，但體驗不會。你剛才那一刻的專注，已經留在你身體裡。",
+      "每一筆都在消失，每一筆都是全新的開始。",
+      "線條會消失，但體驗不會。專注的當下已經留在身體裡。",
     ],
     metta: [
-      "你的每一筆，都是一句無聲的祝福。善意不需要言語，色彩就是它的語言。",
-      "你在為一個人畫畫。這份心意，比任何一幅杰作都珍貴。",
       "慈是：我希望你快樂。你剛才用色彩說了這句話。",
-      "不需要見到對方，善意就能穿越距離。你剛才做的事情，比你想像的更有力量。",
-      "為他人畫畫的時候，你自己的心也會變得柔軟。",
-      "你選擇了「慈」。這個選擇本身，就是一種修行。",
-      "讓你的畫筆帶著溫暖流動。每一個顏色都是一份善意。",
-      "不需要完美，只需要真心。你剛才畫的每一筆，都充滿了祝福。",
-      "慈不求回報。你畫完了，善意就已經完成了。",
+      "善意不需要言語，色彩就是它的語言。",
       "你為他人送上祝福，而祝福首先溫暖的是你自己。",
+      "不需要見到對方，善意就能穿越距離。",
+      "為他人畫畫的時候，你自己的心也會變得柔軟。",
     ],
     karuna: [
-      "你為一個人的痛苦畫了一幅畫。這份陪伴，比任何安慰都深沉。",
-      "悲不是同情，是「我願意和你一起承受」。你剛才做的事情，就是這樣。",
-      "你不需要解決任何問題。靜靜地陪伴，就是最大的慈悲。",
-      "為受苦的人畫畫，是一種無聲的擁抱。",
-      "你選擇了「悲」。這代表你的心是柔軟的、打開的。",
-      "每一筆都在說：「你在這裡，你不孤單。」",
-      "悲是：願你離苦。你剛才用色彩表達了這個願望。",
-      "你為他人的痛苦騰出了一個空間。這份空間，就是慈悲。",
+      "悲不是同情，是「我願意和你一起承受」。",
       "不需要做什麼。你的畫筆已經替你說了最溫柔的話。",
+      "你為他人的痛苦騰出了一個空間。這份空間，就是慈悲。",
+      "每一筆都在說：「你在這裡，你不孤單。」",
       "你選擇了陪伴而不是逃避。這份勇氣，本身就是慈悲。",
     ],
     mudita: [
-      "你為他人的快樂而畫。這份喜悅，是雙倍的。",
-      "為別人的成就感到高興，是一種稀缺的能力。你剛才做到了。",
-      "你的色彩變得明亮了。因為你在為一個人的幸福畫畫。",
-      "喜是：你的快樂就是我的快樂。你剛才用畫筆說了這句話。",
-      "不需要比較。為他人歡喜，你自己也會變得更豐盛。",
-      "你選擇了「喜」。這個選擇，讓你的心變得更寬廣。",
-      "每一筆明亮的色彩，都是你為他人點亮的一盞燈。",
-      "嫉妒消耗能量，隨喜創造能量。你剛才做了一件很有力量的事。",
-      "為他人的幸福真心高興，是世界上最難也最美的修行。",
+      "喜是：你的快樂就是我的快樂。",
+      "為別人成就感到高興，是一種稀缺的能力。你做到了。",
+      "嫉妒消耗能量，隨喜創造能量。你剛才做了一件有力量的事。",
+      "你為他人的幸福真心高興。這份心，很珍貴。",
       "你剛才畫的這幅畫，是為一個人的笑容而存在的。",
     ],
     upekkha: [
-      "你選擇了放下。讓畫筆隨意流動，不追趕、不執著。",
-      "每一筆都會消失，就像生命中的一切。你接受這件事，就是自由。",
-      "不追好、不避壞。你剛才在畫布上練習了平等心。",
-      "捨是：我接受一切如其所是。你剛才用色彩表達了這份接受。",
-      "不需要完美。不需要結果。你只需要在這裡，和畫布在一起。",
-      "你選擇了「捨」。這代表你願意與無常和平共處。",
-      "線條來了又走，色彩亮了又暗。你只是靜靜地看著。這就是修行。",
+      "每一筆都會消失，就像生命中的一切。你接受了，就是自由。",
+      "不追好、不避壞。你剛才練習了平等心。",
       "放下不是放棄。是「我看見了，我接受了，我繼續前行」。",
       "你在畫布上練習了最重要的一課：不執著。",
-      "捨是四無量心的根基。沒有捨，就沒有真正的慈、悲、喜。你剛才做到了。",
+      "線條來了又走，色彩亮了又暗。你只是靜靜地看著。這就是修行。",
     ],
     zen: [
-      "你跟隨節奏，讓唐卡在眼前慢慢綻放。這份耐心，本身就是修行。",
-      "你不需要畫得好，只需要在場。剛才那一分鐘，你已經做到了。",
+      "你跟隨節奏，讓唐卡在眼前綻放。這份耐心，就是修行。",
       "輕觸之間，光暈散開。你與畫面同在，這就是覺知。",
-      "音樂與圖案帶著你走，你的手只是回應。這份放鬆，值得被看見。",
-      "一分鐘很短，但足夠讓心靜下來。你剛才給了自己一份禮物。",
-      "唐卡的圓滿，不在於完美，而在於你願意跟隨。",
-      "你讓圖案自己出現，讓手指輕輕回應。這就是禪繞的意義。",
-      "剛才那一刻，你沒有追趕，沒有著急。很好。",
+      "一分鐘很短，但足夠讓心靜下來。你給了自己一份禮物。",
+      "你不需要畫得好，只需要在場。剛才那一分鐘，你做到了。",
       "光暈散開的瞬間，你已經與當下合一。",
-      "你完成了一幅禪意之畫。帶走這份平靜，回到日常吧。",
     ],
     sumi: [
-      "墨滴落水，自己會找到形狀。你只需要放手，讓它流動。",
-      "你攪動的水流，每一道紋路都係獨一無二。呢一刻，唔會再重複。",
-      "墨色喺水面慢慢暈開，就好似情緒慢慢散開一樣。唔使捉緊。",
-      "你冇控制結果，但結果好美。有時候，放下控制就係答案。",
+      "墨滴落水，自己會找到形狀。你只需要放手。",
+      "你攪動的水流，每一道紋路都係獨一無二。",
+      "你冇控制結果，但結果好美。放下控制就係答案。",
       "水面承載得起所有墨色，就好似呢一刻承載得起你所有思緒。",
-      "一滴墨改變唔到大海，但改變到成幅畫。你嘅每個小行動都有意思。",
-      "墨流嘅美，在於佢從來唔重複。你嘅每一日，都係新嘅一幅畫。",
-      "你睇住墨色流動嗰陣，心都靜咗落嚟。呢份觀察，就係正念。",
       "水唔會急，墨唔會趕。你都可以慢慢嚟。",
-      "呢幅墨流畫係水同你合作嘅作品。學識同唔確定共處，係好大嘅成長。",
     ],
   };
 
@@ -3416,55 +4045,49 @@ function generateInterpretation() {
     },
   };
 
-  // ===== 4. REFLECTION ENGINE (modular, color-aware) =====
+  // ===== 4. REFLECTION ENGINE (concise) =====
   const dominantColor = getDominantColor();
   const colorInfo = colorDescriptions[dominantColor] ||
     colorDescriptions[currentColor] || { meaning: "", phrase: "" };
 
-  // Module A: stroke count
+  // Module A: stroke count (shorter)
   let strokePart = "";
   if (strokeCount < 5) {
-    strokePart = `你用寥寥幾筆 ${strokeCount} 筆完成了這幅畫，留出了大量空間`;
+    strokePart = `${strokeCount} 筆，留白很多`;
   } else if (strokeCount < 30) {
-    strokePart = `你用 ${strokeCount} 筆勾勒了你此刻的心境`;
+    strokePart = `${strokeCount} 筆勾勒了此刻的心境`;
   } else if (strokeCount < 100) {
-    strokePart = `你用 ${strokeCount} 筆層層疊疊地表達了自己`;
-  } else if (strokeCount < 500) {
-    strokePart = `你用超過 ${strokeCount} 筆進行了一次大規模的情緒釋放`;
+    strokePart = `${strokeCount} 筆層層疊疊`;
   } else {
-    strokePart = `你用 ${strokeCount} 筆完成了一次極致的釋放，畫布完全承接得起你所有的力量`;
+    strokePart = `超過 ${strokeCount} 筆的釋放`;
   }
 
-  // Module B: silence
+  // Module B: silence (shorter)
   let silencePart = "";
   if (totalSilence > 60) {
-    silencePart = `其中有一段超過一分鐘的深層寂靜，那是你與自己最深的對話`;
+    silencePart = "中間有段超過一分鐘的深層寂靜";
   } else if (totalSilence > 30) {
-    silencePart = `其中有 ${Math.round(totalSilence)} 秒的深度停頓，那是你進入心流的證明`;
+    silencePart = `有 ${Math.round(totalSilence)} 秒的深度停頓`;
   } else if (totalSilence > 5) {
-    silencePart = `其中有 ${Math.round(totalSilence)} 秒的寂靜，那是你與自己對話的時刻`;
+    silencePart = `有 ${Math.round(totalSilence)} 秒的寂靜`;
   } else {
-    silencePart = "節奏流暢，你的手一直帶著你前進";
+    silencePart = "節奏流暢";
   }
 
-  // Module C: color
+  // Module C: color (shorter)
   let colorPart = colorInfo.meaning || "";
 
-  // Module D: scene-specific ending
+  // Module D: scene-specific ending (shorter)
   const sceneEndings = {
-    anxious: "焦慮終將過去，而你依然在這裡。帶住這份覺察，回到你的日常吧。",
-    chaotic:
-      "混亂的線條是你此刻最真實的樣子——不需要整理，不需要美化。每一筆的消逝，都帶走了一小部分重量。你做得很好。",
-    stuck: "創作中的停頓像音樂的休止符，不是空白，而是蓄力。當你準備好時，下一步自然會來。",
-    free: "這就是當下的力量——不追憶過去，不預期未來，只是純粹地創作。你做得很好。",
-    metta:
-      "你剛才為一個人送上了一份無聲的祝福。善意已經完成，不需要更多。帶住這份溫暖，回到你的日常。",
-    karuna:
-      "你剛才為一個人的痛苦騰出了一個空間。這份陪伴，就是你能做的最好的事。帶住這份慈悲，繼續前行。",
-    mudita:
-      "你剛才為他人的快樂畫了一幅畫。為他人歡喜，你自己也變得更豐盛。帶住這份喜悅，繼續前行。",
-    upekkha: "你剛才在畫布上練習了放下。每一筆都會消失，而你平靜地接受了這件事。這就是最大的自由。",
-    zen: "你剛才跟隨禪繞唐卡，完成了一次靜心的旅程。圖案已綻放，你的心也安定了。帶走這份感受，繼續前行。",
+    anxious: "帶住這份覺察，回到日常吧。",
+    chaotic: "每一筆的消逝，都帶走了一小部分重量。",
+    stuck: "當你準備好時，下一步自然會來。",
+    free: "不追憶過去，不預期未來，只是純粹地創作。",
+    metta: "善意已經完成。帶住這份溫暖，回到日常。",
+    karuna: "這份陪伴，就是你能做的最好的事。",
+    mudita: "為他人歡喜，你自己也變得更豐盛。",
+    upekkha: "每一筆都會消失，而你平靜地接受了這件事。",
+    zen: "圖案已綻放，你的心也安定了。帶走這份感受。",
   };
   let endingPart = sceneEndings[currentScene] || sceneEndings.free;
 
@@ -3534,26 +4157,22 @@ async function generateInterpretationAI() {
     "#3a3a4a": "墨色",
   };
 
-  const prompt = `你是一位擁有 10 年以上資深經驗的視藝教育家、藝術評論家，同時也是一位深諳東方佛學與表達藝術治療的靈魂導師。
+  const prompt = `你是一位資深視藝教育家與東方禪學導師。語氣溫和、詩意、簡潔。
+【避免】宗教教條、商業療癒口吻。請用繁體中文/粵語港式文風。
 
-你的語氣溫和、包容、充滿藝術氣息與詩意。
-【絕對避免】使用任何宗教教條、陳腔濫調的說教，或過於商業化的療癒系口吻。
-你說話的目的是給予用戶深度的陪伴、澄清與溫柔的轉念。
-請用繁體中文/粵語混合的港式文風輸出。
-
-用戶情緒狀態：${OLLAMA_SCENE_MAP[currentScene] || "自由書寫"}
-繪畫統計：共 ${strokeCount} 筆，停頓 ${Math.round(totalSilence)} 秒，主要色彩 ${colorNames[dominantColor] || colorNames[currentColor] || "未指定"}
+用戶情緒：${OLLAMA_SCENE_MAP[currentScene] || "自由書寫"}
+繪畫：${strokeCount} 筆，停頓 ${Math.round(totalSilence)} 秒，主要色彩 ${colorNames[dominantColor] || colorNames[currentColor] || "未指定"}
 
 請生成：
-1. 【禪意題字】（1-2 句話）：將用戶的焦慮或壓力文字提煉為充滿力量的禪意題句
-2. 【心境解讀】（150-200 字）：結合繪畫統計進行客製化解讀，結構：點出筆數 → 解讀停頓意義 → 色彩與情感連結 → 將線條消失引導至無常與放低執著 → 一句溫柔讚賞
+1. 【禪意題字】（1 句，10 字以內）
+2. 【心境解讀】（50-80 字，點出筆數→停頓→色彩→一句溫柔收尾）
 
-格式要求：
+格式：
 題字：
-（你的題字）
+（1 句）
 
 解讀：
-（你的解讀）`;
+（50-80 字）`;
 
   try {
     const response = await fetch(OLLAMA_URL, {
@@ -3564,7 +4183,7 @@ async function generateInterpretationAI() {
         model: OLLAMA_MODEL,
         prompt: prompt,
         stream: false,
-        options: { temperature: 0.8, num_predict: 280 },
+        options: { temperature: 0.8, num_predict: 160 },
       }),
     });
 
@@ -3755,6 +4374,8 @@ window.advanceZenStep = advanceZenStep;
 window.clearSumiCanvas = clearSumiCanvas;
 window.toggleToolsPanel = toggleToolsPanel;
 window.toggleEraser = toggleEraser;
+window.toggleZenTikseGrid = toggleZenTikseGrid;
+window.undoLastAction = undoLastAction;
 window.showTerms = showTerms;
 window.downloadArtwork = downloadArtwork;
 window.finishFromCard = finishFromCard;

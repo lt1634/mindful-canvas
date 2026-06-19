@@ -9,7 +9,7 @@
     <meta name="copyright" content="© 2026 Tim Yuen / ZenArt Lab. All rights reserved." />
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" href="icon-192.png" />
-    <link rel="stylesheet" href="css/style.css?v=zen-v11" />
+    <link rel="stylesheet" href="css/style.css?v=zen-v19" />
   </head>
   <body>
     <!-- WELCOME -->
@@ -38,7 +38,7 @@
             <div class="mode-desc">
               選一個圖案，跟住金光一步一步畫。輕觸留下你的色彩，跟完按「跟好了」，約 1 分鐘完成。
             </div>
-            <div class="mode-meta">約 1 分鐘 · 分步跟畫 · 7 款圖案</div>
+            <div class="mode-meta">約 1 分鐘 · 分步跟畫 · 10 款圖案</div>
           </button>
           <button
             type="button"
@@ -81,6 +81,11 @@
         <h2 class="zen-picker-title">選一個圖案跟住畫</h2>
         <p class="zen-picker-sub">每個圖案都有預覽；撳圖案跟住淺色線條自由畫</p>
         <div class="zen-template-cards" id="zenTemplateCards"></div>
+        <section class="zen-tangle-guide" id="zenTangleGuide" aria-label="禪繞格紋繪製參考">
+          <h3 class="zen-tangle-title">禪繞格紋參考</h3>
+          <p class="zen-tangle-sub">點開格紋名稱，查看繪製步驟（參考 artifact 唐卡版）</p>
+          <div id="zenTangleList"></div>
+        </section>
       </div>
     </div>
 
@@ -95,6 +100,16 @@
         <canvas id="drawCanvas"></canvas>
         <div class="zen-overlay" id="zenOverlay" style="display: none">
           <div class="zen-hint" id="zenHint">跟住淺色線條，留下你的色彩痕跡</div>
+          <button
+            type="button"
+            class="zen-tikse-btn"
+            id="zenTikseBtn"
+            onclick="toggleZenTikseGrid()"
+            aria-pressed="false"
+            style="display: none"
+          >
+            比例網格
+          </button>
           <div class="zen-timer" id="zenTimer" aria-hidden="true" style="display: none">2:00</div>
         </div>
         <div id="sumiUI" style="display: none">
@@ -107,6 +122,15 @@
               <button type="button" class="sumi-flow-btn" aria-pressed="false">大</button>
             </div>
             <span class="sumi-bar-sep" aria-hidden="true"></span>
+            <button
+              type="button"
+              class="sumi-undo"
+              id="sumiUndoBtn"
+              onclick="undoLastAction()"
+              disabled
+            >
+              撤銷
+            </button>
             <button type="button" class="sumi-clear" onclick="clearSumiCanvas()">洗淨水面</button>
           </div>
         </div>
@@ -127,11 +151,54 @@
             <button
               type="button"
               class="tool-btn"
+              id="undoBtn"
+              onclick="undoLastAction()"
+              title="撤銷上一步"
+              aria-label="撤銷上一步"
+              disabled
+            >
+              <svg class="tool-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M9 8H5v4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M5 12c1.5-4 6-6.5 10-5 3.2 1.2 5.2 4.5 5 8-0.2 4-4 7-8.5 7H9"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="tool-btn"
               id="eraserBtn"
               onclick="toggleEraser()"
               title="橡皮擦"
+              aria-label="橡皮擦"
+              aria-pressed="false"
             >
-              🧹
+              <svg class="tool-icon eraser-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <g
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <g transform="translate(12 12) rotate(-42) translate(-4.5 -7)">
+                    <rect x="0" y="0" width="9" height="14" rx="1.5" />
+                    <line x1="0" y1="3.75" x2="9" y2="3.75" />
+                  </g>
+                </g>
+              </svg>
             </button>
             <div class="size-bar" id="sizeBar"></div>
             <label class="particle-toggle">
@@ -215,6 +282,6 @@
       </div>
     </div>
 
-    <script type="module" src="js/app.js?v=zen-v11"></script>
+    <script type="module" src="js/app.js?v=zen-v16"></script>
   </body>
 </html>

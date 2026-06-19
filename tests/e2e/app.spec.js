@@ -40,6 +40,7 @@ test.describe("Mindful Canvas", () => {
     await expect(page.locator("#zenOverlay")).toBeVisible();
     await expect(page.locator("#zenHint")).toHaveText("跟住淺色線條，留下你的色彩痕跡");
     await expect(page.locator("#eraserBtn")).toBeVisible();
+    await expect(page.locator("#undoBtn")).toBeVisible();
   });
 
   test("starts sumi marbling mode and can drop ink", async ({ page }) => {
@@ -50,6 +51,7 @@ test.describe("Mindful Canvas", () => {
     await expect(page.locator(".sumi-flow-btn")).toHaveCount(3);
     await expect(page.locator(".sumi-flow-btn").first()).toHaveClass(/active/);
     await expect(page.locator(".sumi-dot")).toHaveCount(14);
+    await expect(page.locator("#sumiUndoBtn")).toBeVisible();
     const canvas = page.locator("#drawCanvas");
     const box = await canvas.boundingBox();
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
