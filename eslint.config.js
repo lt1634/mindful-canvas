@@ -26,6 +26,7 @@ export default [
     ignores: [
       "node_modules/**",
       "dist/**",
+      "_site/**",
       "*.min.js",
       "sw.js",
       "js/app.js",
