@@ -122,9 +122,8 @@
           收起 ▼
         </button>
         <div class="tools-panel" id="toolsPanel">
-          <div class="color-bar" id="colorBar"></div>
-          <div class="size-bar" id="sizeBar"></div>
-          <div class="tool-bar">
+          <div class="toolbar-row">
+            <div class="color-bar" id="colorBar"></div>
             <button
               type="button"
               class="tool-btn"
@@ -134,10 +133,11 @@
             >
               🧹
             </button>
+            <div class="size-bar" id="sizeBar"></div>
+            <label class="particle-toggle">
+              <input type="checkbox" id="particleToggle" checked /> 粒子
+            </label>
           </div>
-          <label class="particle-toggle">
-            <input type="checkbox" id="particleToggle" checked /> 禪意粒子
-          </label>
         </div>
       </div>
     </div>

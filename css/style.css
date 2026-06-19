@@ -596,16 +596,15 @@ body {
 .color-bar {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 6px;
+  padding: 6px 8px;
   background: var(--surface);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 .color-dot {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   border: 2px solid transparent;
   cursor: pointer;
@@ -621,8 +620,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 8px 16px 12px;
+  gap: 10px;
+  padding: 6px 8px;
   background: var(--surface);
 }
 .size-dot {
@@ -636,21 +635,13 @@ body {
   opacity: 1;
 }
 
-.tool-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  padding: 4px 16px 10px;
-  background: var(--surface);
-}
 .tool-btn {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.15);
   background: var(--bg);
-  font-size: 18px;
+  font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -914,9 +905,22 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 16px 8px;
+  padding: 0 8px;
   background: var(--surface);
   justify-content: center;
+  white-space: nowrap;
+}
+
+/* Toolbar row — single line layout */
+.toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: var(--surface);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .particle-toggle input {
   accent-color: var(--accent);
