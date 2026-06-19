@@ -32,6 +32,8 @@ let currentZenStrokeColor = "#f0c674";
 let zenRipples = [];
 let zenTraceLayer = null;
 let zenTraceCtx = null;
+let freeArtLayer = null;
+let freeArtCtx = null;
 let strokeTrail = null;
 let zenAudio = null;
 let freeAudio = null;
@@ -1215,6 +1217,54 @@ function resizeCanvas() {
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   if (appMode === "zen") resizeZenTraceLayer();
+  else resizeFreeArtLayer();
+}
+
+function ensureFreeArtLayer() {
+  if (!freeArtLayer) {
+    freeArtLayer = document.createElement("canvas");
+    freeArtCtx = freeArtLayer.getContext("2d", { alpha: true });
+  }
+  return freeArtCtx;
+}
+
+function resizeFreeArtLayer() {
+  const fac = ensureFreeArtLayer();
+  const dpr = window.devicePixelRatio || 1;
+  freeArtLayer.width = canvasW * dpr;
+  freeArtLayer.height = canvasH * dpr;
+  fac.setTransform(1, 0, 0, 1, 0, 0);
+  fac.scale(dpr, dpr);
+  fac.lineCap = "round";
+  fac.lineJoin = "round";
+  redrawFreeArtLayer();
+}
+
+function redrawFreeArtLayer(preview) {
+  const fac = ensureFreeArtLayer();
+  fac.clearRect(0, 0, canvasW, canvasH);
+  strokeHistory.forEach((stroke, idx) => {
+    if (stroke.eraser) {
+      eraseInkAlongPoints(fac, stroke.points, stroke.size);
+      return;
+    }
+    const age = strokeHistory.length > 1 ? (strokeHistory.length - idx) / strokeHistory.length : 1;
+    const fadeAmount = Math.max(0.72, 1 - fadePhase * 0.002 * age);
+    drawInkAlongPoints(fac, stroke.points, stroke.color, stroke.size, fadeAmount, 4);
+    drawStroke(stroke, fadeAmount * 0.85, fac);
+  });
+  if (preview) {
+    if (preview.eraser) {
+      eraseInkAlongPoints(fac, preview.points, preview.size);
+    } else if (preview.points.length > 1) {
+      drawInkAlongPoints(fac, preview.points, preview.color, preview.size, 1, 4);
+      drawStroke(
+        { points: preview.points, color: preview.color, size: preview.size, eraser: false },
+        0.88,
+        fac
+      );
+    }
+  }
 }
 
 function ensureZenTraceLayer() {
@@ -1308,18 +1358,25 @@ function drawEraserAlongPoints(targetCtx, points, size) {
   eraseInkAlongPoints(targetCtx, points, size);
 }
 
-function redrawWithFade() {
+function animateFreeFrame() {
   fadePhase += 0.05;
-  strokeHistory.forEach((stroke, idx) => {
-    if (stroke.eraser) {
-      eraseInkAlongPoints(ctx, stroke.points, stroke.size);
-      return;
-    }
-    const age = strokeHistory.length > 1 ? (strokeHistory.length - idx) / strokeHistory.length : 1;
-    const fadeAmount = Math.max(0.72, 1 - fadePhase * 0.002 * age);
-    drawInkAlongPoints(ctx, stroke.points, stroke.color, stroke.size, fadeAmount, 4);
-    drawStroke(stroke, fadeAmount * 0.85);
-  });
+  drawPaperBackground();
+  drawBreathOverlay();
+  const preview =
+    drawing && currentStroke.length
+      ? {
+          points: currentStroke,
+          color: currentColor,
+          size: getBrushSize(isEraser),
+          eraser: isEraser,
+        }
+      : null;
+  redrawFreeArtLayer(preview);
+  ctx.drawImage(freeArtLayer, 0, 0, canvasW, canvasH);
+  if (drawing && !isEraser && currentStroke.length > 1) {
+    strokeTrail.draw(ctx, currentColor, getBrushSize(false));
+  }
+  drawParticles();
 }
 
 function animate(ts) {
@@ -1335,32 +1392,6 @@ function animate(ts) {
   animFrameId = requestAnimationFrame(animate);
 }
 
-function animateFreeFrame() {
-  drawPaperBackground();
-  drawBreathOverlay();
-  redrawWithFade();
-  if (drawing && currentStroke.length) {
-    if (!isEraser) {
-      if (currentStroke.length > 1) {
-        strokeTrail.draw(ctx, currentColor, getBrushSize(false));
-        drawInkAlongPoints(ctx, currentStroke, currentColor, getBrushSize(false), 1, 4);
-        drawStroke(
-          {
-            points: currentStroke,
-            color: currentColor,
-            size: getBrushSize(false),
-            eraser: false,
-          },
-          0.88
-        );
-      }
-    } else {
-      eraseInkAlongPoints(ctx, currentStroke, getBrushSize(true));
-    }
-  }
-  drawParticles();
-}
-
 function animateZenFrame() {
   drawPaperBackground();
   drawBreathOverlay();
@@ -1369,21 +1400,23 @@ function animateZenFrame() {
   const elapsed = zenStartTime ? Date.now() - zenStartTime : 0;
   zenProgress = zenStartTime ? Math.min(1, elapsed / zenDuration) : 0;
   drawZenGuide();
+  ensureZenTraceLayer();
+  redrawZenTraceLayer();
+  if (drawing && currentStroke.length && isEraser) {
+    const brush = getZenBrushSize(true);
+    eraseInkAlongPoints(zenTraceCtx, currentStroke, brush, brush * 1.25);
+  }
   if (zenTraceLayer) {
     ctx.drawImage(zenTraceLayer, 0, 0, canvasW, canvasH);
   }
-  if (drawing && currentStroke.length && appMode === "zen") {
-    const brush = getZenBrushSize(isEraser);
-    if (isEraser) {
-      eraseInkAlongPoints(ctx, currentStroke, brush, brush * 1.25);
-    } else {
-      strokeTrail.draw(ctx, currentZenStrokeColor, brush);
-      drawZenTraceStroke({
-        points: currentStroke,
-        color: currentZenStrokeColor,
-        size: brush,
-      });
-    }
+  if (drawing && currentStroke.length && !isEraser) {
+    const brush = getZenBrushSize(false);
+    strokeTrail.draw(ctx, currentZenStrokeColor, brush);
+    drawZenTraceStroke({
+      points: currentStroke,
+      color: currentZenStrokeColor,
+      size: brush,
+    });
   }
 
   for (let i = zenRipples.length - 1; i >= 0; i--) {
@@ -2986,6 +3019,8 @@ function resetCanvasState() {
   zenTouchCount = 0;
   zenTraceLayer = null;
   zenTraceCtx = null;
+  freeArtLayer = null;
+  freeArtCtx = null;
   if (strokeTrail) strokeTrail.reset();
   zenProgress = 0;
   zenTemplateId = "lotus";
