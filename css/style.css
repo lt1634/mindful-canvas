@@ -603,8 +603,8 @@ body {
   background: var(--surface);
 }
 .color-dot {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: 2px solid transparent;
   cursor: pointer;
@@ -636,12 +636,12 @@ body {
 }
 
 .tool-btn {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.15);
   background: var(--bg);
-  font-size: 18px;
+  font-size: 20px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -900,7 +900,7 @@ body {
 
 /* Particle toggle */
 .particle-toggle {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-muted);
   display: flex;
   align-items: center;
@@ -915,8 +915,8 @@ body {
 .toolbar-row {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 8px;
+  gap: 6px;
+  padding: 8px 10px;
   background: var(--surface);
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   overflow-x: auto;

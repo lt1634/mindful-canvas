@@ -755,12 +755,13 @@ const COLORS = [
   { name: "薄霧", hex: "#e4dfd6" },
   { name: "淡金", hex: "#f0d9a8" },
   { name: "浅樱", hex: "#f0c8c0" },
+  { name: "朱砂", hex: "#c0392b" },
+  { name: "晚霞", hex: "#c46b4a" },
+  { name: "赭石", hex: "#b8734a" },
   { name: "枯葉", hex: "#a0826d" },
   { name: "土褐", hex: "#8b7355" },
-  { name: "赭石", hex: "#b8734a" },
   { name: "沙褐", hex: "#c9b08a" },
   { name: "金光", hex: "#e2b55a" },
-  { name: "晚霞", hex: "#c46b4a" },
   { name: "翠竹", hex: "#5a7a5a" },
   { name: "暮色", hex: "#8b5e83" },
   { name: "深海", hex: "#2c5f7c" },
@@ -769,7 +770,7 @@ const COLORS = [
   { name: "深夜", hex: "#1e2838" },
 ];
 
-const SIZES = [2, 4, 8, 14];
+const SIZES = [4, 8, 14, 22];
 
 // ===== SCENE GUIDANCE =====
 const SCENE_GUIDANCE = {
