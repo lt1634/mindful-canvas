@@ -743,6 +743,7 @@ function restoreCardUI(mode) {
     actions.innerHTML = `
       <button class="btn-secondary" onclick="showTerms()">使用條款</button>
       <button class="btn-secondary" onclick="saveCard()">儲存卡片</button>
+      <button class="btn-secondary" onclick="downloadArtwork()">下載作品</button>
       <button class="btn-primary" onclick="finishFromCard()">返回首頁</button>
     `;
   }
@@ -3585,6 +3586,34 @@ async function generateInterpretationAI() {
   }
 }
 
+// ===== DOWNLOAD ARTWORK (raw drawing, no card text) =====
+function downloadArtwork() {
+  const dpr = window.devicePixelRatio || 1;
+  const temp = document.createElement("canvas");
+  temp.width = canvasW * dpr;
+  temp.height = canvasH * dpr;
+  const tctx = temp.getContext("2d");
+  tctx.setTransform(1, 0, 0, 1, 0, 0);
+  tctx.scale(dpr, dpr);
+  renderPureArtwork(tctx, canvasW, canvasH);
+
+  temp.toBlob((blob) => {
+    if (navigator.share && navigator.canShare) {
+      const file = new File([blob], "mindful-canvas-artwork.png", { type: "image/png" });
+      if (navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: "覺知畫布作品" }).catch(() => {});
+        return;
+      }
+    }
+    const link = document.createElement("a");
+    link.download = "mindful-canvas-artwork.png";
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showToast("作品已下載");
+  }, "image/png");
+}
+
 // ===== SAVE CARD =====
 function saveCard() {
   // Create a composite image
@@ -3836,5 +3865,6 @@ window.toggleToolsPanel = toggleToolsPanel;
 window.toggleEraser = toggleEraser;
 window.showTerms = showTerms;
 window.saveCard = saveCard;
+window.downloadArtwork = downloadArtwork;
 window.finishFromCard = finishFromCard;
 window.closeTerms = closeTerms;
