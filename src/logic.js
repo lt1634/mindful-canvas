@@ -86,6 +86,32 @@ export const ZEN_TRACE_COLORS = [
 ];
 export const STORAGE_KEY = "mindful_canvas_sessions";
 
+export const GALLERY_DB_NAME = "mindful_canvas_gallery";
+export const GALLERY_MAX_ENTRIES = 10;
+export const GALLERY_MODE_LABELS = {
+  free: "自由畫布",
+  zen: "禪繞唐卡",
+  sumi: "墨流畫布",
+};
+
+/**
+ * Format gallery entry ISO date for zh-Hant UI
+ * @param {string} iso - ISO8601 date string
+ * @returns {string}
+ */
+export function formatGalleryDate(iso) {
+  try {
+    return new Date(iso).toLocaleString("zh-Hant", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
+
 // ===== SAFETY =====
 
 /**

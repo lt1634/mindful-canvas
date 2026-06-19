@@ -4,8 +4,17 @@ import {
   SAFETY_RESPONSE,
   OLLAMA_SCENE_MAP,
   STORAGE_KEY,
+  GALLERY_MODE_LABELS,
+  formatGalleryDate,
   checkSafety,
 } from "../src/logic.js";
+import {
+  addGalleryEntry,
+  listGalleryEntries,
+  deleteGalleryEntry,
+  getGalleryCount,
+  dataUrlToThumbnailBlob,
+} from "./gallery.js";
 
 let currentScene = "free";
 let currentColor = "#ddb565";
@@ -41,6 +50,7 @@ let freeAudio = null;
 let sfxAudio = null;
 let lastDrawSfx = 0;
 let lastArtworkDataUrl = "";
+let galleryObjectUrls = [];
 let breathSmoothed = 0.5;
 let breathLastTs = 0;
 let toolsCollapsed = false;
@@ -1942,11 +1952,6 @@ function animateZenFrame() {
   zenProgress = zenStartTime ? Math.min(1, elapsed / zenDuration) : 0;
   drawZenGuide();
   ensureZenTraceLayer();
-  redrawZenTraceLayer();
-  if (drawing && currentStroke.length && isEraser) {
-    const brush = getZenBrushSize(true);
-    eraseInkAlongPoints(zenTraceCtx, currentStroke, brush, brush * 1.25);
-  }
   if (zenTraceLayer) {
     ctx.drawImage(zenTraceLayer, 0, 0, canvasW, canvasH);
   }
@@ -3960,6 +3965,10 @@ function generateCard(force) {
     showToast("先畫一些東西吧");
     return;
   }
+  if (!force && appMode === "sumi" && sumiDrops.length === 0) {
+    showToast("輕點水面，滴一滴墨");
+    return;
+  }
 
   // If zen mode and not yet finished, finalize it first
   if (appMode === "zen" && !zenFinished) {
@@ -4011,6 +4020,7 @@ function generateCard(force) {
     restoreCardUI("normal");
     document.getElementById("loading").classList.remove("active");
     showCardScreen();
+    persistCardToGallery(interpretation.affirmation);
   })();
 }
 
@@ -4431,6 +4441,138 @@ function showToast(msg, durationMs) {
   t._hideTimer = setTimeout(() => t.classList.remove("show"), dur);
 }
 
+// ===== GALLERY (IndexedDB) =====
+function revokeGalleryObjectUrls() {
+  galleryObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+  galleryObjectUrls = [];
+}
+
+function getGalleryModeLabel(entry) {
+  const base = GALLERY_MODE_LABELS[entry.mode] || entry.mode;
+  if (entry.mode === "zen" && entry.templateId && ZEN_TEMPLATES[entry.templateId]) {
+    return `${base} · ${ZEN_TEMPLATES[entry.templateId].name}`;
+  }
+  return base;
+}
+
+async function persistCardToGallery(affirmation) {
+  if (!lastArtworkDataUrl) return;
+  try {
+    const thumb = await dataUrlToThumbnailBlob(lastArtworkDataUrl);
+    await addGalleryEntry({
+      createdAt: new Date().toISOString(),
+      mode: appMode,
+      templateId: appMode === "zen" ? zenTemplateId : null,
+      affirmation: String(affirmation || "").slice(0, 120),
+      thumb,
+    });
+    await refreshGalleryBadge();
+  } catch {
+    /* gallery is optional; fail silently */
+  }
+}
+
+async function refreshGalleryBadge() {
+  const badge = document.getElementById("galleryBadge");
+  if (!badge) return;
+  try {
+    const count = await getGalleryCount();
+    if (count > 0) {
+      badge.hidden = false;
+      badge.textContent = String(count);
+    } else {
+      badge.hidden = true;
+    }
+  } catch {
+    badge.hidden = true;
+  }
+}
+
+function renderGalleryGrid(entries) {
+  revokeGalleryObjectUrls();
+  const grid = document.getElementById("galleryGrid");
+  const empty = document.getElementById("galleryEmpty");
+  if (!grid || !empty) return;
+
+  grid.innerHTML = "";
+  if (!entries.length) {
+    empty.hidden = false;
+    return;
+  }
+  empty.hidden = true;
+
+  entries.forEach((entry) => {
+    const url = URL.createObjectURL(entry.thumb);
+    galleryObjectUrls.push(url);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "gallery-item";
+    btn.innerHTML = `
+      <img src="${url}" alt="" loading="lazy" />
+      <div class="gallery-item-meta">
+        <div class="gallery-item-mode">${getGalleryModeLabel(entry)}</div>
+        <div class="gallery-item-date">${formatGalleryDate(entry.createdAt)}</div>
+      </div>
+    `;
+    btn.addEventListener("click", () => openGalleryDetail(entry, url));
+    grid.appendChild(btn);
+  });
+}
+
+function openGalleryDetail(entry, thumbUrl) {
+  const detail = document.getElementById("galleryDetail");
+  const img = document.getElementById("galleryDetailImg");
+  const modeEl = document.getElementById("galleryDetailMode");
+  const dateEl = document.getElementById("galleryDetailDate");
+  const affEl = document.getElementById("galleryDetailAffirmation");
+  const delBtn = document.getElementById("galleryDeleteBtn");
+  if (!detail || !img) return;
+
+  img.src = thumbUrl;
+  if (modeEl) modeEl.textContent = getGalleryModeLabel(entry);
+  if (dateEl) dateEl.textContent = formatGalleryDate(entry.createdAt);
+  if (affEl) affEl.textContent = entry.affirmation || "";
+  if (delBtn) {
+    delBtn.onclick = () => removeGalleryItem(entry.id);
+  }
+  detail.hidden = false;
+}
+
+function closeGalleryDetail() {
+  const detail = document.getElementById("galleryDetail");
+  if (detail) detail.hidden = true;
+}
+
+async function removeGalleryItem(id) {
+  try {
+    await deleteGalleryEntry(id);
+    closeGalleryDetail();
+    const entries = await listGalleryEntries();
+    renderGalleryGrid(entries);
+    await refreshGalleryBadge();
+    showToast("已刪除");
+  } catch {
+    showToast("刪除失敗，請再試");
+  }
+}
+
+async function openGallery() {
+  try {
+    const entries = await listGalleryEntries();
+    renderGalleryGrid(entries);
+    showScreen("galleryScreen");
+  } catch {
+    showToast("無法開啟藝廊（此裝置可能不支援本地儲存）");
+  }
+}
+
+function closeGallery() {
+  closeGalleryDetail();
+  revokeGalleryObjectUrls();
+  showScreen("welcome");
+  restartWelcomeEnterAnimation();
+}
+
 // ===== SESSION STORAGE (教師長按匯出) =====
 function getSessions() {
   try {
@@ -4514,6 +4656,7 @@ initTeacherExport();
 initParticleToggle();
 registerServiceWorker();
 startWelcomeAmbient();
+refreshGalleryBadge();
 
 window.addEventListener("resize", () => {
   if (document.getElementById("welcome").classList.contains("active")) {
@@ -4542,3 +4685,6 @@ window.showTerms = showTerms;
 window.saveCard = saveCard;
 window.finishFromCard = finishFromCard;
 window.closeTerms = closeTerms;
+window.openGallery = openGallery;
+window.closeGallery = closeGallery;
+window.closeGalleryDetail = closeGalleryDetail;

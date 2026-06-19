@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
-    <link rel="stylesheet" href="css/style.css?v=zen-v29" />
+    <link rel="stylesheet" href="css/style.css?v=zen-v32" />
   </head>
   <body>
     <!-- WELCOME -->
@@ -92,6 +92,46 @@
             <div class="mode-meta">約 5 分鐘 · 自己決定幾時完成</div>
           </button>
         </div>
+
+        <button
+          type="button"
+          class="gallery-open-btn welcome-enter welcome-stagger-4"
+          id="galleryOpenBtn"
+          onclick="openGallery()"
+        >
+          心靈藝廊
+          <span class="gallery-badge" id="galleryBadge" hidden></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- GALLERY -->
+    <div id="galleryScreen" class="screen">
+      <div class="gallery-inner">
+        <button type="button" class="btn-text gallery-back" onclick="closeGallery()">← 返回</button>
+        <h2 class="gallery-title">心靈藝廊</h2>
+        <p class="gallery-sub">最近 10 次作品 · 只存在你的裝置，不會上傳</p>
+        <div class="gallery-grid" id="galleryGrid"></div>
+        <p class="gallery-empty" id="galleryEmpty" hidden>還沒有作品。完成一次創作後會自動收錄。</p>
+      </div>
+      <div class="gallery-detail" id="galleryDetail" hidden>
+        <button
+          type="button"
+          class="gallery-detail-close"
+          onclick="closeGalleryDetail()"
+          aria-label="關閉"
+        >
+          ×
+        </button>
+        <img id="galleryDetailImg" src="" alt="心靈藝廊作品" />
+        <div class="gallery-detail-meta">
+          <div class="gallery-detail-mode" id="galleryDetailMode"></div>
+          <div class="gallery-detail-date" id="galleryDetailDate"></div>
+          <div class="gallery-detail-affirmation" id="galleryDetailAffirmation"></div>
+        </div>
+        <button type="button" class="btn-secondary gallery-delete-btn" id="galleryDeleteBtn">
+          刪除此作品
+        </button>
       </div>
     </div>
 
@@ -278,7 +318,8 @@
           </p>
           <p style="margin-bottom: 12px">
             <strong style="color: var(--text)">3. 用戶內容</strong
-            ><br />你在畫布上創作的繪畫，版權歸你所有。本應用不會收集、儲存或上傳你的個人創作至任何伺服器。
+            ><br />你在畫布上創作的繪畫，版權歸你所有。本應用不會收集、儲存或上傳你的個人創作至任何伺服器。心靈藝廊縮圖僅保存在你裝置的
+            IndexedDB，你可隨時刪除。
           </p>
           <p style="margin-bottom: 12px">
             <strong style="color: var(--text)">4. 免責聲明</strong
@@ -286,20 +327,21 @@
             24 小時生命熱線：2382 0000
           </p>
           <p style="margin-bottom: 12px">
-            <strong style="color: var(--text)">5. 隱私</strong><br />v1
-            版本完全在你的設備上運行，不收集任何個人資料。本地儲存的匿名使用數據僅用於改善體驗。
+            <strong style="color: var(--text)">5. 隱私</strong
+            ><br />本應用完全在你的設備上運行，不收集任何個人資料。匿名 session 數據存於
+            localStorage；心靈藝廊縮圖存於 IndexedDB（最近 10 次），皆不上傳。
           </p>
           <p style="margin-bottom: 12px">
             <strong style="color: var(--text)">6. 品牌</strong><br />Mindful Canvas™ 與 覺知畫布™ 為
             ZenArt Lab 之商標。使用本工具即表示你同意以上條款。
           </p>
           <p style="margin-top: 24px; font-size: 11px; color: #555">
-            Mindful Canvas v2.0 · ZenArt Lab
+            Mindful Canvas v2.4 · ZenArt Lab
           </p>
         </div>
       </div>
     </div>
 
-    <script type="module" src="js/app.js?v=zen-v16"></script>
+    <script type="module" src="js/app.js?v=zen-v32"></script>
   </body>
 </html>
