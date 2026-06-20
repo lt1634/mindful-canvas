@@ -94,7 +94,7 @@ const AMBIENCE_SONGS = [
 const SONG_FADE_IN_SEC = 2.8;
 const SONG_FADE_OUT_SEC = 2.8;
 
-// 墨流調色：每色色相分明，主盤四色＋更多進階
+// 墨流調色：12 色全展開
 const SUMI_COLORS = [
   { hex: "#1a1a1a", name: "黑墨" },
   { hex: "#bc4032", name: "朱紅" },
@@ -109,8 +109,6 @@ const SUMI_COLORS = [
   { hex: "#c4a77c", name: "砂金" },
   { hex: "#98b57b", name: "若草" },
 ];
-// 主盤四色：黑墨、朱紅、靛青、藤黄
-const SUMI_PRIMARY_INDICES = [0, 1, 2, 3];
 const SUMI_WASH_FADE_STEP = 0.045;
 const SUMI_MAX_DROPS = 64;
 const SUMI_DROP_VERTS = 96;
@@ -2809,17 +2807,6 @@ function selectSumiColor(idx) {
   });
 }
 
-function toggleSumiPalette() {
-  const adv = document.getElementById("sumiPaletteAdvanced");
-  const toggle = document.getElementById("sumiPaletteToggle");
-  if (!adv || !toggle) return;
-  const open = adv.hidden;
-  adv.hidden = !open;
-  toggle.setAttribute("aria-expanded", String(open));
-  toggle.textContent = open ? "收起" : "更多";
-  toggle.classList.toggle("open", open);
-}
-
 function createSumiColorDot(colorIndex) {
   const c = SUMI_COLORS[colorIndex];
   const b = document.createElement("button");
@@ -2895,29 +2882,8 @@ function initSumiBar() {
   const palette = document.createElement("div");
   palette.className = "sumi-palette";
   palette.id = "sumiPalette";
+  SUMI_COLORS.forEach((_, i) => palette.appendChild(createSumiColorDot(i)));
 
-  const main = document.createElement("div");
-  main.className = "sumi-palette-main";
-  main.id = "sumiPaletteMain";
-  SUMI_PRIMARY_INDICES.forEach((i) => main.appendChild(createSumiColorDot(i)));
-
-  const toggle = document.createElement("button");
-  toggle.type = "button";
-  toggle.className = "sumi-palette-toggle";
-  toggle.id = "sumiPaletteToggle";
-  toggle.setAttribute("aria-expanded", "false");
-  toggle.textContent = "更多";
-  toggle.onclick = () => toggleSumiPalette();
-
-  const advanced = document.createElement("div");
-  advanced.className = "sumi-palette-advanced";
-  advanced.id = "sumiPaletteAdvanced";
-  advanced.hidden = true;
-  SUMI_COLORS.forEach((_, i) => {
-    if (!SUMI_PRIMARY_INDICES.includes(i)) advanced.appendChild(createSumiColorDot(i));
-  });
-
-  palette.append(main, toggle, advanced);
   const flowCtrl = document.getElementById("sumiFlowCtrl");
   bar.insertBefore(palette, flowCtrl || bar.firstChild);
 }

@@ -646,45 +646,6 @@ body {
   flex-wrap: wrap;
   gap: 6px;
 }
-.sumi-palette-main {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.sumi-palette-advanced {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  width: 100%;
-  padding-top: 4px;
-}
-.sumi-palette-advanced[hidden] {
-  display: none !important;
-}
-.sumi-palette-toggle {
-  border: 1px solid rgba(79, 195, 247, 0.35);
-  background: rgba(79, 195, 247, 0.1);
-  color: #2a7a9c;
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-  line-height: 1.2;
-  transition:
-    background 0.2s,
-    border-color 0.2s;
-}
-.sumi-palette-toggle.open {
-  background: rgba(79, 195, 247, 0.22);
-  border-color: rgba(79, 195, 247, 0.55);
-}
-.sumi-palette-toggle:active {
-  transform: scale(0.96);
-}
 .sumi-bar {
   pointer-events: auto;
   display: flex;
