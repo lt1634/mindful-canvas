@@ -14,7 +14,7 @@ test.describe("Mindful Canvas", () => {
         });
       }
     });
-    await page.goto(`/?v=zen-v41&_=${Date.now()}`);
+    await page.goto(`/?v=zen-v42&_=${Date.now()}`);
     await page.waitForFunction(() => typeof window.openZenPicker === "function");
   });
 
@@ -65,10 +65,14 @@ test.describe("Mindful Canvas", () => {
     await expect(page.locator(".sumi-step-label").first()).toHaveText("滴墨");
     await expect(page.locator(".sumi-step-label").nth(1)).toHaveText("攪水");
     await expect(page.locator(".sumi-palette-main .sumi-dot")).toHaveCount(4);
+    await expect(page.locator(".sumi-palette-main .sumi-dot").nth(3)).toHaveAttribute(
+      "aria-label",
+      "藤黄"
+    );
     await expect(page.locator("#sumiPaletteAdvanced")).toBeHidden();
     await expect(page.locator(".sumi-flow-btn")).toHaveCount(3);
     await expect(page.locator(".sumi-flow-btn").first()).toHaveClass(/active/);
-    await expect(page.locator(".sumi-dot")).toHaveCount(14);
+    await expect(page.locator(".sumi-dot")).toHaveCount(12);
     await expect(page.locator("#sumiUndoBtn")).toBeVisible();
     const canvas = page.locator("#drawCanvas");
     const box = await canvas.boundingBox();

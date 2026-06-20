@@ -94,25 +94,23 @@ const AMBIENCE_SONGS = [
 const SONG_FADE_IN_SEC = 2.8;
 const SONG_FADE_OUT_SEC = 2.8;
 
-// 墨流調色：淺染／深色墨／大地色
+// 墨流調色：每色色相分明，主盤四色＋更多進階
 const SUMI_COLORS = [
   { hex: "#1a1a1a", name: "黑墨" },
-  { hex: "#1a3a5c", name: "深藍" },
-  { hex: "#2a2820", name: "深褐" },
-  { hex: "#3a5a3a", name: "松綠" },
-  { hex: "#8b5e3c", name: "赭土" },
-  { hex: "#7a6a52", name: "陶褐" },
-  { hex: "#6b5344", name: "栗木" },
-  { hex: "#5c6b52", name: "苔綠" },
   { hex: "#c43a2a", name: "朱紅" },
-  { hex: "#4a6a8c", name: "靛青" },
-  { hex: "#8b5e83", name: "暮色" },
-  { hex: "#b8a090", name: "淡赭" },
-  { hex: "#9ab5a8", name: "淺翠" },
-  { hex: "#c4b8a8", name: "米色" },
+  { hex: "#1e4a6e", name: "靛青" },
+  { hex: "#d4a820", name: "藤黄" },
+  { hex: "#3a7a48", name: "松綠" },
+  { hex: "#7a4a8c", name: "紫菫" },
+  { hex: "#e07838", name: "琥珀" },
+  { hex: "#1a8a8a", name: "青碧" },
+  { hex: "#5c4030", name: "栗褐" },
+  { hex: "#48a0d8", name: "空色" },
+  { hex: "#c8a878", name: "砂金" },
+  { hex: "#98b878", name: "若草" },
 ];
-// 主盤四色：黑墨、朱紅、靛青、松綠
-const SUMI_PRIMARY_INDICES = [0, 8, 9, 3];
+// 主盤四色：黑墨、朱紅、靛青、藤黄
+const SUMI_PRIMARY_INDICES = [0, 1, 2, 3];
 const SUMI_WASH_FADE_STEP = 0.045;
 const SUMI_MAX_DROPS = 64;
 const SUMI_DROP_VERTS = 96;
