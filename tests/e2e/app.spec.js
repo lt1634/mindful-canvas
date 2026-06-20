@@ -1,28 +1,39 @@
 import { test, expect } from "@playwright/test";
 
 async function enterFreeMode(page) {
-  await page.locator(".mode-card.free-secondary").click();
+  await page.locator(".showcase-card.showcase-free").click();
   await expect(page.locator("#drawCanvas")).toBeVisible({ timeout: 5000 });
 }
 
 test.describe("Mindful Canvas", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+  test.beforeEach(async ({ page, context }) => {
+    await context.addInitScript(() => {
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations().then((regs) => {
+          regs.forEach((reg) => reg.unregister());
+        });
+      }
+    });
+    await page.goto(`/?v=zen-v38&_=${Date.now()}`);
+    await page.waitForFunction(() => typeof window.openZenPicker === "function");
   });
 
   test("loads the app", async ({ page }) => {
     await expect(page).toHaveTitle(/Mindful Canvas/);
   });
 
-  test("shows welcome screen with mode cards", async ({ page }) => {
+  test("shows welcome screen with showcase cards", async ({ page }) => {
     await expect(page.locator("#welcome")).toBeVisible();
     await expect(page.getByRole("heading", { name: "覺知畫布" })).toBeVisible();
-    await expect(page.locator(".mode-card")).toHaveCount(3);
+    await expect(page.getByText("畫一筆，讓心安靜下來")).toBeVisible();
+    await expect(page.getByText("探索三種不同的創作體驗")).toBeVisible();
+    await expect(page.locator(".showcase-card")).toHaveCount(3);
     await expect(page.locator("#galleryOpenBtn")).toBeVisible();
-    await expect(page.locator("#galleryOpenBtn")).toContainText("心靈藝廊");
-    await expect(page.locator("#welcomeContent .mode-title").first()).toHaveText("禪繞唐卡");
-    await expect(page.locator("#welcomeContent .mode-title").nth(1)).toHaveText("墨流畫布");
-    await expect(page.locator("#welcomeContent .mode-title").nth(2)).toHaveText("自由畫布");
+    await expect(page.locator("#galleryOpenBtn")).toContainText("查看全部");
+    await expect(page.locator("#welcomeContent .showcase-title").first()).toHaveText("🪷 禪繞唐卡");
+    await expect(page.locator("#welcomeContent .showcase-title").nth(1)).toHaveText("🌊 墨流畫布");
+    await expect(page.locator("#welcomeContent .showcase-title").nth(2)).toHaveText("🎨 自由畫布");
+    await expect(page.locator("#welcomeRecent")).toBeVisible();
   });
 
   test("shows canvas after selecting free draw mode", async ({ page }) => {
@@ -32,7 +43,7 @@ test.describe("Mindful Canvas", () => {
   });
 
   test("opens zen template picker and starts guided zen mode", async ({ page }) => {
-    await page.locator(".mode-card.zen").click();
+    await page.locator(".showcase-card.showcase-zen").click();
     await expect(page.locator("#zenPickerScreen")).toHaveClass(/active/);
     await expect(page.getByRole("heading", { name: "選一個圖案跟住畫" })).toBeVisible();
     await expect(page.locator(".zen-tpl-card")).toHaveCount(12);
@@ -46,7 +57,7 @@ test.describe("Mindful Canvas", () => {
   });
 
   test("starts sumi marbling mode and can drop ink", async ({ page }) => {
-    await page.locator(".mode-card.sumi").click();
+    await page.locator(".showcase-card.showcase-sumi").click();
     await expect(page.locator("#canvasScreen")).toHaveClass(/active/);
     await expect(page.locator("#canvasTitle")).toHaveText("墨流畫布");
     await expect(page.locator("#sumiUI")).toBeVisible();
@@ -88,7 +99,7 @@ test.describe("Mindful Canvas", () => {
   test("is responsive on mobile viewport", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await expect(page.locator("#welcome")).toBeVisible();
-    await expect(page.locator(".mode-card")).toHaveCount(3);
+    await expect(page.locator(".showcase-card")).toHaveCount(3);
   });
 
   test("gallery delete removes saved entry", async ({ page }) => {
@@ -126,6 +137,9 @@ test.describe("Mindful Canvas", () => {
       });
       db.close();
     });
+
+    await page.reload();
+    await expect(page.locator(".welcome-recent-thumb")).toHaveCount(1);
 
     await page.locator("#galleryOpenBtn").click();
     await expect(page.locator("#galleryScreen")).toHaveClass(/active/);

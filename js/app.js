@@ -9,14 +9,13 @@ import {
   checkSafety,
   isValidGalleryEntry,
   ZEN_TRACE_COLORS,
-} from "../src/logic.js?v=zen-v36";
+} from "../src/logic.js?v=zen-v38";
 import {
   addGalleryEntry,
   listGalleryEntries,
   deleteGalleryEntry,
-  getGalleryCount,
   dataUrlToThumbnailBlob,
-} from "./gallery.js?v=zen-v36";
+} from "./gallery.js?v=zen-v38";
 
 const ERASER_PREVIEW_FILL = "rgba(110, 200, 255, 0.32)";
 const ERASER_PREVIEW_STROKE = "rgba(130, 210, 255, 1)";
@@ -57,6 +56,7 @@ let sfxAudio = null;
 let lastDrawSfx = 0;
 let lastArtworkDataUrl = "";
 let galleryObjectUrls = [];
+let welcomeRecentObjectUrls = [];
 let galleryDetailObjectUrl = null;
 let galleryDetailEntryId = null;
 let breathSmoothed = 0.5;
@@ -3627,106 +3627,159 @@ function drawWelcomeAmbient() {
   welcomeAnimId = requestAnimationFrame(drawWelcomeAmbient);
 }
 
-function setupPreviewCanvas(c, size) {
-  const dpr = 2;
-  if (c.width !== size * dpr) {
-    c.width = size * dpr;
-    c.height = size * dpr;
-    c.getContext("2d").setTransform(1, 0, 0, 1, 0, 0);
-    c.getContext("2d").scale(dpr, dpr);
+function setupPreviewCanvas(c) {
+  const art = c.closest(".showcase-art");
+  const w = art ? Math.max(art.clientWidth, 120) : 160;
+  const h = art ? Math.max(art.clientHeight, 120) : 132;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const pw = Math.round(w * dpr);
+  const ph = Math.round(h * dpr);
+  if (c.width !== pw || c.height !== ph) {
+    c.width = pw;
+    c.height = ph;
+    const ctx = c.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
   }
+  return { w, h, ctx: c.getContext("2d") };
 }
 
 function drawFreePreview() {
   const c = document.getElementById("previewFree");
   if (!c) return;
-  const size = 64;
-  setupPreviewCanvas(c, size);
-  const pctx = c.getContext("2d");
-  pctx.clearRect(0, 0, size, size);
-  const pulse = 0.35 + Math.sin(previewPhase) * 0.12;
-  pctx.strokeStyle = `rgba(226, 181, 90, ${pulse})`;
-  pctx.lineWidth = 1.5;
-  pctx.lineCap = "round";
-  pctx.beginPath();
-  for (let t = 0; t <= 1; t += 0.04) {
-    const x = size * 0.15 + t * size * 0.7;
-    const y = size * 0.5 + Math.sin(t * Math.PI * 2.5 + previewPhase * 1.2) * size * 0.28;
-    if (t === 0) pctx.moveTo(x, y);
-    else pctx.lineTo(x, y);
-  }
-  pctx.stroke();
-  pctx.strokeStyle = `rgba(44, 95, 124, ${pulse * 0.6})`;
-  pctx.beginPath();
-  for (let t = 0; t <= 1; t += 0.05) {
-    const x = size * 0.2 + t * size * 0.6;
-    const y = size * 0.55 + Math.cos(t * Math.PI * 3 + previewPhase) * size * 0.18;
-    if (t === 0) pctx.moveTo(x, y);
-    else pctx.lineTo(x, y);
-  }
-  pctx.stroke();
+  const { w, h, ctx } = setupPreviewCanvas(c);
+  ctx.fillStyle = "#0f1018";
+  ctx.fillRect(0, 0, w, h);
+  const strokes = [
+    { color: "#c084fc", x0: 0.08, y0: 0.72, x1: 0.55, y1: 0.18, w: 14 },
+    { color: "#f472b6", x0: 0.2, y0: 0.85, x1: 0.78, y1: 0.42, w: 11 },
+    { color: "#fb923c", x0: 0.35, y0: 0.15, x1: 0.92, y1: 0.68, w: 12 },
+    { color: "#60a5fa", x0: 0.05, y0: 0.35, x1: 0.48, y1: 0.88, w: 10 },
+    { color: "#a78bfa", x0: 0.58, y0: 0.55, x1: 0.95, y1: 0.22, w: 9 },
+  ];
+  strokes.forEach((s, i) => {
+    const sway = Math.sin(previewPhase * 0.4 + i * 1.1) * 0.04;
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = s.w;
+    ctx.lineCap = "round";
+    ctx.globalAlpha = 0.88;
+    ctx.beginPath();
+    ctx.moveTo(w * s.x0, h * (s.y0 + sway));
+    ctx.bezierCurveTo(
+      w * (s.x0 + 0.22),
+      h * (s.y0 - 0.18 + sway),
+      w * (s.x1 - 0.18),
+      h * (s.y1 + 0.12 - sway),
+      w * s.x1,
+      h * (s.y1 - sway * 0.5)
+    );
+    ctx.stroke();
+  });
+  ctx.globalAlpha = 1;
 }
 
 function drawZenPreview() {
   const c = document.getElementById("previewZen");
   if (!c) return;
-  const size = 64;
-  setupPreviewCanvas(c, size);
-  const pctx = c.getContext("2d");
-  pctx.clearRect(0, 0, size, size);
-  const cx = size / 2;
-  const cy = size / 2;
-  const bloom = (Math.sin(previewPhase * 0.55) + 1) / 2;
-  pctx.strokeStyle = `rgba(139, 94, 131, ${0.25 + bloom * 0.35})`;
-  pctx.lineWidth = 1.2;
-  pctx.beginPath();
-  pctx.arc(cx, cy, size * 0.3 * bloom, 0, Math.PI * 2);
-  pctx.stroke();
-  pctx.strokeStyle = `rgba(226, 181, 90, ${0.2 + bloom * 0.3})`;
-  pctx.beginPath();
-  pctx.arc(cx, cy, size * 0.18 * bloom, 0, Math.PI * 2 * bloom);
-  pctx.stroke();
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2 + previewPhase * 0.15;
-    const px = cx + Math.cos(angle) * size * 0.22 * bloom;
-    const py = cy + Math.sin(angle) * size * 0.22 * bloom;
-    pctx.fillStyle = `rgba(90, 122, 90, ${0.15 + bloom * 0.2})`;
-    pctx.beginPath();
-    pctx.ellipse(px, py, 3, 7, angle, 0, Math.PI * 2);
-    pctx.fill();
+  const { w, h, ctx } = setupPreviewCanvas(c);
+  const cx = w * 0.52;
+  const cy = h * 0.5;
+  const pulse = 0.92 + Math.sin(previewPhase * 0.45) * 0.04;
+  ctx.fillStyle = "#0f1018";
+  ctx.fillRect(0, 0, w, h);
+  const gold = "#e6b85c";
+  const rings = [0.42, 0.3, 0.18, 0.08];
+  rings.forEach((r, i) => {
+    ctx.strokeStyle = gold;
+    ctx.globalAlpha = 0.22 + (rings.length - i) * 0.12;
+    ctx.lineWidth = 1.2 - i * 0.15;
+    ctx.beginPath();
+    ctx.arc(cx, cy, Math.min(w, h) * r * pulse, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+  const petals = 12;
+  for (let i = 0; i < petals; i++) {
+    const angle = (i / petals) * Math.PI * 2 - Math.PI / 2 + previewPhase * 0.08;
+    const px = cx + Math.cos(angle) * Math.min(w, h) * 0.26 * pulse;
+    const py = cy + Math.sin(angle) * Math.min(w, h) * 0.26 * pulse;
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(angle + Math.PI / 2);
+    ctx.fillStyle = `rgba(230, 184, 92, ${0.35 + (i % 2) * 0.15})`;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, Math.min(w, h) * 0.055, Math.min(w, h) * 0.018, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
+  ctx.globalAlpha = 0.55;
+  ctx.strokeStyle = gold;
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(
+      cx + Math.cos(a) * Math.min(w, h) * 0.36 * pulse,
+      cy + Math.sin(a) * Math.min(w, h) * 0.36 * pulse
+    );
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = gold;
+  ctx.beginPath();
+  ctx.arc(cx, cy, Math.min(w, h) * 0.04, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawSumiPreview() {
   const c = document.getElementById("previewSumi");
   if (!c) return;
-  const size = 64;
-  setupPreviewCanvas(c, size);
-  const pctx = c.getContext("2d");
-  pctx.clearRect(0, 0, size, size);
-  const cx = size / 2;
-  const cy = size / 2;
+  const { w, h, ctx } = setupPreviewCanvas(c);
   const flow = (Math.sin(previewPhase * 0.5) + 1) / 2;
-  const inks = ["#3a3a4a", "#2c5f7c", "#c46b4a"];
-  inks.forEach((color, k) => {
-    const baseR = size * (0.12 + k * 0.09) * (0.7 + flow * 0.4);
-    pctx.strokeStyle = color;
-    pctx.globalAlpha = 0.35 + flow * 0.25;
-    pctx.lineWidth = 2.2 - k * 0.5;
-    pctx.beginPath();
-    for (let i = 0; i <= 40; i++) {
-      const a = (i / 40) * Math.PI * 2;
-      const wobble = Math.sin(a * 3 + previewPhase * (0.8 + k * 0.3)) * size * 0.05;
-      const r = baseR + wobble;
-      const x = cx + Math.cos(a) * r;
-      const y = cy + Math.sin(a) * r * 0.9;
-      if (i === 0) pctx.moveTo(x, y);
-      else pctx.lineTo(x, y);
-    }
-    pctx.closePath();
-    pctx.stroke();
+  ctx.fillStyle = "#0a1520";
+  ctx.fillRect(0, 0, w, h);
+  const blobs = [
+    { cx: 0.42, cy: 0.48, rx: 0.38, ry: 0.32, color: "#1e6f8c", rot: 0.2 },
+    { cx: 0.55, cy: 0.55, rx: 0.3, ry: 0.36, color: "#4fc3f7", rot: -0.35 },
+    { cx: 0.38, cy: 0.62, rx: 0.22, ry: 0.28, color: "#2dd4bf", rot: 0.5 },
+  ];
+  blobs.forEach((b, k) => {
+    const bx = w * (b.cx + Math.sin(previewPhase * 0.3 + k) * 0.03);
+    const by = h * (b.cy + Math.cos(previewPhase * 0.25 + k * 1.2) * 0.02);
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.rotate(b.rot + previewPhase * 0.05);
+    ctx.globalAlpha = 0.55 + flow * 0.25;
+    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, w * b.rx);
+    grad.addColorStop(0, b.color);
+    grad.addColorStop(0.55, b.color);
+    grad.addColorStop(1, "transparent");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(
+      0,
+      0,
+      w * b.rx * (0.85 + flow * 0.15),
+      h * b.ry * (0.85 + flow * 0.15),
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+    ctx.restore();
   });
-  pctx.globalAlpha = 1;
+  ctx.globalAlpha = 0.7;
+  ctx.strokeStyle = "#e6b85c";
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  for (let t = 0; t <= 1; t += 0.03) {
+    const x = w * (0.12 + t * 0.72);
+    const y = h * (0.35 + Math.sin(t * Math.PI * 3.2 + previewPhase) * 0.22);
+    if (t === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.globalAlpha = 1;
 }
 
 function animateModePreviews() {
@@ -4555,18 +4608,74 @@ async function persistCardToGallery(affirmation) {
 }
 
 async function refreshGalleryBadge() {
-  const badge = document.getElementById("galleryBadge");
-  if (!badge) return;
+  await renderWelcomeRecentStrip();
+}
+
+function revokeWelcomeRecentUrls() {
+  welcomeRecentObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+  welcomeRecentObjectUrls = [];
+}
+
+async function openGalleryFromRecent(entry) {
   try {
-    const count = await getGalleryCount();
-    if (count > 0) {
-      badge.hidden = false;
-      badge.textContent = String(count);
-    } else {
-      badge.hidden = true;
-    }
+    await openGallery();
+    openGalleryDetail(entry);
   } catch {
-    badge.hidden = true;
+    showToast("無法開啟藝廊");
+  }
+}
+
+async function renderWelcomeRecentStrip() {
+  const strip = document.getElementById("welcomeRecentStrip");
+  const empty = document.getElementById("welcomeRecentEmpty");
+  if (!strip) return;
+
+  revokeWelcomeRecentUrls();
+  strip.innerHTML = "";
+
+  try {
+    const entries = await listGalleryEntries();
+    const valid = entries.filter((e) => isValidGalleryEntry(e)).slice(0, 6);
+    if (!valid.length) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    valid.forEach((entry) => {
+      const url = createGalleryThumbUrl(entry);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "welcome-recent-thumb";
+      btn.setAttribute("aria-label", getGalleryModeLabel(entry));
+      if (url) {
+        welcomeRecentObjectUrls.push(url);
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = "";
+        img.loading = "lazy";
+        img.addEventListener("error", () => {
+          img.replaceWith(
+            Object.assign(document.createElement("div"), {
+              className: "welcome-recent-placeholder",
+              ariaHidden: "true",
+            })
+          );
+        });
+        btn.appendChild(img);
+      } else {
+        const ph = document.createElement("div");
+        ph.className = "welcome-recent-placeholder";
+        ph.setAttribute("aria-hidden", "true");
+        btn.appendChild(ph);
+      }
+      btn.addEventListener("click", () => {
+        void openGalleryFromRecent(entry);
+      });
+      strip.appendChild(btn);
+    });
+  } catch {
+    if (empty) empty.hidden = false;
   }
 }
 
@@ -4719,6 +4828,8 @@ function closeGallery() {
   revokeGalleryGridUrls();
   showScreen("welcome");
   restartWelcomeEnterAnimation();
+  void renderWelcomeRecentStrip();
+  startWelcomeAmbient();
 }
 
 // ===== SESSION STORAGE (教師長按匯出) =====
@@ -4812,6 +4923,9 @@ refreshGalleryBadge();
 window.addEventListener("resize", () => {
   if (document.getElementById("welcome").classList.contains("active")) {
     resizeWelcomeAmbient();
+    drawFreePreview();
+    drawZenPreview();
+    drawSumiPreview();
   }
   if (document.getElementById("canvasScreen").classList.contains("active")) {
     resizeCanvas();

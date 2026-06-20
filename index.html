@@ -10,98 +10,111 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
-    <link rel="stylesheet" href="css/style.css?v=zen-v36" />
+    <link rel="stylesheet" href="css/style.css?v=zen-v38" />
   </head>
   <body>
     <!-- WELCOME -->
     <div id="welcome" class="screen active">
       <canvas id="welcomeAmbient" aria-hidden="true"></canvas>
       <div id="welcomeContent">
-        <div id="welcomeLogo" class="welcome-brand welcome-enter welcome-stagger-1">
-          <span class="welcome-mark" aria-hidden="true">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-              <line
-                x1="10"
-                y1="10"
-                x2="90"
-                y2="90"
-                stroke="#6e6e7a"
-                stroke-width="4"
-                stroke-linecap="butt"
-              />
-              <circle cx="50" cy="50" r="20.5" fill="#f0c96e" />
-              <line
-                x1="10"
-                y1="90"
-                x2="90"
-                y2="10"
-                stroke="#d4a84f"
-                stroke-width="5.5"
-                stroke-linecap="butt"
-              />
-            </svg>
-          </span>
-          <div class="welcome-brand-text">
-            <h1>覺知畫布</h1>
-            <p class="welcome-brand-en">Mindful Canvas™</p>
+        <header class="welcome-hero welcome-enter welcome-stagger-1">
+          <div id="welcomeLogo" class="welcome-brand">
+            <span class="welcome-mark" aria-hidden="true">
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+                <line
+                  x1="10"
+                  y1="10"
+                  x2="90"
+                  y2="90"
+                  stroke="#6e6e7a"
+                  stroke-width="4"
+                  stroke-linecap="butt"
+                />
+                <circle cx="50" cy="50" r="20.5" fill="#f0c96e" />
+                <line
+                  x1="10"
+                  y1="90"
+                  x2="90"
+                  y2="10"
+                  stroke="#d4a84f"
+                  stroke-width="5.5"
+                  stroke-linecap="butt"
+                />
+              </svg>
+            </span>
+            <h1 class="welcome-hero-title">覺知畫布</h1>
           </div>
-        </div>
-        <p class="welcome-enter welcome-stagger-2">從禪繞跟畫開始，與色彩同在</p>
+          <p class="welcome-hero-lead">畫一筆，讓心安靜下來</p>
+          <p class="welcome-hero-sub">探索三種不同的創作體驗</p>
+        </header>
 
-        <div class="mode-cards welcome-enter welcome-stagger-3">
+        <div class="showcase-cards welcome-enter welcome-stagger-2">
           <button
             type="button"
-            class="mode-card zen featured"
+            class="showcase-card showcase-zen"
             onclick="openZenPicker()"
-            aria-label="禪繞唐卡模式：選一個圖案跟住畫"
+            aria-label="禪繞唐卡：跟隨提示完成靜心圖騰"
           >
-            <canvas class="mode-card-preview" id="previewZen" aria-hidden="true"></canvas>
-            <div class="mode-emoji">🪷</div>
-            <div class="mode-title">禪繞唐卡</div>
-            <div class="mode-desc">
-              選一個圖案，跟住金光一步一步畫。輕觸留下你的色彩，跟完按「跟好了」，約 1 分鐘完成。
+            <div class="showcase-art" aria-hidden="true">
+              <canvas class="showcase-canvas" id="previewZen"></canvas>
             </div>
-            <div class="mode-meta">約 1 分鐘 · 分步跟畫 · 12 款圖案</div>
+            <div class="showcase-body">
+              <h2 class="showcase-title">🪷 禪繞唐卡</h2>
+              <p class="showcase-desc">跟隨提示，一筆一筆完成靜心圖騰</p>
+              <span class="showcase-cta">開始創作 →</span>
+            </div>
           </button>
           <button
             type="button"
-            class="mode-card sumi"
+            class="showcase-card showcase-sumi"
             onclick="startSumiMode()"
-            aria-label="墨流畫布模式：日式墨流滴墨攪水"
+            aria-label="墨流畫布：顏色自然流動擴散"
           >
-            <canvas class="mode-card-preview" id="previewSumi" aria-hidden="true"></canvas>
-            <div class="mode-emoji">🌊</div>
-            <div class="mode-title">墨流畫布</div>
-            <div class="mode-desc">
-              日式墨流（Suminagashi）。輕點滴墨，墨色喺水面慢慢暈開；拖曳攪水，拉出流線與漩渦。
+            <div class="showcase-art" aria-hidden="true">
+              <canvas class="showcase-canvas" id="previewSumi"></canvas>
             </div>
-            <div class="mode-meta">約 3 分鐘 · 滴墨 + 攪水 · 自己決定幾時完成</div>
+            <div class="showcase-body">
+              <h2 class="showcase-title">🌊 墨流畫布</h2>
+              <p class="showcase-desc">顏色會自然流動擴散，創造獨一無二作品</p>
+              <span class="showcase-cta">開始創作 →</span>
+            </div>
           </button>
           <button
             type="button"
-            class="mode-card free-secondary"
+            class="showcase-card showcase-free"
             onclick="startFreeMode()"
-            aria-label="自由畫布模式：自由塗抹無規則"
+            aria-label="自由畫布：沒有規則，靈感自由流動"
           >
-            <canvas class="mode-card-preview" id="previewFree" aria-hidden="true"></canvas>
-            <div class="mode-emoji">🎨</div>
-            <div class="mode-title">自由畫布</div>
-            <div class="mode-desc">
-              冇規則、冇對錯。用手指自由塗抹，每一筆都會慢慢消失，讓情緒自然流走。
+            <div class="showcase-art" aria-hidden="true">
+              <canvas class="showcase-canvas" id="previewFree"></canvas>
             </div>
-            <div class="mode-meta">約 5 分鐘 · 自己決定幾時完成</div>
+            <div class="showcase-body">
+              <h2 class="showcase-title">🎨 自由畫布</h2>
+              <p class="showcase-desc">沒有規則，讓靈感自由流動</p>
+              <span class="showcase-cta">開始創作 →</span>
+            </div>
           </button>
         </div>
 
-        <button
-          type="button"
-          class="gallery-open-btn welcome-enter welcome-stagger-4"
-          id="galleryOpenBtn"
-          onclick="openGallery()"
-        >
-          心靈藝廊
-          <span class="gallery-badge" id="galleryBadge" hidden></span>
-        </button>
+        <section class="welcome-recent welcome-enter welcome-stagger-3" id="welcomeRecent">
+          <div class="welcome-recent-head">
+            <h3 class="welcome-recent-title">最近作品</h3>
+            <button
+              type="button"
+              class="welcome-recent-link"
+              id="galleryOpenBtn"
+              onclick="openGallery()"
+            >
+              查看全部 →
+            </button>
+          </div>
+          <div class="welcome-recent-strip" id="welcomeRecentStrip" aria-label="最近作品縮圖"></div>
+          <p class="welcome-recent-empty" id="welcomeRecentEmpty" hidden>
+            完成一次創作後，作品會出現在這裡
+          </p>
+        </section>
+
+        <p class="welcome-footer welcome-enter welcome-stagger-4">用創作，照顧你的內心</p>
       </div>
     </div>
 
@@ -349,6 +362,6 @@
       </div>
     </div>
 
-    <script type="module" src="js/app.js?v=zen-v36"></script>
+    <script type="module" src="js/app.js?v=zen-v38"></script>
   </body>
 </html>

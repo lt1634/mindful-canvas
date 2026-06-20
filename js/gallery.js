@@ -2,14 +2,14 @@ import {
   GALLERY_DB_NAME,
   GALLERY_MAX_ENTRIES,
   isValidGalleryEntry,
-} from "../src/logic.js?v=zen-v36";
+} from "../src/logic.js?v=zen-v38";
 
 export {
   GALLERY_MAX_ENTRIES,
   GALLERY_MODE_LABELS,
   formatGalleryDate,
   isValidGalleryEntry,
-} from "../src/logic.js?v=zen-v36";
+} from "../src/logic.js?v=zen-v38";
 
 const DB_NAME = GALLERY_DB_NAME;
 const DB_VERSION = 1;
