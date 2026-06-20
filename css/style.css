@@ -1411,15 +1411,6 @@ body {
   aspect-ratio: 4 / 3;
   font-size: 12px;
 }
-.gallery-thumb-missing-icon {
-  font-size: 28px;
-  opacity: 0.5;
-}
-.gallery-thumb-missing-hint {
-  font-size: 12px;
-  line-height: 1.5;
-  max-width: 260px;
-}
 .gallery-detail-preview {
   width: min(100%, 480px);
   margin-bottom: 16px;
@@ -1431,12 +1422,6 @@ body {
   border-radius: 8px;
   object-fit: contain;
   background: #0f1018;
-}
-.gallery-detail-preview .gallery-thumb-missing {
-  min-height: 180px;
-  padding: 24px 16px;
-  border-radius: 8px;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
 }
 .gallery-item-meta {
   padding: 8px 10px 10px;

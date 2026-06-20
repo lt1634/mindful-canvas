@@ -4608,30 +4608,23 @@ async function purgeInvalidGalleryEntries(entries) {
 
 function setGalleryDetailThumb(entry) {
   const img = document.getElementById("galleryDetailImg");
-  const missing = document.getElementById("galleryDetailMissing");
-  if (!img || !missing) return false;
+  if (!img) return false;
 
   revokeGalleryDetailUrl();
   img.removeAttribute("src");
   img.hidden = true;
-  missing.hidden = true;
 
   const url = createGalleryThumbUrl(entry);
-  if (!url) {
-    missing.hidden = false;
-    return false;
-  }
+  if (!url) return false;
 
   galleryDetailObjectUrl = url;
   img.onerror = () => {
     revokeGalleryDetailUrl();
     img.removeAttribute("src");
     img.hidden = true;
-    missing.hidden = false;
   };
   img.onload = () => {
     img.hidden = false;
-    missing.hidden = true;
   };
   img.src = url;
   return true;
@@ -4817,14 +4810,12 @@ function closeGalleryDetail() {
   setGalleryInnerInert(false);
   revokeGalleryDetailUrl();
   const img = document.getElementById("galleryDetailImg");
-  const missing = document.getElementById("galleryDetailMissing");
   if (img) {
     img.removeAttribute("src");
     img.hidden = true;
     img.onerror = null;
     img.onload = null;
   }
-  if (missing) missing.hidden = true;
   const detail = document.getElementById("galleryDetail");
   if (detail) detail.hidden = true;
 }
