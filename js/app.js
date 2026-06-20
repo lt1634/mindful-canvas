@@ -7,14 +7,20 @@ import {
   GALLERY_MODE_LABELS,
   formatGalleryDate,
   checkSafety,
-} from "../src/logic.js";
+  isValidGalleryEntry,
+  ZEN_TRACE_COLORS,
+} from "../src/logic.js?v=zen-v36";
 import {
   addGalleryEntry,
   listGalleryEntries,
   deleteGalleryEntry,
   getGalleryCount,
   dataUrlToThumbnailBlob,
-} from "./gallery.js";
+} from "./gallery.js?v=zen-v36";
+
+const ERASER_PREVIEW_FILL = "rgba(110, 200, 255, 0.32)";
+const ERASER_PREVIEW_STROKE = "rgba(130, 210, 255, 1)";
+const ERASER_TRAIL_COLOR = "rgba(110, 200, 255, 0.78)";
 
 let currentScene = "free";
 let currentColor = "#ddb565";
@@ -51,6 +57,8 @@ let sfxAudio = null;
 let lastDrawSfx = 0;
 let lastArtworkDataUrl = "";
 let galleryObjectUrls = [];
+let galleryDetailObjectUrl = null;
+let galleryDetailEntryId = null;
 let breathSmoothed = 0.5;
 let breathLastTs = 0;
 let toolsCollapsed = false;
@@ -81,24 +89,6 @@ const AMBIENCE_SONGS = [
 ].map((path) => encodeURI(path));
 const SONG_FADE_IN_SEC = 2.8;
 const SONG_FADE_OUT_SEC = 2.8;
-const ZEN_TRACE_COLORS = [
-  "#ddb565",
-  "#c83637",
-  "#de7b4a",
-  "#44965d",
-  "#53add0",
-  "#356fb5",
-  "#9d73b9",
-  "#63b49a",
-  "#dd638a",
-  "#c4af3f",
-  "#77528b",
-  "#9c7956",
-  "#e9a3aa",
-  "#4c5891",
-  "#315e49",
-  "#234f6b",
-];
 
 // 墨流調色：淺染／深色墨／大地色
 const SUMI_COLORS = [
@@ -1426,11 +1416,11 @@ class TrailBuffer {
     this.points.push({ x, y });
     if (this.points.length > this.maxLen) this.points.shift();
   }
-  draw(targetCtx, color, baseWidth) {
+  draw(targetCtx, color, baseWidth, composite = "lighter") {
     if (this.points.length < 2) return;
     const c = targetCtx || ctx;
     c.save();
-    c.globalCompositeOperation = "lighter";
+    c.globalCompositeOperation = composite;
     c.lineCap = "round";
     c.lineJoin = "round";
     for (let i = 1; i < this.points.length; i++) {
@@ -1870,10 +1860,18 @@ function drawEraserRangePreview(targetCtx, points, size, stampBrushSize) {
   const spacing = Math.max(3, size * 0.35);
   targetCtx.save();
   targetCtx.globalCompositeOperation = "source-over";
-  targetCtx.fillStyle = "rgba(226, 181, 90, 0.16)";
-  targetCtx.strokeStyle = "rgba(226, 181, 90, 0.78)";
+  targetCtx.fillStyle = ERASER_PREVIEW_FILL;
+  targetCtx.strokeStyle = ERASER_PREVIEW_STROKE;
   targetCtx.lineWidth = 1.5;
   targetCtx.setLineDash([4, 3]);
+  if (points.length > 1) {
+    targetCtx.beginPath();
+    targetCtx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      targetCtx.lineTo(points[i].x, points[i].y);
+    }
+    targetCtx.stroke();
+  }
   const stampAt = (x, y) => {
     targetCtx.beginPath();
     targetCtx.arc(x, y, stampRadius, 0, Math.PI * 2);
@@ -1925,6 +1923,8 @@ function animateFreeFrame() {
   ctx.drawImage(freeArtLayer, 0, 0, canvasW, canvasH);
   if (drawing && !isEraser && currentStroke.length > 1) {
     strokeTrail.draw(ctx, currentColor, getBrushSize(false));
+  } else if (drawing && isEraser && currentStroke.length > 1) {
+    strokeTrail.draw(ctx, ERASER_TRAIL_COLOR, getBrushSize(true), "source-over");
   }
   paintEraserRangeIndicator();
   drawParticles();
@@ -1963,8 +1963,9 @@ function animateZenFrame() {
       color: currentZenStrokeColor,
       size: brush,
     });
+  } else if (drawing && isEraser && currentStroke.length > 1) {
+    strokeTrail.draw(ctx, ERASER_TRAIL_COLOR, getZenBrushSize(true), "source-over");
   }
-  paintEraserRangeIndicator();
 
   for (let i = zenRipples.length - 1; i >= 0; i--) {
     zenRipples[i].update();
@@ -1972,6 +1973,7 @@ function animateZenFrame() {
     else zenRipples[i].draw();
   }
   drawParticles();
+  paintEraserRangeIndicator();
 
   const remain = Math.max(0, Math.ceil((zenDuration - elapsed) / 1000));
   const m = Math.floor(remain / 60);
@@ -4442,9 +4444,88 @@ function showToast(msg, durationMs) {
 }
 
 // ===== GALLERY (IndexedDB) =====
-function revokeGalleryObjectUrls() {
+function setGalleryInnerInert(inert) {
+  const inner = document.querySelector("#galleryScreen .gallery-inner");
+  if (inner) inner.inert = inert;
+}
+
+function getGalleryDeleteEntryId() {
+  if (galleryDetailEntryId != null) return galleryDetailEntryId;
+  const btn = document.getElementById("galleryDeleteBtn");
+  const raw = btn?.dataset.entryId;
+  if (raw == null || raw === "") return null;
+  const id = Number(raw);
+  return Number.isFinite(id) ? id : null;
+}
+
+function initGallery() {
+  const deleteBtn = document.getElementById("galleryDeleteBtn");
+  if (!deleteBtn || deleteBtn.dataset.bound) return;
+  deleteBtn.dataset.bound = "1";
+  deleteBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    void deleteGalleryDetail();
+  });
+}
+
+function revokeGalleryGridUrls() {
   galleryObjectUrls.forEach((url) => URL.revokeObjectURL(url));
   galleryObjectUrls = [];
+}
+
+function revokeGalleryDetailUrl() {
+  if (galleryDetailObjectUrl) {
+    URL.revokeObjectURL(galleryDetailObjectUrl);
+    galleryDetailObjectUrl = null;
+  }
+}
+
+function createGalleryThumbUrl(entry) {
+  if (!isValidGalleryEntry(entry)) return null;
+  try {
+    return URL.createObjectURL(entry.thumb);
+  } catch {
+    return null;
+  }
+}
+
+async function purgeInvalidGalleryEntries(entries) {
+  const invalid = entries.filter((e) => !isValidGalleryEntry(e));
+  if (!invalid.length) return entries.filter((e) => isValidGalleryEntry(e));
+  await Promise.all(invalid.map((e) => deleteGalleryEntry(e.id).catch(() => {})));
+  if (invalid.length) showToast(`已移除 ${invalid.length} 筆損壞紀錄`);
+  return entries.filter((e) => isValidGalleryEntry(e));
+}
+
+function setGalleryDetailThumb(entry) {
+  const img = document.getElementById("galleryDetailImg");
+  const missing = document.getElementById("galleryDetailMissing");
+  if (!img || !missing) return false;
+
+  revokeGalleryDetailUrl();
+  img.removeAttribute("src");
+  img.hidden = true;
+  missing.hidden = true;
+
+  const url = createGalleryThumbUrl(entry);
+  if (!url) {
+    missing.hidden = false;
+    return false;
+  }
+
+  galleryDetailObjectUrl = url;
+  img.onerror = () => {
+    revokeGalleryDetailUrl();
+    img.removeAttribute("src");
+    img.hidden = true;
+    missing.hidden = false;
+  };
+  img.onload = () => {
+    img.hidden = false;
+    missing.hidden = true;
+  };
+  img.src = url;
+  return true;
 }
 
 function getGalleryModeLabel(entry) {
@@ -4456,9 +4537,10 @@ function getGalleryModeLabel(entry) {
 }
 
 async function persistCardToGallery(affirmation) {
-  if (!lastArtworkDataUrl) return;
+  if (!lastArtworkDataUrl || lastArtworkDataUrl.length < 32) return;
   try {
     const thumb = await dataUrlToThumbnailBlob(lastArtworkDataUrl);
+    if (!thumb || thumb.size === 0) return;
     await addGalleryEntry({
       createdAt: new Date().toISOString(),
       mode: appMode,
@@ -4489,66 +4571,130 @@ async function refreshGalleryBadge() {
 }
 
 function renderGalleryGrid(entries) {
-  revokeGalleryObjectUrls();
+  revokeGalleryGridUrls();
   const grid = document.getElementById("galleryGrid");
   const empty = document.getElementById("galleryEmpty");
   if (!grid || !empty) return;
 
   grid.innerHTML = "";
-  if (!entries.length) {
+  const valid = entries.filter((e) => isValidGalleryEntry(e));
+  if (!valid.length) {
     empty.hidden = false;
+    empty.textContent =
+      entries.length > 0
+        ? "紀錄已損壞或已清除。完成一次創作後會自動收錄。"
+        : "還沒有作品。完成一次創作後會自動收錄。";
     return;
   }
   empty.hidden = true;
+  empty.textContent = "還沒有作品。完成一次創作後會自動收錄。";
 
-  entries.forEach((entry) => {
-    const url = URL.createObjectURL(entry.thumb);
-    galleryObjectUrls.push(url);
+  valid.forEach((entry) => {
+    const url = createGalleryThumbUrl(entry);
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "gallery-item";
+    const thumbHtml = url
+      ? `<img src="${url}" alt="" loading="lazy" />`
+      : `<div class="gallery-thumb-missing gallery-thumb-missing--tile" aria-hidden="true"><span>無縮圖</span></div>`;
+    if (url) galleryObjectUrls.push(url);
     btn.innerHTML = `
-      <img src="${url}" alt="" loading="lazy" />
+      ${thumbHtml}
       <div class="gallery-item-meta">
         <div class="gallery-item-mode">${getGalleryModeLabel(entry)}</div>
         <div class="gallery-item-date">${formatGalleryDate(entry.createdAt)}</div>
       </div>
     `;
-    btn.addEventListener("click", () => openGalleryDetail(entry, url));
+    const img = btn.querySelector("img");
+    if (img) {
+      img.addEventListener("error", () => {
+        img.replaceWith(
+          Object.assign(document.createElement("div"), {
+            className: "gallery-thumb-missing gallery-thumb-missing--tile",
+            innerHTML: "<span>無縮圖</span>",
+          })
+        );
+      });
+    }
+    btn.addEventListener("click", () => openGalleryDetail(entry));
     grid.appendChild(btn);
   });
 }
 
-function openGalleryDetail(entry, thumbUrl) {
+function openGalleryDetail(entry) {
   const detail = document.getElementById("galleryDetail");
-  const img = document.getElementById("galleryDetailImg");
   const modeEl = document.getElementById("galleryDetailMode");
   const dateEl = document.getElementById("galleryDetailDate");
   const affEl = document.getElementById("galleryDetailAffirmation");
-  const delBtn = document.getElementById("galleryDeleteBtn");
-  if (!detail || !img) return;
+  if (!detail) return;
 
-  img.src = thumbUrl;
+  if (!isValidGalleryEntry(entry)) {
+    showToast("此作品未完整儲存");
+    if (entry?.id != null) removeGalleryItem(entry.id);
+    return;
+  }
+
+  galleryDetailEntryId = entry.id;
+  const deleteBtn = document.getElementById("galleryDeleteBtn");
+  if (deleteBtn) deleteBtn.dataset.entryId = String(entry.id);
+  setGalleryDetailThumb(entry);
   if (modeEl) modeEl.textContent = getGalleryModeLabel(entry);
   if (dateEl) dateEl.textContent = formatGalleryDate(entry.createdAt);
   if (affEl) affEl.textContent = entry.affirmation || "";
-  if (delBtn) {
-    delBtn.onclick = () => removeGalleryItem(entry.id);
-  }
+  setGalleryInnerInert(true);
   detail.hidden = false;
 }
 
 function closeGalleryDetail() {
+  galleryDetailEntryId = null;
+  const deleteBtn = document.getElementById("galleryDeleteBtn");
+  if (deleteBtn) deleteBtn.dataset.entryId = "";
+  setGalleryInnerInert(false);
+  revokeGalleryDetailUrl();
+  const img = document.getElementById("galleryDetailImg");
+  const missing = document.getElementById("galleryDetailMissing");
+  if (img) {
+    img.removeAttribute("src");
+    img.hidden = true;
+    img.onerror = null;
+    img.onload = null;
+  }
+  if (missing) missing.hidden = true;
   const detail = document.getElementById("galleryDetail");
   if (detail) detail.hidden = true;
 }
 
+async function deleteGalleryDetail() {
+  const entryId = getGalleryDeleteEntryId();
+  if (entryId == null) {
+    showToast("無法刪除此作品");
+    return;
+  }
+  const btn = document.getElementById("galleryDeleteBtn");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "刪除中…";
+  }
+  try {
+    await removeGalleryItem(entryId);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "刪除此作品";
+    }
+  }
+}
+
 async function removeGalleryItem(id) {
+  if (id == null) {
+    showToast("無法刪除此作品");
+    return;
+  }
   try {
     await deleteGalleryEntry(id);
     closeGalleryDetail();
     const entries = await listGalleryEntries();
-    renderGalleryGrid(entries);
+    renderGalleryGrid(entries.filter((e) => isValidGalleryEntry(e)));
     await refreshGalleryBadge();
     showToast("已刪除");
   } catch {
@@ -4558,8 +4704,10 @@ async function removeGalleryItem(id) {
 
 async function openGallery() {
   try {
+    closeGalleryDetail();
     const entries = await listGalleryEntries();
-    renderGalleryGrid(entries);
+    const valid = await purgeInvalidGalleryEntries(entries);
+    renderGalleryGrid(valid);
     showScreen("galleryScreen");
   } catch {
     showToast("無法開啟藝廊（此裝置可能不支援本地儲存）");
@@ -4568,7 +4716,7 @@ async function openGallery() {
 
 function closeGallery() {
   closeGalleryDetail();
-  revokeGalleryObjectUrls();
+  revokeGalleryGridUrls();
   showScreen("welcome");
   restartWelcomeEnterAnimation();
 }
@@ -4636,9 +4784,11 @@ function initParticleToggle() {
 }
 
 function registerServiceWorker() {
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
-  }
+  if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker
+    .register("./sw.js")
+    .then((reg) => reg.update())
+    .catch(() => {});
 }
 
 function restartWelcomeEnterAnimation() {
@@ -4652,6 +4802,7 @@ function restartWelcomeEnterAnimation() {
 // ===== INIT =====
 initColors();
 initSizes();
+initGallery();
 initTeacherExport();
 initParticleToggle();
 registerServiceWorker();
@@ -4688,3 +4839,4 @@ window.closeTerms = closeTerms;
 window.openGallery = openGallery;
 window.closeGallery = closeGallery;
 window.closeGalleryDetail = closeGalleryDetail;
+window.deleteGalleryDetail = deleteGalleryDetail;

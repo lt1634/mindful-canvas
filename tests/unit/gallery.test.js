@@ -5,6 +5,7 @@ import {
   GALLERY_DB_NAME,
   formatGalleryDate,
 } from "../../src/logic.js";
+import { isValidGalleryEntry } from "../../src/logic.js";
 
 describe("gallery logic", () => {
   it("defines IndexedDB name", () => {
@@ -24,5 +25,48 @@ describe("gallery logic", () => {
   it("formats ISO dates for zh-Hant locale", () => {
     const text = formatGalleryDate("2026-06-12T14:30:00.000Z");
     expect(text.length).toBeGreaterThan(0);
+  });
+});
+
+describe("isValidGalleryEntry", () => {
+  const validThumb = new Blob(["x"], { type: "image/jpeg" });
+
+  it("accepts entry with non-empty thumb blob", () => {
+    expect(
+      isValidGalleryEntry({
+        createdAt: "2026-06-12T14:30:00.000Z",
+        mode: "zen",
+        thumb: validThumb,
+      })
+    ).toBe(true);
+  });
+
+  it("rejects missing thumb", () => {
+    expect(
+      isValidGalleryEntry({
+        createdAt: "2026-06-12T14:30:00.000Z",
+        mode: "zen",
+      })
+    ).toBe(false);
+  });
+
+  it("rejects empty thumb blob", () => {
+    expect(
+      isValidGalleryEntry({
+        createdAt: "2026-06-12T14:30:00.000Z",
+        mode: "zen",
+        thumb: new Blob([], { type: "image/jpeg" }),
+      })
+    ).toBe(false);
+  });
+
+  it("rejects non-blob thumb", () => {
+    expect(
+      isValidGalleryEntry({
+        createdAt: "2026-06-12T14:30:00.000Z",
+        mode: "zen",
+        thumb: "not-a-blob",
+      })
+    ).toBe(false);
   });
 });

@@ -1,11 +1,7 @@
-const CACHE = "mindful-canvas-v2-zen-v32";
-const ASSETS = [
+const CACHE = "mindful-canvas-v2-zen-v36";
+const PRECACHE = [
   "./",
   "./index.html",
-  "./css/style.css",
-  "./js/app.js",
-  "./js/gallery.js",
-  "./src/logic.js",
   "./manifest.json",
   "./assets/logo-mark.svg",
   "./icon-192.png",
@@ -16,7 +12,7 @@ self.addEventListener("install", (e) => {
   e.waitUntil(
     caches
       .open(CACHE)
-      .then((c) => c.addAll(ASSETS))
+      .then((c) => c.addAll(PRECACHE))
       .then(() => self.skipWaiting())
   );
 });
@@ -30,14 +26,17 @@ self.addEventListener("activate", (e) => {
   );
 });
 
+function isNetworkFirstRequest(request) {
+  const accept = request.headers.get("accept") || "";
+  if (request.mode === "navigate" || accept.includes("text/html")) return true;
+  const { pathname } = new URL(request.url);
+  return pathname.endsWith(".js") || pathname.endsWith(".css");
+}
+
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
 
-  const accept = e.request.headers.get("accept") || "";
-  const isPage = e.request.mode === "navigate" || accept.includes("text/html");
-
-  // 頁面用 network-first：有網即攞最新版，離線先 fallback cache
-  if (isPage) {
+  if (isNetworkFirstRequest(e.request)) {
     e.respondWith(
       fetch(e.request)
         .then((res) => {
@@ -52,7 +51,6 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // 靜態資源維持 cache-first
   e.respondWith(
     caches.match(e.request).then(
       (cached) =>

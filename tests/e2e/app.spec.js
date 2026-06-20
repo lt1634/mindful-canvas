@@ -90,4 +90,54 @@ test.describe("Mindful Canvas", () => {
     await expect(page.locator("#welcome")).toBeVisible();
     await expect(page.locator(".mode-card")).toHaveCount(3);
   });
+
+  test("gallery delete removes saved entry", async ({ page }) => {
+    await page.evaluate(async () => {
+      const DB_NAME = "mindful_canvas_gallery";
+      const thumb = new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], {
+        type: "image/jpeg",
+      });
+      const db = await new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+          const database = e.target.result;
+          if (!database.objectStoreNames.contains("entries")) {
+            const store = database.createObjectStore("entries", {
+              keyPath: "id",
+              autoIncrement: true,
+            });
+            store.createIndex("createdAt", "createdAt", { unique: false });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction("entries", "readwrite");
+        tx.objectStore("entries").add({
+          createdAt: new Date().toISOString(),
+          mode: "zen",
+          templateId: "lotus",
+          affirmation: "測試題字",
+          thumb,
+        });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+      db.close();
+    });
+
+    await page.locator("#galleryOpenBtn").click();
+    await expect(page.locator("#galleryScreen")).toHaveClass(/active/);
+    await expect(page.locator(".gallery-item")).toHaveCount(1);
+
+    await page.locator(".gallery-item").first().click();
+    await expect(page.locator("#galleryDetail")).toBeVisible();
+
+    await page.locator("#galleryDeleteBtn").click();
+    await expect(page.locator("#toast")).toContainText("已刪除", { timeout: 5000 });
+    await expect(page.locator("#galleryDetail")).toBeHidden();
+    await expect(page.locator(".gallery-item")).toHaveCount(0);
+    await expect(page.locator("#galleryEmpty")).toBeVisible();
+  });
 });

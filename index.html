@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
-    <link rel="stylesheet" href="css/style.css?v=zen-v32" />
+    <link rel="stylesheet" href="css/style.css?v=zen-v36" />
   </head>
   <body>
     <!-- WELCOME -->
@@ -123,7 +123,14 @@
         >
           ×
         </button>
-        <img id="galleryDetailImg" src="" alt="心靈藝廊作品" />
+        <div class="gallery-detail-preview" id="galleryDetailPreview">
+          <img id="galleryDetailImg" src="" alt="心靈藝廊作品" hidden />
+          <div class="gallery-thumb-missing" id="galleryDetailMissing" hidden>
+            <span class="gallery-thumb-missing-icon" aria-hidden="true">🖼</span>
+            <p>縮圖無法載入</p>
+            <p class="gallery-thumb-missing-hint">作品可能未完整儲存，可刪除此筆紀錄</p>
+          </div>
+        </div>
         <div class="gallery-detail-meta">
           <div class="gallery-detail-mode" id="galleryDetailMode"></div>
           <div class="gallery-detail-date" id="galleryDetailDate"></div>
@@ -342,6 +349,6 @@
       </div>
     </div>
 
-    <script type="module" src="js/app.js?v=zen-v32"></script>
+    <script type="module" src="js/app.js?v=zen-v36"></script>
   </body>
 </html>

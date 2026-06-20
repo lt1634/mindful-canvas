@@ -1,6 +1,15 @@
-import { GALLERY_DB_NAME, GALLERY_MAX_ENTRIES } from "../src/logic.js";
+import {
+  GALLERY_DB_NAME,
+  GALLERY_MAX_ENTRIES,
+  isValidGalleryEntry,
+} from "../src/logic.js?v=zen-v36";
 
-export { GALLERY_MAX_ENTRIES, GALLERY_MODE_LABELS, formatGalleryDate } from "../src/logic.js";
+export {
+  GALLERY_MAX_ENTRIES,
+  GALLERY_MODE_LABELS,
+  formatGalleryDate,
+  isValidGalleryEntry,
+} from "../src/logic.js?v=zen-v36";
 
 const DB_NAME = GALLERY_DB_NAME;
 const DB_VERSION = 1;
@@ -73,11 +82,15 @@ export function dataUrlToThumbnailBlob(dataUrl, maxWidth = 320, quality = 0.82) 
 }
 
 export async function addGalleryEntry(entry) {
+  if (!isValidGalleryEntry(entry)) {
+    throw new Error("invalid gallery entry");
+  }
   const db = await openDB();
   try {
     await new Promise((resolve, reject) => {
       const tx = db.transaction(STORE, "readwrite");
-      tx.objectStore(STORE).add(entry);
+      const req = tx.objectStore(STORE).add(entry);
+      req.onerror = () => reject(req.error);
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
@@ -98,11 +111,16 @@ export async function listGalleryEntries() {
 }
 
 export async function deleteGalleryEntry(id) {
+  const key = typeof id === "string" ? Number(id) : id;
+  if (!Number.isFinite(key)) {
+    throw new Error("invalid gallery entry id");
+  }
   const db = await openDB();
   try {
     await new Promise((resolve, reject) => {
       const tx = db.transaction(STORE, "readwrite");
-      tx.objectStore(STORE).delete(id);
+      const req = tx.objectStore(STORE).delete(key);
+      req.onerror = () => reject(req.error);
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });

@@ -95,6 +95,21 @@ export const GALLERY_MODE_LABELS = {
 };
 
 /**
+ * Validate a gallery IndexedDB entry before display or persistence
+ * @param {object} entry
+ * @returns {boolean}
+ */
+export function isValidGalleryEntry(entry) {
+  return Boolean(
+    entry &&
+    entry.createdAt &&
+    entry.thumb instanceof Blob &&
+    entry.thumb.size > 0 &&
+    typeof entry.mode === "string"
+  );
+}
+
+/**
  * Format gallery entry ISO date for zh-Hant UI
  * @param {string} iso - ISO8601 date string
  * @returns {string}
