@@ -97,17 +97,17 @@ const SONG_FADE_OUT_SEC = 2.8;
 // 墨流調色：每色色相分明，主盤四色＋更多進階
 const SUMI_COLORS = [
   { hex: "#1a1a1a", name: "黑墨" },
-  { hex: "#c43a2a", name: "朱紅" },
-  { hex: "#1e4a6e", name: "靛青" },
-  { hex: "#d4a820", name: "藤黄" },
-  { hex: "#3a7a48", name: "松綠" },
-  { hex: "#7a4a8c", name: "紫菫" },
-  { hex: "#e07838", name: "琥珀" },
-  { hex: "#1a8a8a", name: "青碧" },
-  { hex: "#5c4030", name: "栗褐" },
-  { hex: "#48a0d8", name: "空色" },
-  { hex: "#c8a878", name: "砂金" },
-  { hex: "#98b878", name: "若草" },
+  { hex: "#bc4032", name: "朱紅" },
+  { hex: "#224a6a", name: "靛青" },
+  { hex: "#cba329", name: "藤黄" },
+  { hex: "#3d774a", name: "松綠" },
+  { hex: "#794d89", name: "紫菫" },
+  { hex: "#d87a40", name: "琥珀" },
+  { hex: "#208484", name: "青碧" },
+  { hex: "#5a4132", name: "栗褐" },
+  { hex: "#4f9ed1", name: "空色" },
+  { hex: "#c4a77c", name: "砂金" },
+  { hex: "#98b57b", name: "若草" },
 ];
 // 主盤四色：黑墨、朱紅、靛青、藤黄
 const SUMI_PRIMARY_INDICES = [0, 1, 2, 3];

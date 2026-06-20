@@ -1,4 +1,4 @@
-const CACHE = "mindful-canvas-v2-zen-v42";
+const CACHE = "mindful-canvas-v2-zen-v43";
 const PRECACHE = [
   "./",
   "./index.html",
