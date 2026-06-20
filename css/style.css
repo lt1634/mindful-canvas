@@ -605,11 +605,85 @@ body {
   gap: 8px;
   pointer-events: none;
 }
-.sumi-hint {
+.sumi-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  pointer-events: none;
+}
+.sumi-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sumi-step-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(79, 195, 247, 0.12);
+  border: 1px solid rgba(79, 195, 247, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.sumi-step-label {
   font-size: 12px;
-  color: rgba(90, 80, 72, 0.75);
+  font-weight: 600;
+  color: rgba(60, 90, 110, 0.88);
   letter-spacing: 1px;
-  text-shadow: 0 1px 2px rgba(255, 250, 240, 0.6);
+}
+.sumi-step-connector {
+  width: 22px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(79, 195, 247, 0.15), rgba(79, 195, 247, 0.55));
+  flex-shrink: 0;
+}
+.sumi-palette {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.sumi-palette-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sumi-palette-advanced {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  padding-top: 4px;
+}
+.sumi-palette-advanced[hidden] {
+  display: none !important;
+}
+.sumi-palette-toggle {
+  border: 1px solid rgba(79, 195, 247, 0.35);
+  background: rgba(79, 195, 247, 0.1);
+  color: #2a7a9c;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  line-height: 1.2;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+.sumi-palette-toggle.open {
+  background: rgba(79, 195, 247, 0.22);
+  border-color: rgba(79, 195, 247, 0.55);
+}
+.sumi-palette-toggle:active {
+  transform: scale(0.96);
 }
 .sumi-bar {
   pointer-events: auto;
@@ -707,6 +781,10 @@ body {
 }
 .sumi-clear:active {
   opacity: 0.6;
+}
+.sumi-clear:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 /* ===== CANVAS SCREEN ===== */

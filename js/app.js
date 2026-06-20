@@ -20,6 +20,8 @@ import {
 const ERASER_PREVIEW_FILL = "rgba(110, 200, 255, 0.32)";
 const ERASER_PREVIEW_STROKE = "rgba(130, 210, 255, 1)";
 const ERASER_TRAIL_COLOR = "rgba(110, 200, 255, 0.78)";
+const ERASER_SIZE_MULTIPLIER = 2;
+const ERASER_MIN_SIZE = 8;
 
 let currentScene = "free";
 let currentColor = "#ddb565";
@@ -77,6 +79,8 @@ let sumiAutoMawariAngle = 0;
 let sumiAnimFrame = 0;
 let sumiBgCache = null;
 let sumiUndoStack = [];
+let sumiWashing = false;
+let sumiWashFade = 1;
 
 const BREATH_CYCLE_MS = 8000;
 const TOOLS_IDLE_MS = 3000;
@@ -107,6 +111,9 @@ const SUMI_COLORS = [
   { hex: "#9ab5a8", name: "淺翠" },
   { hex: "#c4b8a8", name: "米色" },
 ];
+// 主盤四色：黑墨、朱紅、靛青、松綠
+const SUMI_PRIMARY_INDICES = [0, 8, 9, 3];
+const SUMI_WASH_FADE_STEP = 0.045;
 const SUMI_MAX_DROPS = 64;
 const SUMI_DROP_VERTS = 96;
 const SUMI_MAX_VERTS = 320;
@@ -1348,7 +1355,9 @@ function updateZenHintBreath() {
 }
 
 function getBrushSize(eraser) {
-  const base = eraser ? Math.max(currentSize * 2.5, 10) : currentSize;
+  const base = eraser
+    ? Math.max(currentSize * ERASER_SIZE_MULTIPLIER, ERASER_MIN_SIZE)
+    : currentSize;
   return eraser ? base : base * getBreathLineMultiplier();
 }
 
@@ -1816,44 +1825,6 @@ function eraseInkAlongPoints(targetCtx, points, size, stampBrushSize) {
   targetCtx.restore();
 }
 
-/**
- * Erase by painting with background color (for save/export only).
- * Unlike eraseInkAlongPoints which uses destination-out (transparent erase),
- * this uses source-over to paint the dark background, so saved PNGs stay dark.
- */
-function eraseToBackground(targetCtx, points, size, bgColor) {
-  if (!points.length) return;
-  const stampRadius = eraseInkRadius(size);
-  const spacing = Math.max(3, size * 0.35);
-  targetCtx.save();
-  targetCtx.globalCompositeOperation = "source-over";
-  targetCtx.fillStyle = bgColor || "#10141c";
-  const stampAt = (x, y) => {
-    targetCtx.beginPath();
-    targetCtx.arc(x, y, stampRadius, 0, Math.PI * 2);
-    targetCtx.fill();
-  };
-  if (points.length === 1) {
-    stampAt(points[0].x, points[0].y);
-  } else {
-    for (let i = 1; i < points.length; i++) {
-      const p0 = points[i - 1];
-      const p1 = points[i];
-      const segLen = Math.hypot(p1.x - p0.x, p1.y - p0.y);
-      const steps = Math.max(1, Math.ceil(segLen / spacing));
-      for (let s = 0; s <= steps; s++) {
-        const t = s / steps;
-        stampAt(p0.x + (p1.x - p0.x) * t, p0.y + (p1.y - p0.y) * t);
-      }
-    }
-  }
-  targetCtx.restore();
-}
-
-function drawEraserAlongPoints(targetCtx, points, size) {
-  eraseInkAlongPoints(targetCtx, points, size);
-}
-
 function drawEraserRangePreview(targetCtx, points, size, stampBrushSize) {
   if (!points.length) return;
   const stampRadius = eraseInkRadius(stampBrushSize || size);
@@ -2009,7 +1980,7 @@ function drawZenPetal(cx, cy, dist, angle, color, alpha, scale) {
 
 function getZenBrushSize(eraser) {
   const base = appMode === "zen" ? currentSize || ZEN_BRUSH_SIZE : currentSize;
-  return eraser ? Math.max(base * 2.5, 10) : base;
+  return eraser ? Math.max(base * ERASER_SIZE_MULTIPLIER, ERASER_MIN_SIZE) : base;
 }
 
 function setDefaultZenBrushSize() {
@@ -2719,6 +2690,7 @@ function drawSumiDrops(targetCtx) {
   const c = targetCtx || ctx;
   c.save();
   c.globalCompositeOperation = "source-over";
+  if (sumiWashing) c.globalAlpha = sumiWashFade;
   for (const drop of sumiDrops) {
     const verts = drop.verts;
     if (verts.length < 3) continue;
@@ -2749,6 +2721,7 @@ function drawSumiRipples(targetCtx) {
   const c = targetCtx || ctx;
   const now = Date.now();
   c.save();
+  if (sumiWashing) c.globalAlpha = sumiWashFade;
   for (let i = sumiRipples.length - 1; i >= 0; i--) {
     const rip = sumiRipples[i];
     if (now < rip.born) continue;
@@ -2790,14 +2763,18 @@ function sumiAutoMawari() {
 function animateSumiFrame() {
   sumiAnimFrame++;
   drawWashiBackgroundCached();
-  if (sumiAnimFrame % 3 === 0) sumiApplyFlows();
-  if (sumiAnimFrame % 8 === 0) sumiAutoMawari();
+  if (!sumiWashing) {
+    if (sumiAnimFrame % 3 === 0) sumiApplyFlows();
+    if (sumiAnimFrame % 8 === 0) sumiAutoMawari();
+  }
   drawSumiDrops();
   if (sumiAnimFrame % 2 === 0) drawSumiRipples();
+  if (sumiWashing) tickSumiWashFade();
 
   // 閒置時跟呼吸慢滴小墨，畫面唔會完全靜止
   const now = Date.now();
   if (
+    !sumiWashing &&
     sumiDrops.length &&
     now - sumiLastInteraction > 6000 &&
     now - sumiLastAutoDrop > SUMI_AUTO_DROP_MS
@@ -2829,7 +2806,56 @@ function sumiDominantColor() {
 
 function selectSumiColor(idx) {
   sumiColorIndex = idx;
-  document.querySelectorAll(".sumi-dot").forEach((b, i) => b.classList.toggle("active", i === idx));
+  document.querySelectorAll(".sumi-dot").forEach((b) => {
+    b.classList.toggle("active", Number(b.dataset.colorIndex) === idx);
+  });
+}
+
+function toggleSumiPalette() {
+  const adv = document.getElementById("sumiPaletteAdvanced");
+  const toggle = document.getElementById("sumiPaletteToggle");
+  if (!adv || !toggle) return;
+  const open = adv.hidden;
+  adv.hidden = !open;
+  toggle.setAttribute("aria-expanded", String(open));
+  toggle.textContent = open ? "收起" : "更多";
+  toggle.classList.toggle("open", open);
+}
+
+function createSumiColorDot(colorIndex) {
+  const c = SUMI_COLORS[colorIndex];
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "sumi-dot" + (colorIndex === sumiColorIndex ? " active" : "");
+  b.style.background = c.hex;
+  b.dataset.colorIndex = String(colorIndex);
+  b.title = c.name;
+  b.setAttribute("aria-label", c.name);
+  b.onclick = () => selectSumiColor(colorIndex);
+  return b;
+}
+
+function setSumiClearBusy(busy) {
+  const clearBtn = document.querySelector(".sumi-clear");
+  if (clearBtn) clearBtn.disabled = busy;
+}
+
+function finishSumiWash() {
+  sumiDrops = [];
+  sumiFlowImpulses = [];
+  sumiRipples = [];
+  sumiAutoMawariAngle = 0;
+  strokeCount = 0;
+  resetSumiUndoStack();
+  sumiWashing = false;
+  sumiWashFade = 1;
+  setSumiClearBusy(false);
+  showToast("水面已洗淨，重新開始");
+}
+
+function tickSumiWashFade() {
+  sumiWashFade -= SUMI_WASH_FADE_STEP;
+  if (sumiWashFade <= 0) finishSumiWash();
 }
 
 function updateSumiFlowUI() {
@@ -2865,28 +2891,48 @@ function initSumiFlowCtrl() {
 function initSumiBar() {
   initSumiFlowCtrl();
   const bar = document.getElementById("sumiBar");
-  if (!bar || bar.querySelector(".sumi-dot")) return;
-  const clearBtn = bar.querySelector(".sumi-clear");
-  SUMI_COLORS.forEach((c, i) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "sumi-dot" + (i === 0 ? " active" : "");
-    b.style.background = c.hex;
-    b.title = c.name;
-    b.setAttribute("aria-label", c.name);
-    b.onclick = () => selectSumiColor(i);
-    bar.insertBefore(b, clearBtn);
+  if (!bar || bar.dataset.ready) return;
+  bar.dataset.ready = "1";
+
+  const palette = document.createElement("div");
+  palette.className = "sumi-palette";
+  palette.id = "sumiPalette";
+
+  const main = document.createElement("div");
+  main.className = "sumi-palette-main";
+  main.id = "sumiPaletteMain";
+  SUMI_PRIMARY_INDICES.forEach((i) => main.appendChild(createSumiColorDot(i)));
+
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "sumi-palette-toggle";
+  toggle.id = "sumiPaletteToggle";
+  toggle.setAttribute("aria-expanded", "false");
+  toggle.textContent = "更多";
+  toggle.onclick = () => toggleSumiPalette();
+
+  const advanced = document.createElement("div");
+  advanced.className = "sumi-palette-advanced";
+  advanced.id = "sumiPaletteAdvanced";
+  advanced.hidden = true;
+  SUMI_COLORS.forEach((_, i) => {
+    if (!SUMI_PRIMARY_INDICES.includes(i)) advanced.appendChild(createSumiColorDot(i));
   });
+
+  palette.append(main, toggle, advanced);
+  const flowCtrl = document.getElementById("sumiFlowCtrl");
+  bar.insertBefore(palette, flowCtrl || bar.firstChild);
 }
 
 function clearSumiCanvas() {
-  sumiDrops = [];
-  sumiFlowImpulses = [];
-  sumiRipples = [];
-  sumiAutoMawariAngle = 0;
-  strokeCount = 0;
-  resetSumiUndoStack();
-  showToast("水面已洗淨，重新開始");
+  if (sumiWashing) return;
+  if (!sumiDrops.length) {
+    showToast("水面已洗淨，重新開始");
+    return;
+  }
+  sumiWashing = true;
+  sumiWashFade = 1;
+  setSumiClearBusy(true);
 }
 
 function drawZenMandala(progress) {
@@ -3323,28 +3369,38 @@ function renderPureArtwork(targetCtx, w, h) {
   } else {
     drawPaperBackground(targetCtx, w, h);
   }
-  targetCtx.lineCap = "round";
-  targetCtx.lineJoin = "round";
+
   if (currentScene === "sumi") {
+    targetCtx.lineCap = "round";
+    targetCtx.lineJoin = "round";
     drawSumiDrops(targetCtx);
-  } else if (currentScene === "zen") {
-    zenTouchStrokes.forEach((s) => {
-      if (s.eraser) {
-        eraseToBackground(targetCtx, s.points, s.size * 1.25, "#f0ebe0");
-      } else {
-        drawZenTraceStroke(s, targetCtx);
-      }
-    });
+    return;
+  }
+
+  const ink = document.createElement("canvas");
+  const dpr = window.devicePixelRatio || 1;
+  ink.width = Math.max(1, Math.round(w * dpr));
+  ink.height = Math.max(1, Math.round(h * dpr));
+  const ictx = ink.getContext("2d");
+  ictx.setTransform(1, 0, 0, 1, 0, 0);
+  ictx.scale(dpr, dpr);
+  ictx.lineCap = "round";
+  ictx.lineJoin = "round";
+
+  if (currentScene === "zen") {
+    zenTouchStrokes.forEach((s) => drawZenTraceStroke(s, ictx));
   } else {
     strokeHistory.forEach((s) => {
       if (s.eraser) {
-        eraseToBackground(targetCtx, s.points, s.size, "#10141c");
+        eraseInkAlongPoints(ictx, s.points, s.size);
         return;
       }
-      drawInkAlongPoints(targetCtx, s.points, s.color, s.size, 1, 4);
-      drawStroke(s, 0.35, targetCtx);
+      drawInkAlongPoints(ictx, s.points, s.color, s.size, 1, 4);
+      drawStroke(s, 0.35, ictx);
     });
   }
+
+  targetCtx.drawImage(ink, 0, 0, w, h);
 }
 
 function createArtworkDataURL() {
@@ -3903,6 +3959,8 @@ function resetCanvasState() {
   sumiAnimFrame = 0;
   sumiBgCache = null;
   sumiUndoStack = [];
+  sumiWashing = false;
+  sumiWashFade = 1;
   drawing = false;
   activePointerId = null;
   currentStroke = [];

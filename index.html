@@ -191,7 +191,41 @@
           <div class="zen-timer" id="zenTimer" aria-hidden="true" style="display: none">2:00</div>
         </div>
         <div id="sumiUI" style="display: none">
-          <div class="sumi-hint">輕點滴墨 · 拖曳攪水</div>
+          <div class="sumi-steps" aria-label="墨流操作：滴墨、攪水">
+            <div class="sumi-step">
+              <span class="sumi-step-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
+                  <path
+                    d="M12 3c-2 4-6 6-6 10a6 6 0 0 0 12 0c0-4-4-6-6-10z"
+                    fill="#4fc3f7"
+                    opacity="0.9"
+                  />
+                </svg>
+              </span>
+              <span class="sumi-step-label">滴墨</span>
+            </div>
+            <span class="sumi-step-connector" aria-hidden="true"></span>
+            <div class="sumi-step">
+              <span class="sumi-step-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
+                  <path
+                    d="M4 14c3-2 5-1 8 0s5 2 8 0"
+                    stroke="#4fc3f7"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M3 18c4-2 7-1 10 0s6 2 9 0"
+                    stroke="#4fc3f7"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    opacity="0.55"
+                  />
+                </svg>
+              </span>
+              <span class="sumi-step-label">攪水</span>
+            </div>
+          </div>
           <div class="sumi-bar" id="sumiBar">
             <div class="sumi-flow" id="sumiFlowCtrl" role="group" aria-label="流動強度">
               <span class="sumi-flow-label">流動</span>
@@ -362,6 +396,6 @@
       </div>
     </div>
 
-    <script type="module" src="js/app.js?v=zen-v38"></script>
+    <script type="module" src="js/app.js?v=zen-v41"></script>
   </body>
 </html>
