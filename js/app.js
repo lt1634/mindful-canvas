@@ -9,13 +9,13 @@ import {
   checkSafety,
   isValidGalleryEntry,
   ZEN_TRACE_COLORS,
-} from "../src/logic.js?v=zen-v38";
+} from "../src/logic.js?v=zen-v45";
 import {
   addGalleryEntry,
   listGalleryEntries,
   deleteGalleryEntry,
   dataUrlToThumbnailBlob,
-} from "./gallery.js?v=zen-v38";
+} from "./gallery.js?v=zen-v45";
 
 const ERASER_PREVIEW_FILL = "rgba(110, 200, 255, 0.32)";
 const ERASER_PREVIEW_STROKE = "rgba(130, 210, 255, 1)";
@@ -1384,6 +1384,13 @@ let canvasW = 0,
   canvasH = 0;
 let isEraser = false;
 let eraserHoverPos = null;
+
+// === Anti-mistouch: edge dead zone (palm rejection) ===
+const EDGE_MARGIN = 20; // px from each edge — touches here are ignored
+
+// === Line stabilization: smoothing buffer ===
+const SMOOTH_WINDOW = 3; // number of points to average for smoothing
+let smoothBuffer = []; // ring buffer for current stroke
 
 class ZenRipple {
   constructor(x, y) {
@@ -3269,7 +3276,26 @@ function stopCanvasLoop() {
 
 function getPointerPos(e) {
   const rect = canvas.getBoundingClientRect();
-  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  let x = e.clientX - rect.left;
+  let y = e.clientY - rect.top;
+  // Anti-mistouch: clamp to safe zone (ignore palm resting on edges)
+  x = Math.max(EDGE_MARGIN, Math.min(canvasW - EDGE_MARGIN, x));
+  y = Math.max(EDGE_MARGIN, Math.min(canvasH - EDGE_MARGIN, y));
+  return { x, y };
+}
+
+// Line stabilization: running average over last N points
+function smoothPoint(pos) {
+  smoothBuffer.push(pos);
+  if (smoothBuffer.length > SMOOTH_WINDOW) smoothBuffer.shift();
+  let sx = 0,
+    sy = 0;
+  for (const p of smoothBuffer) {
+    sx += p.x;
+    sy += p.y;
+  }
+  const n = smoothBuffer.length;
+  return { x: sx / n, y: sy / n };
 }
 
 function zenTouchSparkle(pos) {
@@ -3383,8 +3409,10 @@ function beginStroke(e) {
   if (appMode === "zen" && zenFinished) return;
   resumeAllAudio();
   drawing = true;
+  smoothBuffer = []; // reset smoothing buffer for new stroke
   const pos = getPointerPos(e);
-  currentStroke = [{ x: pos.x, y: pos.y }];
+  const sPos = smoothPoint(pos);
+  currentStroke = [{ x: sPos.x, y: sPos.y }];
   strokeTrail.reset();
   strokeTrail.add(pos.x, pos.y);
   lastInkStampX = pos.x;
@@ -3405,7 +3433,8 @@ function beginStroke(e) {
 function continueStroke(e) {
   if (!drawing || (appMode === "zen" && zenFinished)) return;
   const pos = getPointerPos(e);
-  currentStroke.push({ x: pos.x, y: pos.y });
+  const sPos = smoothPoint(pos);
+  currentStroke.push({ x: sPos.x, y: sPos.y });
   strokeTrail.add(pos.x, pos.y);
   if (appMode === "zen") {
     if (!isEraser) {
@@ -3836,6 +3865,7 @@ function enterCanvasScreen() {
   stopWelcomeAmbient();
   const screen = document.getElementById("canvasScreen");
   showScreen("canvasScreen");
+  if (typeof gtag === "function") gtag("event", "canvas_open");
   screen.classList.remove("canvas-enter");
   void screen.offsetWidth;
   screen.classList.add("canvas-enter");
@@ -4416,6 +4446,7 @@ function drawCardBrandFooter(sctx, w, isZenCard) {
 }
 
 function saveCard() {
+  if (typeof gtag === "function") gtag("event", "card_save");
   const saveCanvas = document.createElement("canvas");
   const w = 1080;
   const h = 1440;
@@ -4459,6 +4490,7 @@ function saveCard() {
         if (navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({ files: [file], title: "覺知畫布 Mindful Canvas" });
+            if (typeof gtag === "function") gtag("event", "card_share");
             showToast("已分享");
             return;
           } catch (e) {}
