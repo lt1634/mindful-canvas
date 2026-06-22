@@ -114,9 +114,10 @@ export function isValidGalleryEntry(entry) {
  * @param {string} iso - ISO8601 date string
  * @returns {string}
  */
-export function formatGalleryDate(iso) {
+export function formatGalleryDate(iso, lang = "zh") {
   try {
-    return new Date(iso).toLocaleString("zh-Hant", {
+    const locale = lang === "en" ? "en-HK" : "zh-Hant";
+    return new Date(iso).toLocaleString(locale, {
       month: "short",
       day: "numeric",
       hour: "2-digit",

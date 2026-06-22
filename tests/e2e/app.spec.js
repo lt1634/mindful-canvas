@@ -14,7 +14,7 @@ test.describe("Mindful Canvas", () => {
         });
       }
     });
-    await page.goto(`/?v=zen-v46&_=${Date.now()}`);
+    await page.goto(`/?v=zen-v47&_=${Date.now()}`);
     await page.waitForFunction(() => typeof window.openZenPicker === "function");
   });
 
@@ -108,6 +108,16 @@ test.describe("Mindful Canvas", () => {
     await page.setViewportSize({ width: 375, height: 812 });
     await expect(page.locator("#welcome")).toBeVisible();
     await expect(page.locator(".showcase-card")).toHaveCount(3);
+  });
+
+  test("switches to English via language toggle", async ({ page }) => {
+    await expect(page.locator("#langToggle")).toBeVisible();
+    await page.locator('#langToggle [data-lang="en"]').click();
+    await expect(page.getByRole("heading", { name: "Mindful Canvas" })).toBeVisible();
+    await expect(page.getByText("Draw one stroke, let your heart settle")).toBeVisible();
+    await page.locator(".showcase-card.showcase-free").click();
+    await expect(page.locator("#canvasTitle")).toHaveText("Free Canvas");
+    await expect(page.locator("#completeBtn")).toHaveText("Done →");
   });
 
   test("gallery delete removes saved entry", async ({ page }) => {

@@ -67,12 +67,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Prepare static site
         run: |
-          mkdir -p _site/css _site/js _site/src _site/Songs _site/assets
+          mkdir -p _site/css _site/js _site/src _site/src/i18n _site/Songs _site/assets
           cp index.html manifest.json sw.js icon-192.png icon-512.png _site/
           cp -r assets/* _site/assets/
           cp css/style.css _site/css/
           cp js/app.js js/gallery.js _site/js/
           cp src/logic.js _site/src/
+          cp -r src/i18n _site/src/
           cp Songs/*.mp3 _site/Songs/ 2>/dev/null || true
           cp .nojekyll _site/ 2>/dev/null || touch _site/.nojekyll
       - uses: actions/configure-pages@v5

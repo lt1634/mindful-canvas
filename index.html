@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
-    <link rel="stylesheet" href="css/style.css?v=zen-v46" />
+    <link rel="stylesheet" href="css/style.css?v=zen-v47" />
     <!-- Google Analytics 4 — 匿名使用統計（canvas_open / card_save / card_share） -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7L9EHZLW7D"></script>
     <script>
@@ -23,6 +23,17 @@
     </script>
   </head>
   <body>
+    <div
+      id="langToggle"
+      class="lang-toggle"
+      role="group"
+      data-i18n="lang.toggleLabel"
+      data-i18n-attr="aria-label"
+    >
+      <button type="button" class="lang-opt active" data-lang="zh">中</button>
+      <button type="button" class="lang-opt" data-lang="en">EN</button>
+    </div>
+
     <!-- WELCOME -->
     <div id="welcome" class="screen active">
       <canvas id="welcomeAmbient" aria-hidden="true"></canvas>
@@ -52,10 +63,10 @@
                 />
               </svg>
             </span>
-            <h1 class="welcome-hero-title">覺知畫布</h1>
+            <h1 class="welcome-hero-title" data-i18n="welcome.title">覺知畫布</h1>
           </div>
-          <p class="welcome-hero-lead">畫一筆，讓心安靜下來</p>
-          <p class="welcome-hero-sub">探索三種不同的創作體驗</p>
+          <p class="welcome-hero-lead" data-i18n="welcome.lead">畫一筆，讓心安靜下來</p>
+          <p class="welcome-hero-sub" data-i18n="welcome.sub">探索三種不同的創作體驗</p>
         </header>
 
         <div class="showcase-cards welcome-enter welcome-stagger-2">
@@ -63,79 +74,108 @@
             type="button"
             class="showcase-card showcase-zen"
             onclick="openZenPicker()"
-            aria-label="禪繞唐卡：跟隨提示完成靜心圖騰"
+            data-i18n="showcase.zen.ariaLabel"
+            data-i18n-attr="aria-label"
           >
             <div class="showcase-art" aria-hidden="true">
               <canvas class="showcase-canvas" id="previewZen"></canvas>
             </div>
             <div class="showcase-body">
-              <h2 class="showcase-title">🪷 禪繞唐卡</h2>
-              <p class="showcase-desc">跟隨提示，一筆一筆完成靜心圖騰</p>
-              <span class="showcase-cta">開始創作 →</span>
+              <h2 class="showcase-title" data-i18n="showcase.zen.title">🪷 禪繞唐卡</h2>
+              <p class="showcase-desc" data-i18n="showcase.zen.desc">
+                跟隨提示，一筆一筆完成靜心圖騰
+              </p>
+              <span class="showcase-cta" data-i18n="showcase.zen.cta">開始創作 →</span>
             </div>
           </button>
           <button
             type="button"
             class="showcase-card showcase-sumi"
             onclick="startSumiMode()"
-            aria-label="墨流畫布：顏色自然流動擴散"
+            data-i18n="showcase.sumi.ariaLabel"
+            data-i18n-attr="aria-label"
           >
             <div class="showcase-art" aria-hidden="true">
               <canvas class="showcase-canvas" id="previewSumi"></canvas>
             </div>
             <div class="showcase-body">
-              <h2 class="showcase-title">🌊 墨流畫布</h2>
-              <p class="showcase-desc">顏色會自然流動擴散，創造獨一無二作品</p>
-              <span class="showcase-cta">開始創作 →</span>
+              <h2 class="showcase-title" data-i18n="showcase.sumi.title">🌊 墨流畫布</h2>
+              <p class="showcase-desc" data-i18n="showcase.sumi.desc">
+                顏色會自然流動擴散，創造獨一無二作品
+              </p>
+              <span class="showcase-cta" data-i18n="showcase.sumi.cta">開始創作 →</span>
             </div>
           </button>
           <button
             type="button"
             class="showcase-card showcase-free"
             onclick="startFreeMode()"
-            aria-label="自由畫布：沒有規則，靈感自由流動"
+            data-i18n="showcase.free.ariaLabel"
+            data-i18n-attr="aria-label"
           >
             <div class="showcase-art" aria-hidden="true">
               <canvas class="showcase-canvas" id="previewFree"></canvas>
             </div>
             <div class="showcase-body">
-              <h2 class="showcase-title">🎨 自由畫布</h2>
-              <p class="showcase-desc">沒有規則，讓靈感自由流動</p>
-              <span class="showcase-cta">開始創作 →</span>
+              <h2 class="showcase-title" data-i18n="showcase.free.title">🎨 自由畫布</h2>
+              <p class="showcase-desc" data-i18n="showcase.free.desc">沒有規則，讓靈感自由流動</p>
+              <span class="showcase-cta" data-i18n="showcase.free.cta">開始創作 →</span>
             </div>
           </button>
         </div>
 
         <section class="welcome-recent welcome-enter welcome-stagger-3" id="welcomeRecent">
           <div class="welcome-recent-head">
-            <h3 class="welcome-recent-title">最近作品</h3>
+            <h3 class="welcome-recent-title" data-i18n="welcome.recentTitle">最近作品</h3>
             <button
               type="button"
               class="welcome-recent-link"
               id="galleryOpenBtn"
               onclick="openGallery()"
+              data-i18n="welcome.recentAll"
             >
               查看全部 →
             </button>
           </div>
-          <div class="welcome-recent-strip" id="welcomeRecentStrip" aria-label="最近作品縮圖"></div>
-          <p class="welcome-recent-empty" id="welcomeRecentEmpty" hidden>
+          <div
+            class="welcome-recent-strip"
+            id="welcomeRecentStrip"
+            data-i18n="welcome.recentAria"
+            data-i18n-attr="aria-label"
+          ></div>
+          <p
+            class="welcome-recent-empty"
+            id="welcomeRecentEmpty"
+            hidden
+            data-i18n="welcome.recentEmpty"
+          >
             完成一次創作後，作品會出現在這裡
           </p>
         </section>
 
-        <p class="welcome-footer welcome-enter welcome-stagger-4">用創作，照顧你的內心</p>
+        <p class="welcome-footer welcome-enter welcome-stagger-4" data-i18n="welcome.footer">
+          用創作，照顧你的內心
+        </p>
       </div>
     </div>
 
     <!-- GALLERY -->
     <div id="galleryScreen" class="screen">
       <div class="gallery-inner">
-        <button type="button" class="btn-text gallery-back" onclick="closeGallery()">← 返回</button>
-        <h2 class="gallery-title">心靈藝廊</h2>
-        <p class="gallery-sub">最近 10 次作品 · 只存在你的裝置，不會上傳</p>
+        <button
+          type="button"
+          class="btn-text gallery-back"
+          onclick="closeGallery()"
+          data-i18n="gallery.back"
+        >
+          ← 返回
+        </button>
+        <h2 class="gallery-title" data-i18n="gallery.title">心靈藝廊</h2>
+        <p class="gallery-sub" data-i18n="gallery.sub">最近 10 次作品 · 只存在你的裝置，不會上傳</p>
         <div class="gallery-grid" id="galleryGrid"></div>
-        <p class="gallery-empty" id="galleryEmpty" hidden>還沒有作品。完成一次創作後會自動收錄。</p>
+        <p class="gallery-empty" id="galleryEmpty" hidden data-i18n="gallery.empty">
+          還沒有作品。完成一次創作後會自動收錄。
+        </p>
       </div>
       <div class="gallery-detail" id="galleryDetail" hidden>
         <button
@@ -143,18 +183,32 @@
           class="gallery-detail-close"
           onclick="closeGalleryDetail()"
           aria-label="關閉"
+          data-i18n="gallery.close"
+          data-i18n-attr="aria-label"
         >
           ×
         </button>
         <div class="gallery-detail-preview" id="galleryDetailPreview">
-          <img id="galleryDetailImg" src="" alt="心靈藝廊作品" hidden />
+          <img
+            id="galleryDetailImg"
+            src=""
+            alt="心靈藝廊作品"
+            data-i18n="gallery.detailAlt"
+            data-i18n-attr="alt"
+            hidden
+          />
         </div>
         <div class="gallery-detail-meta">
           <div class="gallery-detail-mode" id="galleryDetailMode"></div>
           <div class="gallery-detail-date" id="galleryDetailDate"></div>
           <div class="gallery-detail-affirmation" id="galleryDetailAffirmation"></div>
         </div>
-        <button type="button" class="btn-secondary gallery-delete-btn" id="galleryDeleteBtn">
+        <button
+          type="button"
+          class="btn-secondary gallery-delete-btn"
+          id="galleryDeleteBtn"
+          data-i18n="gallery.delete"
+        >
           刪除此作品
         </button>
       </div>
@@ -163,11 +217,18 @@
     <!-- ZEN TEMPLATE PICKER -->
     <div id="zenPickerScreen" class="screen">
       <div class="zen-picker-inner">
-        <button type="button" class="btn-text zen-picker-back" onclick="showScreen('welcome')">
+        <button
+          type="button"
+          class="btn-text zen-picker-back"
+          onclick="showScreen('welcome')"
+          data-i18n="zenPicker.back"
+        >
           ← 返回
         </button>
-        <h2 class="zen-picker-title">選一個圖案跟住畫</h2>
-        <p class="zen-picker-sub">每個圖案都有預覽；撳圖案跟住淺色線條自由畫</p>
+        <h2 class="zen-picker-title" data-i18n="zenPicker.title">選一個圖案跟住畫</h2>
+        <p class="zen-picker-sub" data-i18n="zenPicker.sub">
+          每個圖案都有預覽；撳圖案跟住淺色線條自由畫
+        </p>
         <div class="zen-template-cards" id="zenTemplateCards"></div>
       </div>
     </div>
@@ -175,14 +236,23 @@
     <!-- CANVAS -->
     <div id="canvasScreen" class="screen">
       <div class="canvas-header">
-        <button class="btn-text" onclick="goHome()">← 返回</button>
+        <button class="btn-text" onclick="goHome()" data-i18n="canvas.back">← 返回</button>
         <span class="title" id="canvasTitle">自由畫布</span>
-        <button class="btn-text" id="completeBtn" onclick="generateCard()">完成 →</button>
+        <button
+          class="btn-text"
+          id="completeBtn"
+          onclick="generateCard()"
+          data-i18n="canvas.complete"
+        >
+          完成 →
+        </button>
       </div>
       <div class="canvas-area">
         <canvas id="drawCanvas"></canvas>
         <div class="zen-overlay" id="zenOverlay" style="display: none">
-          <div class="zen-hint" id="zenHint">跟住淺色線條，留下你的色彩痕跡</div>
+          <div class="zen-hint" id="zenHint" data-i18n="zenPicker.hint">
+            跟住淺色線條，留下你的色彩痕跡
+          </div>
           <button
             type="button"
             class="zen-tikse-btn"
@@ -190,13 +260,14 @@
             onclick="toggleZenTikseGrid()"
             aria-pressed="false"
             style="display: none"
+            data-i18n="zenPicker.tikseGrid"
           >
             比例網格
           </button>
           <div class="zen-timer" id="zenTimer" aria-hidden="true" style="display: none">2:00</div>
         </div>
         <div id="sumiUI" style="display: none">
-          <div class="sumi-steps" aria-label="墨流操作：滴墨、攪水">
+          <div class="sumi-steps" data-i18n="sumi.stepsAria" data-i18n-attr="aria-label">
             <div class="sumi-step">
               <span class="sumi-step-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
@@ -207,7 +278,7 @@
                   />
                 </svg>
               </span>
-              <span class="sumi-step-label">滴墨</span>
+              <span class="sumi-step-label" data-i18n="sumi.dropInk">滴墨</span>
             </div>
             <span class="sumi-step-connector" aria-hidden="true"></span>
             <div class="sumi-step">
@@ -228,15 +299,42 @@
                   />
                 </svg>
               </span>
-              <span class="sumi-step-label">攪水</span>
+              <span class="sumi-step-label" data-i18n="sumi.stirWater">攪水</span>
             </div>
           </div>
           <div class="sumi-bar" id="sumiBar">
-            <div class="sumi-flow" id="sumiFlowCtrl" role="group" aria-label="流動強度">
-              <span class="sumi-flow-label">流動</span>
-              <button type="button" class="sumi-flow-btn active" aria-pressed="true">細</button>
-              <button type="button" class="sumi-flow-btn" aria-pressed="false">中</button>
-              <button type="button" class="sumi-flow-btn" aria-pressed="false">大</button>
+            <div
+              class="sumi-flow"
+              id="sumiFlowCtrl"
+              role="group"
+              data-i18n="sumi.flowAria"
+              data-i18n-attr="aria-label"
+            >
+              <span class="sumi-flow-label" data-i18n="sumi.flow">流動</span>
+              <button
+                type="button"
+                class="sumi-flow-btn active"
+                aria-pressed="true"
+                data-i18n="sumi.flowFine"
+              >
+                細
+              </button>
+              <button
+                type="button"
+                class="sumi-flow-btn"
+                aria-pressed="false"
+                data-i18n="sumi.flowMid"
+              >
+                中
+              </button>
+              <button
+                type="button"
+                class="sumi-flow-btn"
+                aria-pressed="false"
+                data-i18n="sumi.flowLarge"
+              >
+                大
+              </button>
             </div>
             <span class="sumi-bar-sep" aria-hidden="true"></span>
             <button
@@ -245,10 +343,18 @@
               id="sumiUndoBtn"
               onclick="undoLastAction()"
               disabled
+              data-i18n="sumi.undo"
             >
               撤銷
             </button>
-            <button type="button" class="sumi-clear" onclick="clearSumiCanvas()">洗淨水面</button>
+            <button
+              type="button"
+              class="sumi-clear"
+              onclick="clearSumiCanvas()"
+              data-i18n="sumi.wash"
+            >
+              洗淨水面
+            </button>
           </div>
         </div>
       </div>
@@ -258,9 +364,10 @@
           class="tools-toggle"
           id="toolsToggle"
           onclick="toggleToolsPanel()"
-          aria-label="收起或展開工具"
+          data-i18n="tools.toggleAria"
+          data-i18n-attr="aria-label"
         >
-          收起 ▼
+          <span data-i18n="tools.collapse">收起 ▼</span>
         </button>
         <div class="tools-panel" id="toolsPanel">
           <div class="toolbar-row">
@@ -272,6 +379,8 @@
               onclick="undoLastAction()"
               title="撤銷上一步"
               aria-label="撤銷上一步"
+              data-i18n="tools.undoAria"
+              data-i18n-attr="aria-label"
               disabled
             >
               <svg class="tool-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -300,6 +409,8 @@
               onclick="toggleEraser()"
               title="橡皮擦"
               aria-label="橡皮擦"
+              data-i18n="tools.eraserAria"
+              data-i18n-attr="aria-label"
               aria-pressed="false"
             >
               <svg class="tool-icon eraser-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -319,7 +430,8 @@
             </button>
             <div class="size-bar" id="sizeBar"></div>
             <label class="particle-toggle">
-              <input type="checkbox" id="particleToggle" checked /> 粒子
+              <input type="checkbox" id="particleToggle" checked />
+              <span data-i18n="tools.particles">粒子</span>
             </label>
           </div>
         </div>
@@ -331,7 +443,13 @@
       <div class="card-container">
         <div class="card">
           <div class="card-drawing">
-            <img id="cardImage" src="" alt="你的繪畫作品" />
+            <img
+              id="cardImage"
+              src=""
+              alt="你的繪畫作品"
+              data-i18n="card.drawingAlt"
+              data-i18n-attr="alt"
+            />
           </div>
           <div class="card-body">
             <div class="card-affirmation" id="cardAffirmation"></div>
@@ -339,9 +457,13 @@
           </div>
         </div>
         <div class="card-actions" id="cardActions">
-          <button class="btn-secondary" onclick="showTerms()">使用條款</button>
-          <button class="btn-secondary" onclick="saveCard()">儲存卡片</button>
-          <button class="btn-primary" onclick="finishFromCard()">返回首頁</button>
+          <button class="btn-secondary" onclick="showTerms()" data-i18n="card.terms">
+            使用條款
+          </button>
+          <button class="btn-secondary" onclick="saveCard()" data-i18n="card.save">儲存卡片</button>
+          <button class="btn-primary" onclick="finishFromCard()" data-i18n="card.home">
+            返回首頁
+          </button>
         </div>
       </div>
     </div>
@@ -349,7 +471,9 @@
     <!-- Loading -->
     <div class="loading-overlay" id="loading" role="status" aria-live="polite">
       <div class="loading-spinner"></div>
-      <div class="loading-text" id="loadingText">正在為你生成心靈解讀...</div>
+      <div class="loading-text" id="loadingText" data-i18n="loading.generating">
+        正在為你生成心靈解讀...
+      </div>
     </div>
 
     <!-- TOAST -->
@@ -358,50 +482,27 @@
     <!-- TERMS OF USE -->
     <div id="termsScreen" class="screen">
       <div style="max-width: 480px; margin: 0 auto">
-        <button class="btn-text" onclick="closeTerms()" style="margin-bottom: 16px">← 返回</button>
-        <h2 style="font-size: 20px; color: var(--accent); margin-bottom: 16px">
+        <button
+          class="btn-text"
+          onclick="closeTerms()"
+          style="margin-bottom: 16px"
+          data-i18n="terms.back"
+        >
+          ← 返回
+        </button>
+        <h2
+          style="font-size: 20px; color: var(--accent); margin-bottom: 16px"
+          data-i18n="terms.heading"
+        >
           使用條款 Terms of Use
         </h2>
-        <div style="font-size: 13px; color: var(--text-muted); line-height: 1.8">
-          <p style="margin-bottom: 12px">
-            <strong style="color: var(--text)">© 2026 ZenArt Lab</strong><br />All rights reserved.
-          </p>
-          <p style="margin-bottom: 12px">
-            <strong style="color: var(--text)">1. 使用授權</strong
-            ><br />本工具僅供學校教學及個人正念練習用途。未經書面許可，不得用於商業目的、再分發或改作。
-          </p>
-          <p style="margin-bottom: 12px">
-            <strong style="color: var(--text)">2. 知識產權</strong><br />本應用程式之程式碼、UI
-            設計、禪意題字、心境解讀算法、場景引導腳本及品牌標識，均為 ZenArt Lab
-            之知識產權。版權所有，保留一切權利。
-          </p>
-          <p style="margin-bottom: 12px">
-            <strong style="color: var(--text)">3. 用戶內容</strong
-            ><br />你在畫布上創作的繪畫，版權歸你所有。本應用不會收集、儲存或上傳你的個人創作至任何伺服器。心靈藝廊縮圖僅保存在你裝置的
-            IndexedDB，你可隨時刪除。
-          </p>
-          <p style="margin-bottom: 12px">
-            <strong style="color: var(--text)">4. 免責聲明</strong
-            ><br />本工具並非醫療或心理治療工具。如你正在經歷嚴重的情緒困擾，請聯絡專業人士。<br />香港
-            24 小時生命熱線：2382 0000
-          </p>
-          <p style="margin-bottom: 12px">
-            <strong style="color: var(--text)">5. 隱私</strong
-            ><br />創作內容與心靈藝廊縮圖僅存於你裝置（localStorage /
-            IndexedDB），不上傳。本應用使用 Google Analytics
-            收集匿名使用統計（例如開啟畫布、儲存卡片），不含畫作或個人文字內容。
-          </p>
-          <p style="margin-bottom: 12px">
-            <strong style="color: var(--text)">6. 品牌</strong><br />Mindful Canvas™ 與 覺知畫布™ 為
-            ZenArt Lab 之商標。使用本工具即表示你同意以上條款。
-          </p>
-          <p style="margin-top: 24px; font-size: 11px; color: #555">
-            Mindful Canvas v2.5.6 · ZenArt Lab
-          </p>
-        </div>
+        <div
+          id="termsBody"
+          style="font-size: 13px; color: var(--text-muted); line-height: 1.8"
+        ></div>
       </div>
     </div>
 
-    <script type="module" src="js/app.js?v=zen-v46"></script>
+    <script type="module" src="js/app.js?v=zen-v47"></script>
   </body>
 </html>

@@ -4,18 +4,34 @@ import {
   SAFETY_RESPONSE,
   OLLAMA_SCENE_MAP,
   STORAGE_KEY,
-  GALLERY_MODE_LABELS,
   formatGalleryDate,
   checkSafety,
   isValidGalleryEntry,
   ZEN_TRACE_COLORS,
-} from "../src/logic.js?v=zen-v46";
+} from "../src/logic.js?v=zen-v47";
 import {
   addGalleryEntry,
   listGalleryEntries,
   deleteGalleryEntry,
   dataUrlToThumbnailBlob,
-} from "./gallery.js?v=zen-v46";
+} from "./gallery.js?v=zen-v47";
+import {
+  t,
+  getLang,
+  setLang,
+  initI18n,
+  initLangToggle,
+  onLangChange,
+  getSafetyResponse,
+  getGalleryModeLabel as i18nGalleryMode,
+  getSumiColorName,
+  getZenName,
+  getZenPickerDesc,
+  getZenMeta,
+  getAffirmations,
+  getSceneGuidance,
+  buildReflectionParts,
+} from "../src/i18n/index.js?v=zen-v47";
 
 const ERASER_PREVIEW_FILL = "rgba(110, 200, 255, 0.32)";
 const ERASER_PREVIEW_STROKE = "rgba(130, 210, 255, 1)";
@@ -34,6 +50,7 @@ let particles = [];
 let fadePhase = 0;
 let particlesEnabled = true;
 let pendingSession = null;
+let cardUIMode = "normal";
 let logoPressTimer = null;
 let appMode = "free";
 let zenStartTime = 0;
@@ -172,7 +189,7 @@ function getSumiFlowPreset() {
 const ZEN_GUIDE_RADIUS = 0.46;
 const ZEN_BRUSH_SIZE = 6;
 const ZEN_GUIDE_GHOST_ALPHA = 0.2;
-const ZEN_HINT_TEXT = "跟住淺色線條，留下你的色彩痕跡";
+// Zen guide hint uses i18n (zenPicker.hint)
 
 const ZEN_TEMPLATES = {
   circle: {
@@ -1124,18 +1141,18 @@ function getDominantColor() {
 }
 
 function restoreCardUI(mode) {
+  cardUIMode = mode;
   const drawing = document.querySelector(".card-drawing");
   const actions = document.getElementById("cardActions");
   if (mode === "safety") {
     drawing.style.display = "none";
-    actions.innerHTML =
-      '<button class="btn-primary" onclick="goHome()" style="width:100%">返回首頁</button>';
+    actions.innerHTML = `<button class="btn-primary" onclick="goHome()" style="width:100%">${t("card.safetyHome")}</button>`;
   } else {
     drawing.style.display = "flex";
     actions.innerHTML = `
-      <button class="btn-secondary" onclick="showTerms()">使用條款</button>
-      <button class="btn-secondary" onclick="saveCard()">儲存卡片</button>
-      <button class="btn-primary" onclick="finishFromCard()">返回首頁</button>
+      <button class="btn-secondary" onclick="showTerms()">${t("card.terms")}</button>
+      <button class="btn-secondary" onclick="saveCard()">${t("card.save")}</button>
+      <button class="btn-primary" onclick="finishFromCard()">${t("card.home")}</button>
     `;
   }
 }
@@ -1167,26 +1184,69 @@ const COLORS = [
 
 const SIZES = [4, 8, 14, 22];
 
-// ===== SCENE GUIDANCE =====
-const SCENE_GUIDANCE = {
-  anxious:
-    "你選擇了「焦慮」。深呼吸……這張白紙是一片安靜的雪地。你的畫筆只是輕輕劃過表面，不需要急著定義它。現在，隨意畫一條線，或點一個點。允許第一筆是不完美的。",
-  chaotic:
-    "你選擇了「混亂」。腦袋裝了很多東西，像一團打結的線條。沒關係，不需要強迫它停下來。把注意力帶回呼吸，把混亂透過畫筆引導到紙上。不需要畫出具體形狀。",
-  stuck:
-    "你選擇了「停頓」。停滯是創作中自然的一部分，像音樂裡的休止符。不需要急著突破。當你準備好時，不要想「我要畫什麼」，而是感受「我的手想怎麼動」。",
-  free: "你選擇了「自由畫布」。沒有規則，沒有對錯。讓手帶領你，讓色彩在畫布上流動。這一刻，你只需要與色彩同在。",
-  zen: "你選擇了「禪繞唐卡」。不需要畫得好，只需要跟著節奏。輕觸畫面，感受光暈，讓圖案與音樂帶你進入當下。",
-  sumi: "你選擇了「墨流畫布」。想像面前係一盆靜水。輕點一下，滴一滴墨，睇住佢慢慢暈開；用手指攪一攪水，墨色會跟住流動。唔使控制結果，水自然會幫你完成。",
-  metta:
-    "你選擇了「慈」。想想一個你想祝福的人——家人、朋友、甚至自己。讓你的畫筆帶著善意流動，不需要完美，只需要真心。每一筆都是一句無聲的祝福：願你快樂。",
-  karuna:
-    "你選擇了「悲」。想想一個正在受苦的人。你不需要解決他的問題，只需要在畫布上畫出你的陪伴。有時候，靜靜地同在，就是最大的慈悲。",
-  mudita:
-    "你選擇了「喜」。想想一個讓你由衷高興的人——他的成就、他的笑容、他的幸福。讓你的色彩變得明亮，為他人的快樂畫出喜悅。為他歡喜，就是修行。",
-  upekkha:
-    "你選擇了「捨」。放下好壞、得失、對錯。讓畫筆隨意流動，不追趕、不執著。接受每一筆都會消失，就像生命中的一切。平靜地與不完美共處，就是最大的自由。",
-};
+// ===== I18N DYNAMIC UI =====
+function refreshCanvasTitle() {
+  const title = document.getElementById("canvasTitle");
+  if (!title) return;
+  const key =
+    appMode === "zen"
+      ? "canvas.titles.zen"
+      : appMode === "sumi"
+        ? "canvas.titles.sumi"
+        : "canvas.titles.free";
+  title.textContent = t(key);
+}
+
+function refreshZenHint() {
+  const hint = document.getElementById("zenHint");
+  if (hint && appMode === "zen" && !zenFinished) hint.textContent = t("zenPicker.hint");
+}
+
+function refreshToolLabels(collapsed = toolsCollapsed) {
+  const toggle = document.querySelector("#toolsToggle span");
+  if (toggle) toggle.textContent = t(collapsed ? "tools.expand" : "tools.collapse");
+  const undo = document.getElementById("undoBtn");
+  if (undo) undo.title = t("tools.undoTitle");
+  const eraser = document.getElementById("eraserBtn");
+  if (eraser) eraser.title = t("tools.eraserTitle");
+}
+
+function refreshSumiDotLabels() {
+  document.querySelectorAll(".sumi-dot").forEach((btn) => {
+    const idx = Number(btn.dataset.colorIndex);
+    const name = getSumiColorName(idx);
+    btn.title = name;
+    btn.setAttribute("aria-label", name);
+  });
+}
+
+function rerollCardIfVisible() {
+  const card = document.getElementById("cardScreen");
+  if (!card?.classList.contains("active")) return;
+  if (cardUIMode === "safety") {
+    const safety = getSafetyResponse();
+    document.getElementById("cardAffirmation").textContent = safety.affirmation;
+    document.getElementById("cardReflection").textContent = safety.reflection;
+    return;
+  }
+  if (!pendingSession) return;
+  const interpretation = generateInterpretation();
+  document.getElementById("cardAffirmation").textContent = interpretation.affirmation;
+  document.getElementById("cardReflection").textContent = interpretation.reflection;
+}
+
+function handleLanguageChange() {
+  refreshCanvasTitle();
+  refreshZenHint();
+  refreshToolLabels();
+  refreshSumiDotLabels();
+  buildZenPickerCards();
+  void renderWelcomeRecentStrip();
+  const galleryScreen = document.getElementById("galleryScreen");
+  if (galleryScreen?.classList.contains("active")) void renderGallery();
+  rerollCardIfVisible();
+  restoreCardUI(cardUIMode);
+}
 
 // ===== INIT =====
 function initColors() {
@@ -1276,7 +1336,7 @@ function updateUndoButton() {
 function undoLastAction() {
   if (drawing) commitStroke();
   if (!canUndo()) {
-    showToast("沒有可撤銷的步驟");
+    showToast(t("toast.noUndo"));
     return;
   }
   if (appMode === "sumi") {
@@ -1285,7 +1345,7 @@ function undoLastAction() {
     sumiFlowImpulses = [];
     sumiRipples = [];
     strokeCount = sumiDrops.length ? Math.max(1, strokeCount - 1) : 0;
-    showToast("已撤銷上一步");
+    showToast(t("toast.undone"));
     updateUndoButton();
     return;
   }
@@ -1293,14 +1353,14 @@ function undoLastAction() {
     const last = zenTouchStrokes.pop();
     if (last && !last.eraser) zenTouchCount = Math.max(0, zenTouchCount - 1);
     redrawZenTraceLayer();
-    showToast("已撤銷上一步");
+    showToast(t("toast.undone"));
     updateUndoButton();
     return;
   }
   const last = strokeHistory.pop();
   if (last && !last.eraser) strokeCount = Math.max(0, strokeCount - 1);
   redrawFreeArtLayer();
-  showToast("已撤銷上一步");
+  showToast(t("toast.undone"));
   updateUndoButton();
 }
 
@@ -2316,7 +2376,7 @@ function drawZenGuide() {
 }
 
 function updateZenStepUI() {
-  document.getElementById("zenHint").textContent = ZEN_HINT_TEXT;
+  document.getElementById("zenHint").textContent = t("zenPicker.hint");
 }
 
 function advanceZenStep() {
@@ -2437,10 +2497,11 @@ function buildZenPickerCards() {
   ZEN_PICKER_ITEMS.forEach((item) => {
     const tpl = ZEN_TEMPLATES[item.id];
     if (!tpl) return;
+    const displayName = getZenName(item.id);
     const card = document.createElement("button");
     card.type = "button";
     card.className = "zen-tpl-card";
-    card.setAttribute("aria-label", `選擇${tpl.name}`);
+    card.setAttribute("aria-label", t("zenPicker.choose", { name: displayName }));
     card.onclick = () => startZenMode(item.id);
     const preview = document.createElement("div");
     preview.className = "zen-tpl-preview";
@@ -2448,10 +2509,10 @@ function buildZenPickerCards() {
     preview.appendChild(canvas);
     const name = document.createElement("div");
     name.className = "zen-tpl-name";
-    name.textContent = tpl.name;
+    name.textContent = displayName;
     const meta = ZEN_TEMPLATE_META[item.id];
     const parts = [preview, name];
-    if (meta?.englishTitle) {
+    if (getLang() === "zh" && meta?.englishTitle) {
       const en = document.createElement("div");
       en.className = "zen-tpl-en";
       en.textContent = meta.englishTitle;
@@ -2459,18 +2520,22 @@ function buildZenPickerCards() {
     }
     const desc = document.createElement("div");
     desc.className = "zen-tpl-desc";
-    desc.textContent = item.desc || `${tpl.steps.length} 步跟畫`;
+    desc.textContent =
+      getZenPickerDesc(item.id) || t("zenPicker.stepsFallback", { n: tpl.steps.length });
     parts.push(desc);
-    if (meta?.symbolism) {
+    const symbolism = getZenMeta(item.id, "symbolism") || meta?.symbolism;
+    if (symbolism) {
       const sym = document.createElement("div");
       sym.className = "zen-tpl-symbolism";
-      sym.textContent = meta.symbolism;
+      sym.textContent = symbolism;
       parts.push(sym);
     }
-    if (meta?.difficulty) {
+    const difficulty = getZenMeta(item.id, "difficulty") || meta?.difficulty;
+    const timeCost = getZenMeta(item.id, "timeCost") || meta?.timeCost;
+    if (difficulty) {
       const badge = document.createElement("div");
       badge.className = "zen-tpl-meta";
-      badge.textContent = `${meta.difficulty} · ${meta.timeCost}`;
+      badge.textContent = `${difficulty} · ${timeCost}`;
       parts.push(badge);
     }
     card.append(...parts);
@@ -2821,8 +2886,8 @@ function createSumiColorDot(colorIndex) {
   b.className = "sumi-dot" + (colorIndex === sumiColorIndex ? " active" : "");
   b.style.background = c.hex;
   b.dataset.colorIndex = String(colorIndex);
-  b.title = c.name;
-  b.setAttribute("aria-label", c.name);
+  b.title = getSumiColorName(colorIndex);
+  b.setAttribute("aria-label", getSumiColorName(colorIndex));
   b.onclick = () => selectSumiColor(colorIndex);
   return b;
 }
@@ -2842,7 +2907,7 @@ function finishSumiWash() {
   sumiWashing = false;
   sumiWashFade = 1;
   setSumiClearBusy(false);
-  showToast("水面已洗淨，重新開始");
+  showToast(t("toast.washDone"));
 }
 
 function tickSumiWashFade() {
@@ -2898,7 +2963,7 @@ function initSumiBar() {
 function clearSumiCanvas() {
   if (sumiWashing) return;
   if (!sumiDrops.length) {
-    showToast("水面已洗淨，重新開始");
+    showToast(t("toast.washDone"));
     return;
   }
   sumiWashing = true;
@@ -3254,7 +3319,11 @@ function setCanvasModeUI(mode) {
   if (tikseBtn) tikseBtn.style.display = mode === "zen" ? "inline-flex" : "none";
   document.getElementById("sumiUI").style.display = mode === "sumi" ? "flex" : "none";
   document.getElementById("canvasTitle").textContent =
-    mode === "zen" ? "禪繞唐卡" : mode === "sumi" ? "墨流畫布" : "自由畫布";
+    mode === "zen"
+      ? t("canvas.titles.zen")
+      : mode === "sumi"
+        ? t("canvas.titles.sumi")
+        : t("canvas.titles.free");
   document.getElementById("completeBtn").style.display = "";
 }
 
@@ -3895,7 +3964,8 @@ function setToolsCollapsed(collapsed) {
   if (!ui) return;
   ui.classList.toggle("tools-collapsed", collapsed);
   const btn = document.getElementById("toolsToggle");
-  if (btn) btn.textContent = collapsed ? "工具 ▲" : "收起 ▼";
+  if (btn)
+    btn.querySelector("span").textContent = collapsed ? t("tools.expand") : t("tools.collapse");
 }
 
 function touchToolsActivity() {
@@ -3975,7 +4045,7 @@ function startFreeMode() {
   setTimeout(() => {
     resizeCanvas();
     startFreeAmbience();
-    showToast(SCENE_GUIDANCE.free, 8000);
+    showToast(getSceneGuidance("free"), 8000);
     startFadeEffect();
     touchToolsActivity();
     updateUndoButton();
@@ -3993,7 +4063,7 @@ function startSumiMode() {
   setTimeout(() => {
     resizeCanvas();
     startFreeAmbience();
-    showToast(SCENE_GUIDANCE.sumi, 8000);
+    showToast(getSceneGuidance("sumi"), 8000);
     resetSumiUndoStack();
     startCanvasLoop();
     updateUndoButton();
@@ -4025,7 +4095,7 @@ function startZenMode(templateId) {
     zenStartTime = Date.now();
     updateZenStepUI();
     startZenAmbience();
-    showToast(SCENE_GUIDANCE.zen, 8000);
+    showToast(getSceneGuidance("zen"), 8000);
     startCanvasLoop();
     updateUndoButton();
   }, 100);
@@ -4035,7 +4105,7 @@ function finishZenSession() {
   zenFinished = true;
   stopZenAmbience();
   strokeCount = Math.max(zenTouchStrokes.length, 1);
-  document.getElementById("zenHint").textContent = "完成了，正在為你生成心靈卡片…";
+  document.getElementById("zenHint").textContent = t("zenPicker.hintDone");
   setTimeout(() => generateCard(true), 200);
 }
 
@@ -4060,7 +4130,7 @@ function goHome() {
   canvas.classList.remove("eraser-cursor");
   zenTemplateId = "lotus";
   zenStepIndex = 0;
-  document.getElementById("zenHint").textContent = ZEN_HINT_TEXT;
+  document.getElementById("zenHint").textContent = t("zenPicker.hint");
   document.getElementById("freeModeUI").classList.remove("zen-tools");
   showScreen("welcome");
   restartWelcomeEnterAnimation();
@@ -4069,11 +4139,11 @@ function goHome() {
 // ===== CARD GENERATION =====
 function generateCard(force) {
   if (!force && strokeCount === 0 && appMode === "free") {
-    showToast("先畫一些東西吧");
+    showToast(t("toast.drawFirst"));
     return;
   }
   if (!force && appMode === "sumi" && sumiDrops.length === 0) {
-    showToast("輕點水面，滴一滴墨");
+    showToast(t("toast.sumiTap"));
     return;
   }
 
@@ -4093,7 +4163,7 @@ function generateCard(force) {
   lastArtworkDataUrl = createArtworkDataURL();
   document.getElementById("cardImage").src = lastArtworkDataUrl;
 
-  document.getElementById("loadingText").textContent = "正在為你生成心靈解讀...";
+  document.getElementById("loadingText").textContent = t("loading.generating");
   (async () => {
     const interpretation = await generateInterpretationAI();
 
@@ -4133,156 +4203,19 @@ function generateCard(force) {
 
 function generateInterpretation() {
   const safety = checkSafety(currentScene, strokeCount, totalSilence);
-  if (safety) return safety;
+  if (safety) return getSafetyResponse();
 
-  // ===== 2. AFFIRMATION POOL (10 per scene, 80 total) =====
-  const affirmations = {
-    anxious: [
-      "你動筆了，這就夠了。",
-      "焦慮在色彩裡慢慢融化。",
-      "你在這裡，很安全。",
-      "面對空白，你已經很勇敢。",
-      "深呼吸，此刻與你同在。",
-    ],
-    chaotic: [
-      "混亂也是創造力。",
-      "畫出來，就是一種整理。",
-      "讓線條自己找路。",
-      "不必想清楚才動筆。",
-      "情緒誠實地留在紙上。",
-    ],
-    stuck: [
-      "留白也是創作。",
-      "停下來，也是溫柔。",
-      "不急，下一步會來。",
-      "你給了自己空間。",
-      "空白是給自己的禮物。",
-    ],
-    free: [
-      "沒有對錯，只有當下。",
-      "你的手知道要去哪。",
-      "你在這裡，這就夠了。",
-      "每一筆都是新的開始。",
-      "專注的當下已留在身上。",
-    ],
-    metta: [
-      "你用色彩送上祝福。",
-      "善意先溫暖了自己。",
-      "祝福穿越了距離。",
-      "柔軟的心正在綻放。",
-      "慈心已經完成。",
-    ],
-    karuna: [
-      "你願意一起承受。",
-      "畫筆說了最溫柔的話。",
-      "你為痛苦騰出空間。",
-      "你在這裡，你不孤單。",
-      "陪伴本身就是慈悲。",
-    ],
-    mudita: [
-      "為他人歡喜，心更豐盛。",
-      "隨喜是一種力量。",
-      "你為笑容留了一筆。",
-      "這份心，很珍貴。",
-      "喜心已經完成。",
-    ],
-    upekkha: [
-      "不執著，就是自由。",
-      "你練習了平等心。",
-      "看見，接受，前行。",
-      "線條來了又走。",
-      "靜靜地看，就是修行。",
-    ],
-    zen: [
-      "你跟隨節奏，心在場。",
-      "輕觸之間，覺知同在。",
-      "一分鐘，足夠靜下來。",
-      "不需要畫得好。",
-      "你已與當下合一。",
-    ],
-    sumi: [
-      "墨會自己找形狀。",
-      "每一道紋路都獨一無二。",
-      "放下控制，結果很美。",
-      "水面承載得住思緒。",
-      "水不急，墨不趕。",
-    ],
-  };
-
-  // ===== 3. COLOR DESCRIPTIONS (now connected) =====
-  const colorDescriptions = {
-    "#e2b55a": { name: "金光", meaning: "金色，溫暖智慧。" },
-    "#2c5f7c": { name: "深海", meaning: "深藍，尋找平靜。" },
-    "#8b5e83": { name: "暮色", meaning: "紫色，內在轉化。" },
-    "#a0826d": { name: "枯葉", meaning: "大地色，穩定根基。" },
-    "#d4d0c8": { name: "霧白", meaning: "留白，保留可能。" },
-    "#5a7a5a": { name: "翠竹", meaning: "綠色，渴望療癒。" },
-    "#c46b4a": { name: "晚霞", meaning: "橘色，生命力湧動。" },
-    "#3a3a4a": { name: "墨色", meaning: "墨色，向內探索。" },
-  };
-
-  // ===== 4. REFLECTION ENGINE（簡短版，儲存卡片用）=====
-  const dominantColor = getDominantColor();
-  const colorInfo = colorDescriptions[dominantColor] ||
-    colorDescriptions[currentColor] || { meaning: "" };
-
-  let strokePart = "";
-  if (strokeCount < 5) {
-    strokePart = `${strokeCount} 筆，留白多`;
-  } else if (strokeCount < 30) {
-    strokePart = `${strokeCount} 筆勾勒心境`;
-  } else if (strokeCount < 100) {
-    strokePart = `${strokeCount} 筆層層疊加`;
-  } else {
-    strokePart = `${strokeCount} 筆的釋放`;
-  }
-
-  let silencePart = "";
-  if (totalSilence > 60) {
-    silencePart = "曾有深層寂靜";
-  } else if (totalSilence > 30) {
-    silencePart = `停頓約 ${Math.round(totalSilence)} 秒`;
-  } else if (totalSilence > 5) {
-    silencePart = `寂靜 ${Math.round(totalSilence)} 秒`;
-  } else {
-    silencePart = "節奏流暢";
-  }
-
-  const colorPart = colorInfo.meaning || "";
-
-  const sceneEndings = {
-    anxious: "帶著覺察回到日常。",
-    chaotic: "重量又輕了一點。",
-    stuck: "準備好時，下一步會來。",
-    free: "只專注此刻的創作。",
-    metta: "帶走這份溫暖。",
-    karuna: "陪伴已經完成。",
-    mudita: "隨喜讓心更豐盛。",
-    upekkha: "平靜地接受消逝。",
-    zen: "帶走這份安定。",
-    sumi: "讓水繼續流動。",
-  };
-  let endingPart = sceneEndings[currentScene] || sceneEndings.free;
-
-  if (currentScene === "zen") {
-    strokePart =
-      zenTouchStrokes.length > 0 ? `${zenTouchStrokes.length} 道色彩痕跡` : "安靜跟隨完成";
-    silencePart = "與節奏同在";
-    endingPart = sceneEndings.zen;
-  }
-
-  if (currentScene === "sumi") {
-    strokePart = strokeCount > 0 ? `${strokeCount} 次與水互動` : "靜觀墨流";
-    silencePart = "水流自有節奏";
-    endingPart = sceneEndings.sumi;
-  }
-
-  const reflectionParts = [strokePart, silencePart, colorPart, endingPart].filter(Boolean);
-  const reflection = reflectionParts.slice(0, 3).join("，") + "。";
-
-  // ===== 5. PICK AFFIRMATION =====
-  const sceneAffirmations = affirmations[currentScene] || affirmations.free;
-  const affirmation = sceneAffirmations[Math.floor(Math.random() * sceneAffirmations.length)];
+  const scene = appMode === "zen" ? "zen" : appMode === "sumi" ? "sumi" : currentScene;
+  const pool = getAffirmations(scene);
+  const affirmation = pool[Math.floor(Math.random() * pool.length)];
+  const reflection = buildReflectionParts({
+    scene,
+    strokeCount,
+    totalSilence,
+    dominantColor: getDominantColor(),
+    currentColorHex: currentColor,
+    zenTouchCount: zenTouchStrokes.length,
+  });
 
   return { affirmation, reflection, isSafe: true };
 }
@@ -4303,13 +4236,13 @@ function templateInterpretation() {
 
 async function generateInterpretationAI() {
   const safety = checkSafety(currentScene, strokeCount, totalSilence);
-  if (safety) return safety;
+  if (safety) return getSafetyResponse();
 
   if (!shouldUseOllama()) {
     return templateInterpretation();
   }
 
-  document.getElementById("loadingText").textContent = "AI 正在為你撰寫專屬解讀...";
+  document.getElementById("loadingText").textContent = t("loading.aiGenerating");
 
   try {
     const healthCheck = await fetch("http://localhost:11434/api/tags", {
@@ -4491,7 +4424,7 @@ function saveCard() {
           try {
             await navigator.share({ files: [file], title: "覺知畫布 Mindful Canvas" });
             if (typeof gtag === "function") gtag("event", "card_share");
-            showToast("已分享");
+            showToast(t("toast.shareDone"));
             return;
           } catch (e) {}
         }
@@ -4501,7 +4434,7 @@ function saveCard() {
       link.href = URL.createObjectURL(blob);
       link.click();
       URL.revokeObjectURL(link.href);
-      showToast("卡片已儲存");
+      showToast(t("toast.saveDone"));
     }, "image/png");
   };
   artworkImg.src = document.getElementById("cardImage").src;
@@ -4600,7 +4533,7 @@ async function purgeInvalidGalleryEntries(entries) {
   const invalid = entries.filter((e) => !isValidGalleryEntry(e));
   if (!invalid.length) return entries.filter((e) => isValidGalleryEntry(e));
   await Promise.all(invalid.map((e) => deleteGalleryEntry(e.id).catch(() => {})));
-  if (invalid.length) showToast(`已移除 ${invalid.length} 筆損壞紀錄`);
+  if (invalid.length) showToast(t("gallery.corruptRemoved", { n: invalid.length }));
   return entries.filter((e) => isValidGalleryEntry(e));
 }
 
@@ -4629,9 +4562,10 @@ function setGalleryDetailThumb(entry) {
 }
 
 function getGalleryModeLabel(entry) {
-  const base = GALLERY_MODE_LABELS[entry.mode] || entry.mode;
-  if (entry.mode === "zen" && entry.templateId && ZEN_TEMPLATES[entry.templateId]) {
-    return `${base} · ${ZEN_TEMPLATES[entry.templateId].name}`;
+  const base = i18nGalleryMode(entry.mode);
+  if (entry.mode === "zen" && entry.templateId) {
+    const name = getZenName(entry.templateId);
+    if (name) return `${base} · ${name}`;
   }
   return base;
 }
@@ -4668,7 +4602,7 @@ async function openGalleryFromRecent(entry) {
     await openGallery();
     openGalleryDetail(entry);
   } catch {
-    showToast("無法開啟藝廊");
+    showToast(t("gallery.openFail"));
   }
 }
 
@@ -4736,14 +4670,11 @@ function renderGalleryGrid(entries) {
   const valid = entries.filter((e) => isValidGalleryEntry(e));
   if (!valid.length) {
     empty.hidden = false;
-    empty.textContent =
-      entries.length > 0
-        ? "紀錄已損壞或已清除。完成一次創作後會自動收錄。"
-        : "還沒有作品。完成一次創作後會自動收錄。";
+    empty.textContent = entries.length > 0 ? t("gallery.emptyCorrupt") : t("gallery.empty");
     return;
   }
   empty.hidden = true;
-  empty.textContent = "還沒有作品。完成一次創作後會自動收錄。";
+  empty.textContent = t("gallery.empty");
 
   valid.forEach((entry) => {
     const url = createGalleryThumbUrl(entry);
@@ -4752,13 +4683,13 @@ function renderGalleryGrid(entries) {
     btn.className = "gallery-item";
     const thumbHtml = url
       ? `<img src="${url}" alt="" loading="lazy" />`
-      : `<div class="gallery-thumb-missing gallery-thumb-missing--tile" aria-hidden="true"><span>無縮圖</span></div>`;
+      : `<div class="gallery-thumb-missing gallery-thumb-missing--tile" aria-hidden="true"><span>${t("gallery.thumbMissing")}</span></div>`;
     if (url) galleryObjectUrls.push(url);
     btn.innerHTML = `
       ${thumbHtml}
       <div class="gallery-item-meta">
         <div class="gallery-item-mode">${getGalleryModeLabel(entry)}</div>
-        <div class="gallery-item-date">${formatGalleryDate(entry.createdAt)}</div>
+        <div class="gallery-item-date">${formatGalleryDate(entry.createdAt, getLang())}</div>
       </div>
     `;
     const img = btn.querySelector("img");
@@ -4767,7 +4698,7 @@ function renderGalleryGrid(entries) {
         img.replaceWith(
           Object.assign(document.createElement("div"), {
             className: "gallery-thumb-missing gallery-thumb-missing--tile",
-            innerHTML: "<span>無縮圖</span>",
+            innerHTML: `<span>${t("gallery.thumbMissing")}</span>`,
           })
         );
       });
@@ -4785,7 +4716,7 @@ function openGalleryDetail(entry) {
   if (!detail) return;
 
   if (!isValidGalleryEntry(entry)) {
-    showToast("此作品未完整儲存");
+    showToast(t("gallery.incompleteEntry"));
     if (entry?.id != null) removeGalleryItem(entry.id);
     return;
   }
@@ -4795,7 +4726,7 @@ function openGalleryDetail(entry) {
   if (deleteBtn) deleteBtn.dataset.entryId = String(entry.id);
   setGalleryDetailThumb(entry);
   if (modeEl) modeEl.textContent = getGalleryModeLabel(entry);
-  if (dateEl) dateEl.textContent = formatGalleryDate(entry.createdAt);
+  if (dateEl) dateEl.textContent = formatGalleryDate(entry.createdAt, getLang());
   if (affEl) affEl.textContent = entry.affirmation || "";
   setGalleryInnerInert(true);
   detail.hidden = false;
@@ -4821,27 +4752,27 @@ function closeGalleryDetail() {
 async function deleteGalleryDetail() {
   const entryId = getGalleryDeleteEntryId();
   if (entryId == null) {
-    showToast("無法刪除此作品");
+    showToast(t("gallery.deleteFail"));
     return;
   }
   const btn = document.getElementById("galleryDeleteBtn");
   if (btn) {
     btn.disabled = true;
-    btn.textContent = "刪除中…";
+    btn.textContent = t("gallery.deleting");
   }
   try {
     await removeGalleryItem(entryId);
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = "刪除此作品";
+      btn.textContent = t("gallery.delete");
     }
   }
 }
 
 async function removeGalleryItem(id) {
   if (id == null) {
-    showToast("無法刪除此作品");
+    showToast(t("gallery.deleteFail"));
     return;
   }
   try {
@@ -4850,9 +4781,9 @@ async function removeGalleryItem(id) {
     const entries = await listGalleryEntries();
     renderGalleryGrid(entries.filter((e) => isValidGalleryEntry(e)));
     await refreshGalleryBadge();
-    showToast("已刪除");
+    showToast(t("gallery.deleted"));
   } catch {
-    showToast("刪除失敗，請再試");
+    showToast(t("gallery.deleteFailRetry"));
   }
 }
 
@@ -4864,7 +4795,7 @@ async function openGallery() {
     renderGalleryGrid(valid);
     showScreen("galleryScreen");
   } catch {
-    showToast("無法開啟藝廊（此裝置可能不支援本地儲存）");
+    showToast(t("gallery.storageFail"));
   }
 }
 
@@ -4905,7 +4836,7 @@ function exportSessions() {
   link.href = URL.createObjectURL(blob);
   link.click();
   URL.revokeObjectURL(link.href);
-  showToast("已匯出 session 數據");
+  showToast(t("gallery.exportDone"));
 }
 
 function initTeacherExport() {
@@ -4956,6 +4887,10 @@ function restartWelcomeEnterAnimation() {
 }
 
 // ===== INIT =====
+initI18n();
+initLangToggle(setLang);
+onLangChange(handleLanguageChange);
+refreshToolLabels();
 initColors();
 initSizes();
 initGallery();
