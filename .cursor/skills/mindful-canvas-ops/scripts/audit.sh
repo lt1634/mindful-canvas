@@ -22,12 +22,22 @@ for f in index.html manifest.json sw.js icon-192.png icon-512.png \
 done
 echo ""
 
-echo "## Code signals (index.html)"
-for pat in "checkSafety" "feedbackScreen" "exportSessions" "getDominantColor" \
-           "registerServiceWorker" "requestAnimationFrame" "OLLAMA_SCENE_MAP"; do
-  if grep -q "$pat" index.html 2>/dev/null; then echo "  OK   $pat"
+echo "## Code signals (modularized app)"
+for pat in "checkSafety" "exportSessions" "registerServiceWorker" "requestAnimationFrame"; do
+  if grep -q "$pat" js/app.js 2>/dev/null; then echo "  OK   $pat (js/app.js)"
   else echo "  MISS $pat"; fi
 done
+for pat in "checkSafety" "OLLAMA_SCENE_MAP" "isValidGalleryEntry"; do
+  if grep -q "$pat" src/logic.js 2>/dev/null; then echo "  OK   $pat (src/logic.js)"
+  else echo "  MISS $pat"; fi
+done
+if grep -q "feedbackScreen" index.html 2>/dev/null; then
+  echo "  OK   feedbackScreen (legacy)"
+else
+  echo "  OK   feedbackScreen removed (v2.4+)"
+fi
+if grep -q "gtag" index.html 2>/dev/null; then echo "  OK   GA4 gtag"
+else echo "  MISS GA4"; fi
 echo ""
 
 echo "## PLAN gaps (still marked 待)"

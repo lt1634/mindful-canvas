@@ -2,13 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   checkSafety,
   hexToRgb,
-  getDominantColor,
   getBreathValue,
   getBreathLineMultiplier,
-  getBrushSize,
   parseSessions,
   serializeSessions,
-  getInkStamp,
   DANGER_KEYWORDS,
   SAFETY_RESPONSE,
   OLLAMA_SCENE_MAP,
@@ -69,32 +66,6 @@ describe("hexToRgb", () => {
   });
 });
 
-// ===== getDominantColor =====
-
-describe("getDominantColor", () => {
-  it("returns fallback for empty history", () => {
-    expect(getDominantColor([])).toBe("#e2b55a");
-    expect(getDominantColor([], "#ff0000")).toBe("#ff0000");
-  });
-
-  it("returns the most used color", () => {
-    const history = [
-      { color: "#ff0000", eraser: false },
-      { color: "#ff0000", eraser: false },
-      { color: "#00ff00", eraser: false },
-    ];
-    expect(getDominantColor(history)).toBe("#ff0000");
-  });
-
-  it("ignores eraser strokes", () => {
-    const history = [
-      { color: "#ff0000", eraser: true },
-      { color: "#00ff00", eraser: false },
-    ];
-    expect(getDominantColor(history)).toBe("#00ff00");
-  });
-});
-
 // ===== getBreathValue =====
 
 describe("getBreathValue", () => {
@@ -133,23 +104,6 @@ describe("getBreathLineMultiplier", () => {
   });
 });
 
-// ===== getBrushSize =====
-
-describe("getBrushSize", () => {
-  it("returns base size for normal brush", () => {
-    expect(getBrushSize(false)).toBe(4);
-  });
-
-  it("returns multiplied size for eraser", () => {
-    expect(getBrushSize(true)).toBe(12);
-  });
-
-  it("respects custom parameters", () => {
-    expect(getBrushSize(false, 8, 2)).toBe(8);
-    expect(getBrushSize(true, 8, 2)).toBe(16);
-  });
-});
-
 // ===== parseSessions / serializeSessions =====
 
 describe("parseSessions", () => {
@@ -175,22 +129,6 @@ describe("serializeSessions", () => {
   it("serializes sessions to JSON", () => {
     const sessions = [{ id: 1 }];
     expect(serializeSessions(sessions)).toBe('[{"id":1}]');
-  });
-});
-
-// ===== getInkStamp =====
-
-describe("getInkStamp", () => {
-  it("returns stamp data with correct alpha", () => {
-    const stamp = getInkStamp("#ff0000", 4);
-    expect(stamp.color).toBe("#ff0000");
-    expect(stamp.brushSize).toBe(4);
-    expect(stamp.alpha).toBeCloseTo(0.68, 2);
-  });
-
-  it("caps alpha at 1", () => {
-    const stamp = getInkStamp("#ff0000", 50);
-    expect(stamp.alpha).toBe(1);
   });
 });
 

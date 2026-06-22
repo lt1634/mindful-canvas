@@ -67,7 +67,7 @@ Agent 會：
 ```
 tests/
 ├── unit/
-│   └── logic.test.js      # 純邏輯函數測試（29 tests）
+│   └── logic.test.js      # 純邏輯函數測試（21 tests）
 └── e2e/
     └── app.spec.js         # 瀏覽器端到端測試（6 tests × 2 viewports）
 ```

@@ -161,30 +161,6 @@ export function hexToRgb(hex) {
   };
 }
 
-/**
- * Get the dominant color from stroke history
- * @param {Array} strokeHistory - Array of stroke objects with .color and .eraser properties
- * @param {string} fallbackColor - Fallback color if no strokes
- * @returns {string} Hex color
- */
-export function getDominantColor(strokeHistory, fallbackColor = "#e2b55a") {
-  const painted = strokeHistory.filter((s) => !s.eraser);
-  if (!painted.length) return fallbackColor;
-  const counts = {};
-  painted.forEach((s) => {
-    counts[s.color] = (counts[s.color] || 0) + 1;
-  });
-  let max = 0;
-  let dominant = fallbackColor;
-  for (const [hex, n] of Object.entries(counts)) {
-    if (n > max) {
-      max = n;
-      dominant = hex;
-    }
-  }
-  return dominant;
-}
-
 // ===== BREATH =====
 
 /**
@@ -206,19 +182,6 @@ export function getBreathValue(ts, cycleMs = BREATH_CYCLE_MS) {
 export function getBreathLineMultiplier(ts, cycleMs = BREATH_CYCLE_MS) {
   const b = getBreathValue(ts, cycleMs);
   return 1 + 0.3 * (b - 0.5);
-}
-
-// ===== BRUSH =====
-
-/**
- * Calculate brush size based on eraser mode
- * @param {boolean} isEraser - Whether eraser is active
- * @param {number} baseSize - Base brush size
- * @param {number} eraserMultiplier - Eraser size multiplier
- * @returns {number} Brush size
- */
-export function getBrushSize(isEraser, baseSize = 4, eraserMultiplier = 3) {
-  return isEraser ? baseSize * eraserMultiplier : baseSize;
 }
 
 // ===== STORAGE =====
@@ -244,17 +207,4 @@ export function parseSessions(json) {
  */
 export function serializeSessions(sessions) {
   return JSON.stringify(sessions);
-}
-
-// ===== INK STAMP =====
-
-/**
- * Create ink stamp pattern data
- * @param {string} color - Hex color
- * @param {number} brushSize - Brush size
- * @returns {object} Stamp data with color, brushSize, alpha
- */
-export function getInkStamp(color, brushSize) {
-  const alpha = Math.min(0.6 + brushSize * 0.02, 1);
-  return { color, brushSize, alpha };
 }

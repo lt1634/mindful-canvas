@@ -14,7 +14,7 @@ test.describe("Mindful Canvas", () => {
         });
       }
     });
-    await page.goto(`/?v=zen-v45&_=${Date.now()}`);
+    await page.goto(`/?v=zen-v46&_=${Date.now()}`);
     await page.waitForFunction(() => typeof window.openZenPicker === "function");
   });
 

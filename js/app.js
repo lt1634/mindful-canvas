@@ -9,13 +9,13 @@ import {
   checkSafety,
   isValidGalleryEntry,
   ZEN_TRACE_COLORS,
-} from "../src/logic.js?v=zen-v45";
+} from "../src/logic.js?v=zen-v46";
 import {
   addGalleryEntry,
   listGalleryEntries,
   deleteGalleryEntry,
   dataUrlToThumbnailBlob,
-} from "./gallery.js?v=zen-v45";
+} from "./gallery.js?v=zen-v46";
 
 const ERASER_PREVIEW_FILL = "rgba(110, 200, 255, 0.32)";
 const ERASER_PREVIEW_STROKE = "rgba(130, 210, 255, 1)";

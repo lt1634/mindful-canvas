@@ -10,8 +10,8 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
-    <link rel="stylesheet" href="css/style.css?v=zen-v38" />
-    <!-- Google Analytics 4 -->
+    <link rel="stylesheet" href="css/style.css?v=zen-v46" />
+    <!-- Google Analytics 4 — 匿名使用統計（canvas_open / card_save / card_share） -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7L9EHZLW7D"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -20,12 +20,6 @@
       }
       gtag("js", new Date());
       gtag("config", "G-7L9EHZLW7D");
-      // Debug: print events to console (remove after verification)
-      const _origGtag = gtag;
-      window.gtag = function () {
-        console.log("[GA4]", ...arguments);
-        _origGtag.apply(this, arguments);
-      };
     </script>
   </head>
   <body>
@@ -393,20 +387,21 @@
           </p>
           <p style="margin-bottom: 12px">
             <strong style="color: var(--text)">5. 隱私</strong
-            ><br />本應用完全在你的設備上運行，不收集任何個人資料。匿名 session 數據存於
-            localStorage；心靈藝廊縮圖存於 IndexedDB（最近 10 次），皆不上傳。
+            ><br />創作內容與心靈藝廊縮圖僅存於你裝置（localStorage /
+            IndexedDB），不上傳。本應用使用 Google Analytics
+            收集匿名使用統計（例如開啟畫布、儲存卡片），不含畫作或個人文字內容。
           </p>
           <p style="margin-bottom: 12px">
             <strong style="color: var(--text)">6. 品牌</strong><br />Mindful Canvas™ 與 覺知畫布™ 為
             ZenArt Lab 之商標。使用本工具即表示你同意以上條款。
           </p>
           <p style="margin-top: 24px; font-size: 11px; color: #555">
-            Mindful Canvas v2.4 · ZenArt Lab
+            Mindful Canvas v2.5.6 · ZenArt Lab
           </p>
         </div>
       </div>
     </div>
 
-    <script type="module" src="js/app.js?v=zen-v45"></script>
+    <script type="module" src="js/app.js?v=zen-v46"></script>
   </body>
 </html>

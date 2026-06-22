@@ -4,18 +4,18 @@
 
 ## A. 核心流程
 
-| ID  | 項目                          | 驗證方式                            |
-| --- | ----------------------------- | ----------------------------------- |
-| A1  | 雙模式（自由畫布 / 禪繞唐卡） | index.html welcome mode-cards       |
-| A2  | 畫布：8 色 + 4 筆刷           | COLORS / SIZES                      |
-| A3  | 無常淡化                      | rAF + fadePhase                     |
-| A4  | 語音                          | **已移除**（v2.0 產品決策）         |
-| A5  | 模板解讀 80 句                | generateInterpretation              |
-| A6  | Ollama 可選                   | generateInterpretationAI + fallback |
-| A7  | 心靈卡片 PNG 1080×1440        | saveCard                            |
-| A8  | 反饋問卷 3 題                 | #feedbackScreen                     |
-| A9  | 流程含 feedback               | card → feedback → home              |
-| A10 | 使用條款                      | #termsScreen                        |
+| ID  | 項目                          | 驗證方式                                      |
+| --- | ----------------------------- | --------------------------------------------- |
+| A1  | 雙模式（自由畫布 / 禪繞唐卡） | index.html welcome mode-cards                 |
+| A2  | 畫布：8 色 + 4 筆刷           | COLORS / SIZES                                |
+| A3  | 無常淡化                      | rAF + fadePhase                               |
+| A4  | 語音                          | **已移除**（v2.0 產品決策）                   |
+| A5  | 模板解讀 80 句                | generateInterpretation                        |
+| A6  | Ollama 可選                   | generateInterpretationAI + fallback           |
+| A7  | 心靈卡片 PNG 1080×1440        | saveCard                                      |
+| A8  | 反饋問卷 3 題                 | **已移除**（v2.4；session 仍寫 localStorage） |
+| A9  | 流程含 feedback               | **已改**：card → welcome（`finishFromCard`）  |
+| A10 | 使用條款                      | #termsScreen                                  |
 
 ## B. 安全與合規
 
@@ -28,12 +28,12 @@
 
 ## C. 數據與營運
 
-| ID  | 項目                                 | 驗證方式               |
-| --- | ------------------------------------ | ---------------------- |
-| C1  | localStorage mindful_canvas_sessions | saveSession            |
-| C2  | 教師匯出（長按 logo 3s）             | exportSessions         |
-| C3  | FEEDBACK.md 有真實條目               | 手動 / JSON 匯入       |
-| C4  | getDominantColor 用於解讀            | generateInterpretation |
+| ID  | 項目                                 | 驗證方式                           |
+| --- | ------------------------------------ | ---------------------------------- |
+| C1  | localStorage mindful_canvas_sessions | saveSession                        |
+| C2  | 教師匯出（長按 logo 3s）             | exportSessions                     |
+| C3  | FEEDBACK.md 有真實條目               | 手動 / JSON 匯入                   |
+| C4  | getDominantColor 用於解讀            | `js/app.js` generateInterpretation |
 
 ## D. PWA 與部署
 
