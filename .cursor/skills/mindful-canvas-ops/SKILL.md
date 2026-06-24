@@ -116,6 +116,8 @@ bash .cursor/skills/mindful-canvas-ops/scripts/audit.sh
 
 用戶要設 Cursor Automation 時，讀 [`automate` skill](file:///Users/newmac/.cursor/skills-cursor/automate/SKILL.md) 並用 plain language 起草。
 
+用戶打 `/goal` 或交模糊改動任務時，讀 [`.cursor/skills/goal/SKILL.md`](../goal/SKILL.md)（v2），並載入 [`REFERENCES/hermes/rubrics/`](../../../REFERENCES/hermes/rubrics/)。
+
 | 節奏       | 觸發                | Agent 做乜                                  |
 | ---------- | ------------------- | ------------------------------------------- |
 | 每日放學後 | cron 週一至五 17:00 | 跑本 Skill 精簡版 → 提醒 Tim 填「今日觀察」 |

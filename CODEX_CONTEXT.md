@@ -98,3 +98,11 @@ Key: `mindful_canvas_sessions`（JSON 陣列）
 - 路徑：`.cursor/skills/mindful-canvas-ops/SKILL.md`
 - 觸發：盤點、未做、更新、refine、research、automations、Hermes 交接
 - 機械檢查：`bash .cursor/skills/mindful-canvas-ops/scripts/audit.sh`
+
+## Hermes `/goal`（模糊任務 → 5 元素 + Rubric）
+
+- Skill：`.cursor/skills/goal/SKILL.md`（v2：Provenance gate、凍結區自動注入）
+- Rubric：`REFERENCES/hermes/rubrics/mindful-canvas.md`、`mindful-retention-rubric.md`（防 bait）
+- Parked ideas：`data/backlog/retention-ideas.md`
+- 範例：`REFERENCES/hermes/examples/goal-touch-latency.md`
+- 部署到 Hermes：`cp` 至 `~/NS/runtime/hermes/skills/goal/` 與 `data/rubrics/`

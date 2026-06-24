@@ -3947,6 +3947,9 @@ function showScreen(id) {
   document.getElementById(id).classList.add("active");
   if (id === "welcome") startWelcomeAmbient();
   else if (id !== "canvasScreen") stopWelcomeAmbient();
+  // Hide lang-toggle on canvas screen to avoid covering completeBtn
+  const langToggle = document.getElementById("langToggle");
+  if (langToggle) langToggle.style.display = id === "canvasScreen" ? "none" : "";
 }
 
 function showCardScreen() {
