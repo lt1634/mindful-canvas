@@ -79,6 +79,7 @@ export const en = {
   },
 
   canvas: {
+    ariaLabel: "Drawing canvas — release emotions with color",
     back: "← Back",
     complete: "Done →",
     titles: {

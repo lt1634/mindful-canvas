@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
-    <link rel="stylesheet" href="css/style.css?v=zen-v47" />
+    <link rel="stylesheet" href="css/style.css?v=zen-v49" />
     <!-- Google Analytics 4 — 匿名使用統計（canvas_open / card_save / card_share） -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7L9EHZLW7D"></script>
     <script>
@@ -248,7 +248,13 @@
         </button>
       </div>
       <div class="canvas-area">
-        <canvas id="drawCanvas"></canvas>
+        <canvas
+          id="drawCanvas"
+          role="img"
+          aria-label="繪畫畫布"
+          data-i18n="canvas.ariaLabel"
+          data-i18n-attr="aria-label"
+        ></canvas>
         <div class="zen-overlay" id="zenOverlay" style="display: none">
           <div class="zen-hint" id="zenHint" data-i18n="zenPicker.hint">
             跟住淺色線條，留下你的色彩痕跡
@@ -503,6 +509,6 @@
       </div>
     </div>
 
-    <script type="module" src="js/app.js?v=zen-v47"></script>
+    <script type="module" src="js/app.js?v=zen-v49"></script>
   </body>
 </html>

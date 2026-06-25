@@ -78,6 +78,7 @@ export const zh = {
   },
 
   canvas: {
+    ariaLabel: "繪畫畫布——用色彩釋放情緒",
     back: "← 返回",
     complete: "完成 →",
     titles: {

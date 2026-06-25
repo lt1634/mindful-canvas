@@ -8,13 +8,13 @@ import {
   checkSafety,
   isValidGalleryEntry,
   ZEN_TRACE_COLORS,
-} from "../src/logic.js?v=zen-v47";
+} from "../src/logic.js?v=zen-v49";
 import {
   addGalleryEntry,
   listGalleryEntries,
   deleteGalleryEntry,
   dataUrlToThumbnailBlob,
-} from "./gallery.js?v=zen-v47";
+} from "./gallery.js?v=zen-v49";
 import {
   t,
   getLang,
@@ -31,7 +31,7 @@ import {
   getAffirmations,
   getSceneGuidance,
   buildReflectionParts,
-} from "../src/i18n/index.js?v=zen-v47";
+} from "../src/i18n/index.js?v=zen-v49";
 
 const ERASER_PREVIEW_FILL = "rgba(110, 200, 255, 0.32)";
 const ERASER_PREVIEW_STROKE = "rgba(130, 210, 255, 1)";
@@ -62,6 +62,7 @@ let showZenTikseGrid = false;
 let zenFinished = false;
 let zenTouchCount = 0;
 let zenTouchStrokes = [];
+let zenTimerEl = null;
 let currentZenStrokeColor = "#f0c674";
 let zenRipples = [];
 let zenTraceLayer = null;
@@ -1740,7 +1741,7 @@ function drawWashiBackgroundCached(targetCtx) {
 
 function resizeCanvas() {
   const rect = canvas.parentElement.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
   canvasW = rect.width;
   canvasH = rect.height;
   canvas.width = canvasW * dpr;
@@ -1764,7 +1765,7 @@ function ensureFreeArtLayer() {
 
 function resizeFreeArtLayer() {
   const fac = ensureFreeArtLayer();
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
   freeArtLayer.width = canvasW * dpr;
   freeArtLayer.height = canvasH * dpr;
   fac.setTransform(1, 0, 0, 1, 0, 0);
@@ -1812,7 +1813,7 @@ function ensureZenTraceLayer() {
 function resizeZenTraceLayer() {
   const tctx = ensureZenTraceLayer();
   if (!tctx) return;
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
   zenTraceLayer.width = canvasW * dpr;
   zenTraceLayer.height = canvasH * dpr;
   tctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -2012,7 +2013,8 @@ function animateZenFrame() {
   const remain = Math.max(0, Math.ceil((zenDuration - elapsed) / 1000));
   const m = Math.floor(remain / 60);
   const s = remain % 60;
-  document.getElementById("zenTimer").textContent = m + ":" + String(s).padStart(2, "0");
+  if (!zenTimerEl) zenTimerEl = document.getElementById("zenTimer");
+  if (zenTimerEl) zenTimerEl.textContent = m + ":" + String(s).padStart(2, "0");
 
   if (zenStartTime && zenProgress >= 1 && !zenFinished) {
     // Auto-finish removed — user clicks 完成 manually
@@ -3437,7 +3439,7 @@ function renderPureArtwork(targetCtx, w, h) {
   }
 
   const ink = document.createElement("canvas");
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
   ink.width = Math.max(1, Math.round(w * dpr));
   ink.height = Math.max(1, Math.round(h * dpr));
   const ictx = ink.getContext("2d");
@@ -3464,7 +3466,7 @@ function renderPureArtwork(targetCtx, w, h) {
 
 function createArtworkDataURL() {
   const temp = document.createElement("canvas");
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
   temp.width = canvasW * dpr;
   temp.height = canvasH * dpr;
   const tctx = temp.getContext("2d");
@@ -4162,12 +4164,12 @@ function generateCard(force) {
 
   // Show loading
   document.getElementById("loading").classList.add("active");
-
-  lastArtworkDataUrl = createArtworkDataURL();
-  document.getElementById("cardImage").src = lastArtworkDataUrl;
-
   document.getElementById("loadingText").textContent = t("loading.generating");
   (async () => {
+    await new Promise((r) => requestAnimationFrame(r));
+    lastArtworkDataUrl = createArtworkDataURL();
+    document.getElementById("cardImage").src = lastArtworkDataUrl;
+
     const interpretation = await generateInterpretationAI();
 
     if (!interpretation.isSafe) {
@@ -4903,16 +4905,20 @@ registerServiceWorker();
 startWelcomeAmbient();
 refreshGalleryBadge();
 
+let resizeTimer = null;
 window.addEventListener("resize", () => {
-  if (document.getElementById("welcome").classList.contains("active")) {
-    resizeWelcomeAmbient();
-    drawFreePreview();
-    drawZenPreview();
-    drawSumiPreview();
-  }
-  if (document.getElementById("canvasScreen").classList.contains("active")) {
-    resizeCanvas();
-  }
+  if (resizeTimer) clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (document.getElementById("welcome").classList.contains("active")) {
+      resizeWelcomeAmbient();
+      drawFreePreview();
+      drawZenPreview();
+      drawSumiPreview();
+    }
+    if (document.getElementById("canvasScreen").classList.contains("active")) {
+      resizeCanvas();
+    }
+  }, 200);
 });
 
 // Expose onclick handlers for HTML (ES modules are scoped)

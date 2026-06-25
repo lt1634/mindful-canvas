@@ -24,3 +24,4 @@
 | v2.5.5 | 2026-06-20 | 墨流色盤 12 色全展開，移除「更多」收合；SW zen-v45                                                                                                                              |
 | v2.5.6 | 2026-06-22 | GA4 匿名事件追蹤；修 Hermes 精煉損壞的 logic.js；隱私條款對齊 GA4；移除 GA4 debug log 與 feedback 死 CSS；SW zen-v46                                                            |
 | v2.6.0 | 2026-06-22 | 中英文一鍵切換（全局 中/EN 掣）；題字／解讀／禪繞／藝廊 UI 雙語；切換語言重抽題字；localStorage 記住語言；SW zen-v47                                                            |
+| v2.6.1 | 2026-06-24 | Review 修復：canvas DPR cap、resize debounce、畫布 aria-label、artwork 非阻塞、zenTimer cache、gtag ESLint、zen-v49                                                             |
