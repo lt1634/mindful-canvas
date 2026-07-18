@@ -39,6 +39,11 @@ const ERASER_TRAIL_COLOR = "rgba(110, 200, 255, 0.78)";
 const ERASER_SIZE_MULTIPLIER = 2;
 const ERASER_MIN_SIZE = 8;
 
+// ===== APPLE DESIGN: Reduced motion detection =====
+// 來源：apple-design skill — 尊重用戶系統偏好
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const animationSpeedMultiplier = prefersReducedMotion ? 0.15 : 1; // 覺知畫布保留微動，但大幅減速
+
 let currentScene = "free";
 let currentColor = "#ddb565";
 let currentSize = 8;
@@ -1377,7 +1382,9 @@ function updateBreath(ts) {
   if (!breathLastTs) breathLastTs = ts;
   const dt = Math.min((ts - breathLastTs) / 1000, 0.1);
   breathLastTs = ts;
-  const raw = (Math.sin((2 * Math.PI * ts) / BREATH_CYCLE_MS) + 1) / 2;
+  // reduced-motion: 呼吸週期放慢 4 倍，保留微弱脈動但唔會令人不安
+  const breathCycle = prefersReducedMotion ? BREATH_CYCLE_MS * 4 : BREATH_CYCLE_MS;
+  const raw = (Math.sin((2 * Math.PI * ts) / breathCycle) + 1) / 2;
   const smooth = 1 - Math.exp(-dt / 0.12);
   breathSmoothed += (raw - breathSmoothed) * smooth;
 }
@@ -1942,7 +1949,7 @@ function paintEraserRangeIndicator() {
 }
 
 function animateFreeFrame() {
-  fadePhase += 0.05;
+  fadePhase += 0.05 * animationSpeedMultiplier; // reduced-motion: 大幅減速
   drawPaperBackground();
   drawBreathOverlay();
   const preview =
@@ -3708,7 +3715,7 @@ function drawWelcomeAmbient() {
     return;
   const w = welcomeAmbientCanvas.clientWidth;
   const h = welcomeAmbientCanvas.clientHeight;
-  welcomePhase += 0.007;
+  welcomePhase += 0.007 * animationSpeedMultiplier; // reduced-motion: 大幅減速
 
   welcomeAmbientCtx.fillStyle = "#0f1018";
   welcomeAmbientCtx.fillRect(0, 0, w, h);
@@ -3731,7 +3738,7 @@ function drawWelcomeAmbient() {
 
   while (welcomeInkDots.length < 14) welcomeInkDots.push(spawnInkDot(w, h));
   welcomeInkDots.forEach((dot, i) => {
-    dot.phase += dot.speed;
+    dot.phase += dot.speed * animationSpeedMultiplier; // reduced-motion: 大幅減速
     const life = (Math.sin(dot.phase) + 1) / 2;
     const r = dot.maxR * life;
     const alpha = life * (dot.gold ? 0.32 : 0.22);
@@ -3904,7 +3911,7 @@ function drawSumiPreview() {
 
 function animateModePreviews() {
   if (!document.getElementById("welcome").classList.contains("active")) return;
-  previewPhase += 0.025;
+  previewPhase += 0.025 * animationSpeedMultiplier; // reduced-motion: 大幅減速
   drawFreePreview();
   drawZenPreview();
   drawSumiPreview();

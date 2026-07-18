@@ -1424,3 +1424,64 @@ body {
   opacity: 0.55;
   cursor: wait;
 }
+
+/* ===== APPLE DESIGN: prefers-reduced-motion ===== */
+/* 來源：apple-design skill — 尊重用戶系統偏好 */
+@media (prefers-reduced-motion: reduce) {
+  /* 停止所有循環動畫 */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* 歡迎頁：即刻顯示，唔做 fade */
+  .welcome-enter {
+    opacity: 1;
+    animation: none;
+  }
+
+  /* 畫布入場：跳過漸亮，直接顯示 */
+  #canvasScreen.canvas-enter .canvas-area {
+    animation: none;
+    opacity: 1;
+    filter: brightness(1);
+  }
+  #canvasScreen.canvas-enter .canvas-header,
+  #canvasScreen.canvas-enter #freeModeUI,
+  #canvasScreen.canvas-enter .zen-overlay {
+    animation: none;
+    opacity: 1;
+  }
+
+  /* 按鈕壓感：保留 feedback，但唔做過渡 */
+  .showcase-card:active,
+  .btn-primary:active,
+  .color-swatch:active,
+  .tool-btn:active {
+    transform: scale(0.97);
+    transition: none;
+  }
+
+  /* 載入 spinner：停轉 */
+  .loading-spinner {
+    animation: none;
+  }
+}
+
+/* ===== APPLE DESIGN: Spring-like button feedback ===== */
+/* 來源：apple-design skill §1 Response — pointer-down 即時反饋 */
+.showcase-card,
+.btn-primary,
+.color-swatch,
+.tool-btn {
+  transition: transform 0.12s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.showcase-card:active,
+.btn-primary:active,
+.color-swatch:active,
+.tool-btn:active {
+  transform: scale(0.97);
+}
