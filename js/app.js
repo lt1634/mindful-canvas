@@ -1456,7 +1456,18 @@ let eraserHoverPos = null;
 // === Anti-mistouch: edge dead zone (palm rejection) ===
 const EDGE_MARGIN = 20; // px from each edge — touches here are ignored
 
-// === Line stabilization: smoothing buffer ===
+// === APPLE DESIGN: Rubber-banding (§9) + Velocity handoff (§5-6) ===
+// 來源：apple-design skill — 畫布邊緣阻力 + 筆觸動量傳遞
+const RUBBER_BAND_CONSTANT = 0.55; // 橡皮筋阻力係數（越大越硬）
+const VELOCITY_HISTORY_SIZE = 5; // 追蹤最近 N 個 pointer 位置計算速度
+const MOMENTUM_DECELERATION = 0.998; // 動量衰減率（exponential decay）
+const MOMENTUM_PROJECTION_MAX = 80; // 最大動量投射距離（px）
+
+// 速度追蹤
+let pointerHistory = []; // {x, y, t} 最近 N 個位置
+let lastReleaseVelocity = { x: 0, y: 0 }; // 釋放瞬間速度
+
+// Line stabilization: smoothing buffer
 const SMOOTH_WINDOW = 3; // number of points to average for smoothing
 let smoothBuffer = []; // ring buffer for current stroke
 
@@ -3352,13 +3363,64 @@ function stopCanvasLoop() {
   }
 }
 
+// === APPLE DESIGN: Rubber-banding function (§9) ===
+// 畫到邊緣唔係硬停，係 progressive resistance
+function rubberband(overshoot, dimension) {
+  return (
+    (overshoot * dimension * RUBBER_BAND_CONSTANT) /
+    (dimension + RUBBER_BAND_CONSTANT * Math.abs(overshoot))
+  );
+}
+
+// === APPLE DESIGN: Velocity tracking ===
+function trackPointerVelocity(x, y, t) {
+  pointerHistory.push({ x, y, t });
+  if (pointerHistory.length > VELOCITY_HISTORY_SIZE) pointerHistory.shift();
+}
+
+function getReleaseVelocity() {
+  if (pointerHistory.length < 2) return { x: 0, y: 0 };
+  const first = pointerHistory[0];
+  const last = pointerHistory[pointerHistory.length - 1];
+  const dt = (last.t - first.t) / 1000; // seconds
+  if (dt <= 0) return { x: 0, y: 0 };
+  return {
+    x: (last.x - first.x) / dt, // px/s
+    y: (last.y - first.y) / dt,
+  };
+}
+
 function getPointerPos(e) {
   const rect = canvas.getBoundingClientRect();
   let x = e.clientX - rect.left;
   let y = e.clientY - rect.top;
-  // Anti-mistouch: clamp to safe zone (ignore palm resting on edges)
-  x = Math.max(EDGE_MARGIN, Math.min(canvasW - EDGE_MARGIN, x));
-  y = Math.max(EDGE_MARGIN, Math.min(canvasH - EDGE_MARGIN, y));
+
+  // APPLE DESIGN: Rubber-banding — 超過邊緣時 progressive resistance
+  // 而唔係 hard clamp
+  const minX = EDGE_MARGIN;
+  const maxX = canvasW - EDGE_MARGIN;
+  const minY = EDGE_MARGIN;
+  const maxY = canvasH - EDGE_MARGIN;
+
+  if (x < minX) {
+    x = minX + rubberband(x - minX, maxX - minX);
+  } else if (x > maxX) {
+    x = maxX + rubberband(x - maxX, maxX - minX);
+  }
+
+  if (y < minY) {
+    y = minY + rubberband(y - minY, maxY - minY);
+  } else if (y > maxY) {
+    y = maxY + rubberband(y - maxY, maxY - minY);
+  }
+
+  // 追蹤速度（用原始位置，唔用 rubber-band 後嘅位置）
+  trackPointerVelocity(
+    e.clientX - rect.left,
+    e.clientY - rect.top,
+    e.timeStamp || performance.now()
+  );
+
   return { x, y };
 }
 
@@ -3488,6 +3550,7 @@ function beginStroke(e) {
   resumeAllAudio();
   drawing = true;
   smoothBuffer = []; // reset smoothing buffer for new stroke
+  pointerHistory = []; // 重置速度追蹤（Apple Design: velocity handoff）
   const pos = getPointerPos(e);
   const sPos = smoothPoint(pos);
   currentStroke = [{ x: sPos.x, y: sPos.y }];
@@ -3603,8 +3666,38 @@ function commitStroke() {
   }
   const minStrokePoints = isEraser ? 1 : 2;
   if (currentStroke.length >= minStrokePoints) {
+    // === APPLE DESIGN: Velocity handoff (§5-6) ===
+    // 拎起手指嗰一刻，筆觸繼續滑行一小段
+    let finalStroke = [...currentStroke];
+    if (!isEraser && currentStroke.length >= 2) {
+      const vel = getReleaseVelocity();
+      const speed = Math.hypot(vel.x, vel.y);
+      // 只有快速 flick 先投射（>200px/s），避免慢速繪圖時意外延伸
+      if (speed > 200) {
+        const last = currentStroke[currentStroke.length - 1];
+        const prev = currentStroke[currentStroke.length - 2];
+        // 投射方向 = 最後兩點方向 + 釋放速度
+        const dx = last.x - prev.x;
+        const dy = last.y - prev.y;
+        const segLen = Math.hypot(dx, dy);
+        if (segLen > 0) {
+          // 投射距離 = min(速度/10, 最大值)
+          const projectionDist = Math.min(speed / 10, MOMENTUM_PROJECTION_MAX);
+          const steps = Math.ceil(projectionDist / Math.max(segLen, 1));
+          for (let i = 1; i <= steps; i++) {
+            const progress = i / steps;
+            const decay = Math.pow(MOMENTUM_DECELERATION, i * 16); // ~16ms per frame
+            finalStroke.push({
+              x: last.x + (dx / segLen) * projectionDist * progress * decay,
+              y: last.y + (dy / segLen) * projectionDist * progress * decay,
+            });
+          }
+        }
+      }
+    }
+
     strokeHistory.push({
-      points: [...currentStroke],
+      points: finalStroke,
       color: currentColor,
       size: getBrushSize(isEraser),
       alpha: 1,
@@ -3614,6 +3707,7 @@ function commitStroke() {
   }
   currentStroke = [];
   strokeTrail.reset();
+  pointerHistory = []; // 重置速度追蹤
   updateUndoButton();
   const silenceDur = (Date.now() - silenceStart) / 1000;
   if (silenceDur > 3) totalSilence += silenceDur;
