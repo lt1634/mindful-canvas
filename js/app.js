@@ -4677,9 +4677,11 @@ function getGalleryModeLabel(entry) {
 }
 
 async function persistCardToGallery(affirmation) {
-  if (!lastArtworkDataUrl || lastArtworkDataUrl.length < 32) return;
+  // 先複製 dataUrl，避免 goHome() 清走 lastArtworkDataUrl 導致 race condition
+  const dataUrl = lastArtworkDataUrl;
+  if (!dataUrl || dataUrl.length < 32) return;
   try {
-    const thumb = await dataUrlToThumbnailBlob(lastArtworkDataUrl);
+    const thumb = await dataUrlToThumbnailBlob(dataUrl);
     if (!thumb || thumb.size === 0) return;
     await addGalleryEntry({
       createdAt: new Date().toISOString(),
