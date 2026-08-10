@@ -5211,8 +5211,7 @@ window.submitWelcomeFeedback = async function submitWelcomeFeedback() {
     return;
   }
 
-  const FEEDBACK_API =
-    "https://script.google.com/macros/s/AKfycbyl_kkcbcw1LO35KY5UWw6g_KFBa3hy--JHP6wwlVTKR5ORBNBWa8Rzecv0VgXacApvdg/exec";
+  const FEEDBACK_API = "https://mindful-canvas-nine.vercel.app/api/feedback";
 
   try {
     // Save to local IndexedDB

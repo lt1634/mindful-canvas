@@ -1,0 +1,8 @@
+name = "mindful-canvas-feedback"
+main = "worker/feedback-notify.js"
+compatibility_date = "2026-08-11"
+
+[vars]
+# TG_BOT_TOKEN and TG_CHAT_ID are set via secrets:
+# wrangler secret put TG_BOT_TOKEN
+# wrangler secret put TG_CHAT_ID
