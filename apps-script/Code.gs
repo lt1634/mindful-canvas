@@ -21,9 +21,9 @@ function doPost(e) {
       data.device || "",
     ]);
 
-    return ContentService.createTextOutput(
-      JSON.stringify({ status: "ok" })
-    ).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ status: "ok" })).setMimeType(
+      ContentService.MimeType.JSON
+    );
   } catch (err) {
     return ContentService.createTextOutput(
       JSON.stringify({ status: "error", message: err.message })
@@ -41,7 +41,7 @@ function doGet(e) {
     headers.forEach((h, i) => (obj[h] = row[i]));
     return obj;
   });
-  return ContentService.createTextOutput(
-    JSON.stringify(data)
-  ).setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(
+    ContentService.MimeType.JSON
+  );
 }
