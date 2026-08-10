@@ -5194,7 +5194,7 @@ window.deleteGalleryDetail = deleteGalleryDetail;
       }, 1500);
       if (tapCount >= 5) {
         tapCount = 0;
-        viewBtn.hidden = false;
+        viewBtn.classList.add("visible");
       }
     });
   }

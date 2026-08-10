@@ -1711,7 +1711,7 @@ body {
 
 /* Welcome Feedback View Link */
 .welcome-feedback-view {
-  display: block;
+  display: none;
   margin: 8px auto 0;
   background: none;
   border: none;
@@ -1720,6 +1720,9 @@ body {
   cursor: pointer;
   opacity: 0.6;
   transition: opacity 0.2s;
+}
+.welcome-feedback-view.visible {
+  display: block;
 }
 .welcome-feedback-view:hover {
   opacity: 1;
