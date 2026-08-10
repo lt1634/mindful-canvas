@@ -5179,6 +5179,25 @@ window.deleteGalleryDetail = deleteGalleryDetail;
       countEl.textContent = textarea.value.length;
     });
   }
+
+  // Hidden teacher gesture: tap logo 5× to reveal feedback list
+  const logo = document.getElementById("welcomeLogo");
+  const viewBtn = document.getElementById("feedbackViewBtn");
+  if (logo && viewBtn) {
+    let tapCount = 0;
+    let tapTimer = null;
+    logo.addEventListener("click", () => {
+      tapCount++;
+      clearTimeout(tapTimer);
+      tapTimer = setTimeout(() => {
+        tapCount = 0;
+      }, 1500);
+      if (tapCount >= 5) {
+        tapCount = 0;
+        viewBtn.hidden = false;
+      }
+    });
+  }
 })();
 
 window.submitWelcomeFeedback = async function submitWelcomeFeedback() {
