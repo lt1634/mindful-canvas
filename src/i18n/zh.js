@@ -21,6 +21,8 @@ export const zh = {
     recentAll: "查看全部 →",
     recentEmpty: "完成一次創作後，作品會出現在這裡",
     recentAria: "最近作品縮圖",
+    feedbackTitle: "意見回饋",
+    feedbackSub: "你的想法會幫助我們變得更好",
   },
 
   showcase: {

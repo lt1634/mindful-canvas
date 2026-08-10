@@ -165,7 +165,35 @@
           </p>
         </section>
 
-        <p class="welcome-footer welcome-enter welcome-stagger-4" data-i18n="welcome.footer">
+        <!-- Welcome Feedback -->
+        <section class="welcome-feedback welcome-enter welcome-stagger-4" id="welcomeFeedback">
+          <h3 class="welcome-feedback-title" data-i18n="welcome.feedbackTitle">意見回饋</h3>
+          <p class="welcome-feedback-sub" data-i18n="welcome.feedbackSub">
+            你的想法會幫助我們變得更好
+          </p>
+          <textarea
+            id="welcomeFeedbackComment"
+            class="welcome-feedback-textarea"
+            maxlength="200"
+            rows="3"
+            placeholder="可選：寫下你的想法（最多 200 字）"
+            data-i18n-placeholder="feedback.placeholder"
+          ></textarea>
+          <div class="welcome-feedback-footer">
+            <span class="welcome-feedback-count"><span id="welcomeFeedbackCount">0</span>/200</span>
+            <button
+              type="button"
+              class="btn-primary btn-sm"
+              id="welcomeFeedbackSubmit"
+              onclick="submitWelcomeFeedback()"
+              data-i18n="feedback.submit"
+            >
+              送出反饋
+            </button>
+          </div>
+        </section>
+
+        <p class="welcome-footer welcome-enter welcome-stagger-5" data-i18n="welcome.footer">
           用創作，照顧你的內心
         </p>
       </div>

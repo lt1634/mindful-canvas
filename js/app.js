@@ -5164,3 +5164,42 @@ window.openGallery = openGallery;
 window.closeGallery = closeGallery;
 window.closeGalleryDetail = closeGalleryDetail;
 window.deleteGalleryDetail = deleteGalleryDetail;
+
+// ===== WELCOME FEEDBACK =====
+(function initWelcomeFeedback() {
+  const textarea = document.getElementById("welcomeFeedbackComment");
+  const countEl = document.getElementById("welcomeFeedbackCount");
+  if (textarea && countEl) {
+    textarea.addEventListener("input", () => {
+      countEl.textContent = textarea.value.length;
+    });
+  }
+})();
+
+window.submitWelcomeFeedback = async function submitWelcomeFeedback() {
+  const textarea = document.getElementById("welcomeFeedbackComment");
+  const container = document.getElementById("welcomeFeedback");
+  if (!textarea || !container) return;
+
+  const comment = textarea.value.trim();
+  if (!comment) {
+    showToast("請先寫下你的想法", 3000);
+    return;
+  }
+
+  try {
+    await addFeedbackEntry({
+      mode: "welcome",
+      templateId: null,
+      rating: null,
+      comment,
+      duration: 0,
+      language: getLang(),
+    });
+    // Replace form with thank-you message
+    container.innerHTML = '<p class="welcome-feedback-done">感謝你的回饋 🙏</p>';
+  } catch (err) {
+    console.error("[Welcome Feedback] save failed:", err);
+    showToast("儲存失敗，請稍後再試", 3000);
+  }
+};

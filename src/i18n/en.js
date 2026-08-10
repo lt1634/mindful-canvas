@@ -21,6 +21,8 @@ export const en = {
     recentAll: "See all →",
     recentEmpty: "After you finish a piece, it will appear here",
     recentAria: "Recent work thumbnails",
+    feedbackTitle: "Feedback",
+    feedbackSub: "Your thoughts help us improve",
   },
 
   showcase: {
