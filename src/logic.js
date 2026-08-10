@@ -1,10 +1,12 @@
 /**
  * Mindful Canvas — Core Logic Module
  * Pure functions extracted for unit testing
+ * @module logic
  */
 
 // ===== CONSTANTS =====
 
+/** @type {string[]} List of danger keywords for safety detection */
 export const DANGER_KEYWORDS = [
   "想死",
   "自殺",
@@ -44,6 +46,7 @@ export const DANGER_KEYWORDS = [
   "end my life",
 ];
 
+/** @type {{ affirmation: string, reflection: string, isSafe: boolean }} */
 export const SAFETY_RESPONSE = {
   affirmation: "我聽到你了。你不是一個人。",
   reflection:
@@ -51,6 +54,7 @@ export const SAFETY_RESPONSE = {
   isSafe: false,
 };
 
+/** @type {Record<string, string>} Scene names for Ollama AI interpretation */
 export const OLLAMA_SCENE_MAP = {
   anxious: "焦慮、壓力、擔心",
   chaotic: "混亂、思緒紛飛、腦袋很亂",
@@ -96,8 +100,11 @@ export const GALLERY_MODE_LABELS = {
 
 /**
  * Validate a gallery IndexedDB entry before display or persistence
- * @param {object} entry
- * @returns {boolean}
+ * @param {Object} entry - Gallery entry object
+ * @param {string} entry.createdAt - ISO8601 date string
+ * @param {Blob} entry.thumb - Thumbnail blob
+ * @param {string} entry.mode - Drawing mode (free|zen|sumi)
+ * @returns {boolean} True if entry is valid
  */
 export function isValidGalleryEntry(entry) {
   return Boolean(
@@ -133,9 +140,9 @@ export function formatGalleryDate(iso, lang = "zh") {
 /**
  * Check if text contains danger keywords or high-stress indicators
  * @param {string} sceneText - The scene/mood text to check
- * @param {number} strokeCount - Number of strokes drawn
- * @param {number} totalSilence - Total silence duration
- * @returns {object|null} Safety response if danger detected, null otherwise
+ * @param {number} [strokeCount=0] - Number of strokes drawn
+ * @param {number} [totalSilence=Infinity] - Total silence duration in seconds
+ * @returns {{ affirmation: string, reflection: string, isSafe: boolean } | null} Safety response if danger detected, null otherwise
  */
 export function checkSafety(sceneText, strokeCount = 0, totalSilence = Infinity) {
   const allText = (sceneText || "").toLowerCase();
@@ -151,7 +158,7 @@ export function checkSafety(sceneText, strokeCount = 0, totalSilence = Infinity)
 /**
  * Convert hex color to RGB object
  * @param {string} hex - Hex color string (e.g., "#e2b55a")
- * @returns {{ r: number, g: number, b: number }}
+ * @returns {{ r: number, g: number, b: number }} RGB values (0-255)
  */
 export function hexToRgb(hex) {
   const h = hex.replace("#", "");
@@ -166,8 +173,8 @@ export function hexToRgb(hex) {
 
 /**
  * Calculate breath value (0-1) based on sine wave
- * @param {number} ts - Timestamp in ms
- * @param {number} cycleMs - Breath cycle duration in ms
+ * @param {number} ts - Timestamp in milliseconds
+ * @param {number} [cycleMs=8000] - Breath cycle duration in milliseconds
  * @returns {number} Breath value between 0 and 1
  */
 export function getBreathValue(ts, cycleMs = BREATH_CYCLE_MS) {

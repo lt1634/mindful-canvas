@@ -3,6 +3,11 @@ export const zh = {
     title: "Mindful Canvas 覺知畫布",
   },
 
+  accessibility: {
+    skipToContent: "跳到主要內容",
+    canvasAria: "繪畫畫布",
+  },
+
   lang: {
     toggleLabel: "切換語言",
   },
@@ -130,10 +135,23 @@ export const zh = {
     drawingAlt: "你的繪畫作品",
     terms: "使用條款",
     save: "儲存卡片",
+    feedback: "分享感受",
     home: "返回首頁",
     safetyHome: "返回首頁",
     shared: "已分享",
     saved: "卡片已儲存",
+  },
+
+  feedback: {
+    title: "分享你的感受",
+    subtitle: "你的反饋會幫助我們變得更好",
+    ratingGroup: "選擇評分",
+    placeholder: "可選：寫下你的想法（最多 200 字）",
+    skip: "跳過",
+    submit: "送出反饋",
+    thankYou: "感謝你的反饋！",
+    saved: "反饋已保存",
+    exportDone: "反饋已匯出",
   },
 
   loading: {

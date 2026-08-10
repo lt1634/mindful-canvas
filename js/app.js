@@ -15,6 +15,7 @@ import {
   deleteGalleryEntry,
   dataUrlToThumbnailBlob,
 } from "./gallery.js?v=zen-v49";
+import { addFeedbackEntry, exportFeedbackJSON } from "./feedback.js?v=zen-v49";
 import {
   t,
   getLang,
@@ -104,6 +105,10 @@ let sumiBgCache = null;
 let sumiUndoStack = [];
 let sumiWashing = false;
 let sumiWashFade = 1;
+
+// ===== FEEDBACK STATE =====
+let feedbackSelectedRating = null;
+let feedbackSessionStart = 0;
 
 const BREATH_CYCLE_MS = 8000;
 const TOOLS_IDLE_MS = 3000;
@@ -1407,7 +1412,9 @@ function syncBreathAudio() {
   const vol = player._baseGain * (1 + 0.08 * (breathSmoothed - 0.5));
   try {
     player._masterGain.gain.setTargetAtTime(vol, player.ctx.currentTime, 0.15);
-  } catch (e) {}
+  } catch (e) {
+    // Web Audio API gain control failed — non-critical, continue silently
+  }
 }
 
 function updateZenHintBreath() {
@@ -2947,7 +2954,9 @@ function setSumiFlowLevel(level) {
   sumiFlowLevel = Math.max(0, Math.min(SUMI_FLOW_PRESETS.length - 1, level));
   try {
     localStorage.setItem(SUMI_FLOW_STORAGE, String(sumiFlowLevel));
-  } catch (_) {}
+  } catch (e) {
+    // localStorage may be full or unavailable — non-critical preference
+  }
   updateSumiFlowUI();
 }
 
@@ -3278,7 +3287,9 @@ function playDrawSfx(isStart) {
     lastDrawSfx = now;
     if (appMode === "zen") playZenDrawSfx(!!isStart);
     else playFreeDrawSfx(!!isStart);
-  } catch (e) {}
+  } catch (e) {
+    // Draw sound effect failed — non-critical, continue silently
+  }
 }
 
 function fadeOutAndClose(player) {
@@ -3295,16 +3306,22 @@ function fadeOutAndClose(player) {
         player.el?.pause();
         if (player.el) player.el.src = "";
         player.ctx?.close();
-      } catch (e) {}
+      } catch (e) {
+        // Audio cleanup failed — non-critical, continue
+      }
     }, 1300);
-  } catch (e) {}
+  } catch (e) {
+    // Audio fade-out failed — non-critical, continue
+  }
 }
 
 function startZenAmbience() {
   stopZenAmbience();
   try {
     zenAudio = createSongAmbience("zen");
-  } catch (e) {}
+  } catch (e) {
+    console.warn("[MindfulCanvas] Zen ambience failed:", e);
+  }
 }
 
 function stopZenAmbience() {
@@ -3318,7 +3335,9 @@ function startFreeAmbience() {
   stopFreeAmbience();
   try {
     freeAudio = createSongAmbience("free");
-  } catch (e) {}
+  } catch (e) {
+    console.warn("[MindfulCanvas] Free ambience failed:", e);
+  }
 }
 
 function stopFreeAmbience() {
@@ -3717,7 +3736,9 @@ function releaseActivePointer() {
   if (activePointerId === null) return;
   try {
     canvas.releasePointerCapture(activePointerId);
-  } catch (err) {}
+  } catch (err) {
+    // Pointer capture release failed — non-critical, continue
+  }
   activePointerId = null;
 }
 
@@ -3731,7 +3752,9 @@ function onPointerDown(e) {
   activePointerId = e.pointerId;
   try {
     canvas.setPointerCapture(e.pointerId);
-  } catch (err) {}
+  } catch (err) {
+    // Pointer capture failed — non-critical on some browsers
+  }
   beginStroke(e);
 }
 
@@ -4532,7 +4555,9 @@ function saveCard() {
             if (typeof gtag === "function") gtag("event", "card_share");
             showToast(t("toast.shareDone"));
             return;
-          } catch (e) {}
+          } catch (e) {
+            // Share cancelled or failed — fall through to download
+          }
         }
       }
       const link = document.createElement("a");
@@ -4936,15 +4961,104 @@ function finishFromCard() {
   goHome();
 }
 
+// ===== FEEDBACK FUNCTIONS =====
+
+/**
+ * Show the feedback screen
+ */
+function showFeedback() {
+  feedbackSessionStart = Date.now();
+  feedbackSelectedRating = null;
+
+  // Reset UI
+  document.querySelectorAll(".feedback-emoji").forEach((btn) => {
+    btn.classList.remove("selected");
+  });
+  document.getElementById("feedbackComment").value = "";
+  document.getElementById("feedbackCharCount").textContent = "0";
+
+  showScreen("feedbackScreen");
+}
+
+/**
+ * Submit feedback to IndexedDB
+ */
+async function submitFeedback() {
+  const comment = document.getElementById("feedbackComment").value.trim();
+  const duration = Math.round((Date.now() - feedbackSessionStart) / 1000);
+
+  try {
+    await addFeedbackEntry({
+      mode: appMode,
+      templateId: appMode === "zen" ? zenTemplateId : null,
+      rating: feedbackSelectedRating,
+      comment: comment,
+      duration: duration,
+      language: getLang(),
+    });
+
+    showToast(t("feedback.thankYou"));
+    if (typeof gtag === "function") gtag("event", "feedback_submit");
+  } catch (e) {
+    console.warn("[MindfulCanvas] Feedback save failed:", e);
+  }
+
+  goHome();
+}
+
+/**
+ * Skip feedback and go home
+ */
+function skipFeedback() {
+  goHome();
+}
+
+/**
+ * Handle emoji rating selection
+ * @param {number} rating - 1-5 rating
+ */
+function selectFeedbackRating(rating) {
+  feedbackSelectedRating = rating;
+  document.querySelectorAll(".feedback-emoji").forEach((btn) => {
+    btn.classList.toggle("selected", Number(btn.dataset.rating) === rating);
+  });
+}
+
 function exportSessions() {
-  const data = JSON.stringify(getSessions(), null, 2);
+  const sessions = getSessions();
+  const data = JSON.stringify(sessions, null, 2);
   const blob = new Blob([data], { type: "application/json" });
   const link = document.createElement("a");
   link.download = "mindful-canvas-sessions.json";
   link.href = URL.createObjectURL(blob);
   link.click();
   URL.revokeObjectURL(link.href);
+
+  // Also export feedback data
+  exportFeedbackJSON().catch(() => {});
+
   showToast(t("gallery.exportDone"));
+}
+
+/**
+ * Initialize feedback screen event listeners
+ */
+function initFeedback() {
+  // Emoji rating buttons
+  document.querySelectorAll(".feedback-emoji").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectFeedbackRating(Number(btn.dataset.rating));
+    });
+  });
+
+  // Character count for textarea
+  const textarea = document.getElementById("feedbackComment");
+  const charCount = document.getElementById("feedbackCharCount");
+  if (textarea && charCount) {
+    textarea.addEventListener("input", () => {
+      charCount.textContent = textarea.value.length;
+    });
+  }
 }
 
 function initTeacherExport() {
@@ -5003,6 +5117,7 @@ initColors();
 initSizes();
 initGallery();
 initTeacherExport();
+initFeedback();
 initParticleToggle();
 registerServiceWorker();
 startWelcomeAmbient();
@@ -5031,6 +5146,9 @@ window.startFreeMode = startFreeMode;
 window.showScreen = showScreen;
 window.startZenMode = startZenMode;
 window.goHome = goHome;
+window.showFeedback = showFeedback;
+window.submitFeedback = submitFeedback;
+window.skipFeedback = skipFeedback;
 window.generateCard = generateCard;
 window.advanceZenStep = advanceZenStep;
 window.clearSumiCanvas = clearSumiCanvas;

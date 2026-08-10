@@ -3,6 +3,11 @@ export const en = {
     title: "Mindful Canvas",
   },
 
+  accessibility: {
+    skipToContent: "Skip to content",
+    canvasAria: "Drawing canvas",
+  },
+
   lang: {
     toggleLabel: "Switch language",
   },
@@ -131,10 +136,23 @@ export const en = {
     drawingAlt: "Your artwork",
     terms: "Terms of Use",
     save: "Save card",
+    feedback: "Share feedback",
     home: "Back to home",
     safetyHome: "Back to home",
     shared: "Shared",
     saved: "Card saved",
+  },
+
+  feedback: {
+    title: "Share Your Experience",
+    subtitle: "Your feedback helps us improve",
+    ratingGroup: "Select rating",
+    placeholder: "Optional: Share your thoughts (max 200 chars)",
+    skip: "Skip",
+    submit: "Submit Feedback",
+    thankYou: "Thank you for your feedback!",
+    saved: "Feedback saved",
+    exportDone: "Feedback exported",
   },
 
   loading: {

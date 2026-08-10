@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#1a1a2e" />
+    <meta name="description" content="用色彩釋放情緒，每一筆都會慢慢消失 — 中學生情緒出口 PWA" />
+    <meta name="robots" content="index, follow" />
     <title>Mindful Canvas 覺知畫布</title>
     <meta name="copyright" content="© 2026 Tim Yuen / ZenArt Lab. All rights reserved." />
     <link rel="manifest" href="manifest.json" />
@@ -23,6 +26,15 @@
     </script>
   </head>
   <body>
+    <!-- Skip link for keyboard navigation -->
+    <a
+      href="#welcomeContent"
+      class="skip-link"
+      data-i18n="accessibility.skipToContent"
+      data-i18n-text
+      >Skip to content</a
+    >
+
     <div
       id="langToggle"
       class="lang-toggle"
@@ -30,8 +42,8 @@
       data-i18n="lang.toggleLabel"
       data-i18n-attr="aria-label"
     >
-      <button type="button" class="lang-opt active" data-lang="zh">中</button>
-      <button type="button" class="lang-opt" data-lang="en">EN</button>
+      <button type="button" class="lang-opt active" data-lang="zh" aria-label="繁體中文">中</button>
+      <button type="button" class="lang-opt" data-lang="en" aria-label="English">EN</button>
     </div>
 
     <!-- WELCOME -->
@@ -467,8 +479,68 @@
             使用條款
           </button>
           <button class="btn-secondary" onclick="saveCard()" data-i18n="card.save">儲存卡片</button>
+          <button class="btn-secondary" onclick="showFeedback()" data-i18n="card.feedback">
+            分享感受
+          </button>
           <button class="btn-primary" onclick="finishFromCard()" data-i18n="card.home">
             返回首頁
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEEDBACK -->
+    <div id="feedbackScreen" class="screen">
+      <div class="feedback-container">
+        <h2 class="feedback-title" data-i18n="feedback.title">分享你的感受</h2>
+        <p class="feedback-subtitle" data-i18n="feedback.subtitle">你的反饋會幫助我們變得更好</p>
+
+        <!-- Emoji Rating -->
+        <div
+          class="feedback-rating"
+          id="feedbackRating"
+          role="radiogroup"
+          data-i18n="feedback.ratingGroup"
+          data-i18n-attr="aria-label"
+        >
+          <button type="button" class="feedback-emoji" data-rating="1" aria-label="很不滿意">
+            😞
+          </button>
+          <button type="button" class="feedback-emoji" data-rating="2" aria-label="不滿意">
+            😕
+          </button>
+          <button type="button" class="feedback-emoji" data-rating="3" aria-label="普通">😐</button>
+          <button type="button" class="feedback-emoji" data-rating="4" aria-label="滿意">😊</button>
+          <button type="button" class="feedback-emoji" data-rating="5" aria-label="非常滿意">
+            😍
+          </button>
+        </div>
+
+        <!-- Optional Comment -->
+        <textarea
+          id="feedbackComment"
+          class="feedback-textarea"
+          maxlength="200"
+          rows="3"
+          data-i18n-placeholder="feedback.placeholder"
+          placeholder="可選：寫下你的想法（最多 200 字）"
+        ></textarea>
+
+        <!-- Character Count -->
+        <div class="feedback-char-count"><span id="feedbackCharCount">0</span>/200</div>
+
+        <!-- Actions -->
+        <div class="feedback-actions">
+          <button type="button" class="btn-text" onclick="skipFeedback()" data-i18n="feedback.skip">
+            跳過
+          </button>
+          <button
+            type="button"
+            class="btn-primary"
+            onclick="submitFeedback()"
+            data-i18n="feedback.submit"
+          >
+            送出反饋
           </button>
         </div>
       </div>
