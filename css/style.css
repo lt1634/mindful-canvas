@@ -126,7 +126,8 @@ body {
   padding: 0;
   text-align: center;
   background: #0f1018;
-  overflow: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 #welcomeAmbient {
   position: absolute;
