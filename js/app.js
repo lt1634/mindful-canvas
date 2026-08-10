@@ -5227,7 +5227,6 @@ window.submitWelcomeFeedback = async function submitWelcomeFeedback() {
     // Send to Google Sheet (fire-and-forget, don't block UI)
     fetch(FEEDBACK_API, {
       method: "POST",
-      mode: "no-cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         time: new Date().toISOString(),
@@ -5236,7 +5235,7 @@ window.submitWelcomeFeedback = async function submitWelcomeFeedback() {
         device: navigator.userAgent,
       }),
     }).catch(() => {
-      /* sheet sync is best-effort */
+      /* notification is best-effort */
     });
 
     // Replace form with thank-you message

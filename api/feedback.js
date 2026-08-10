@@ -16,7 +16,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { time, mode, comment, device } = req.body;
+    // Parse body explicitly
+    let body = req.body;
+    if (!body || typeof body === "string") {
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      body = JSON.parse(Buffer.concat(chunks).toString());
+    }
+
+    const { time, mode, comment, device } = body;
 
     const modeLabel = {
       welcome: "意見回饋",
