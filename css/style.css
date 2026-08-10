@@ -149,8 +149,6 @@ body {
   margin: 0 auto;
   min-height: 100%;
   padding: 28px 18px 40px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 .welcome-hero {
   text-align: center;
