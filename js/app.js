@@ -5211,7 +5211,11 @@ window.submitWelcomeFeedback = async function submitWelcomeFeedback() {
     return;
   }
 
+  const FEEDBACK_API =
+    "https://script.google.com/macros/s/AKfycbyl_kkcbcw1LO35KY5UWw6g_KFBa3hy--JHP6wwlVTKR5ORBNBWa8Rzecv0VgXacApvdg/exec";
+
   try {
+    // Save to local IndexedDB
     await addFeedbackEntry({
       mode: "welcome",
       templateId: null,
@@ -5220,6 +5224,22 @@ window.submitWelcomeFeedback = async function submitWelcomeFeedback() {
       duration: 0,
       language: getLang(),
     });
+
+    // Send to Google Sheet (fire-and-forget, don't block UI)
+    fetch(FEEDBACK_API, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        time: new Date().toISOString(),
+        mode: "welcome",
+        comment,
+        device: navigator.userAgent,
+      }),
+    }).catch(() => {
+      /* sheet sync is best-effort */
+    });
+
     // Replace form with thank-you message
     container.innerHTML = '<p class="welcome-feedback-done">感謝你的回饋 🙏</p>';
   } catch (err) {
