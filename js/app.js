@@ -15,7 +15,12 @@ import {
   deleteGalleryEntry,
   dataUrlToThumbnailBlob,
 } from "./gallery.js?v=zen-v50";
-import { addFeedbackEntry, exportFeedbackJSON } from "./feedback.js?v=zen-v50";
+import {
+  addFeedbackEntry,
+  exportFeedbackJSON,
+  listFeedbackEntries,
+  getFeedbackCount,
+} from "./feedback.js?v=zen-v50";
 import {
   t,
   getLang,
@@ -5203,3 +5208,57 @@ window.submitWelcomeFeedback = async function submitWelcomeFeedback() {
     showToast("儲存失敗，請稍後再試", 3000);
   }
 };
+
+// ===== FEEDBACK LIST =====
+const MODE_LABELS = { free: "自由畫布", zen: "禪繞唐卡", sumi: "墨流畫布", welcome: "意見回饋" };
+
+window.openFeedbackList = async function openFeedbackList() {
+  showScreen("feedbackListScreen");
+  const entriesEl = document.getElementById("feedbackListEntries");
+  const countEl = document.getElementById("feedbackListCount");
+  const emptyEl = document.getElementById("feedbackListEmpty");
+
+  try {
+    const entries = await listFeedbackEntries();
+    const sorted = entries.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+
+    if (sorted.length === 0) {
+      entriesEl.innerHTML = "";
+      emptyEl.hidden = false;
+      countEl.textContent = "";
+      return;
+    }
+
+    emptyEl.hidden = true;
+    countEl.textContent = `共 ${sorted.length} 則回饋`;
+
+    entriesEl.innerHTML = sorted
+      .map((e) => {
+        const date = e.createdAt ? new Date(e.createdAt).toLocaleString("zh-Hant") : "";
+        const mode = MODE_LABELS[e.mode] || e.mode;
+        const comment = e.comment
+          ? `<div class="feedback-list-entry-comment">${escapeHtml(e.comment)}</div>`
+          : "";
+        const rating = e.rating ? " ".repeat(e.rating) : "";
+        return `<div class="feedback-list-entry">
+          <div class="feedback-list-entry-meta">${date} ${rating}</div>
+          ${comment}
+          <span class="feedback-list-entry-mode">${mode}</span>
+        </div>`;
+      })
+      .join("");
+  } catch (err) {
+    console.error("[Feedback List] load failed:", err);
+    showToast("載入失敗", 3000);
+  }
+};
+
+window.closeFeedbackList = function closeFeedbackList() {
+  showScreen("welcome");
+};
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}

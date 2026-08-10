@@ -1708,3 +1708,80 @@ body {
   padding: 12px 28px;
   font-size: 14px;
 }
+
+/* Welcome Feedback View Link */
+.welcome-feedback-view {
+  display: block;
+  margin: 8px auto 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.welcome-feedback-view:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
+/* Feedback List Screen */
+.feedback-list-inner {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 18px;
+}
+.feedback-list-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 16px 0 4px;
+}
+.feedback-list-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 16px;
+}
+.feedback-list-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.feedback-list-entry {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px;
+}
+.feedback-list-entry-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  opacity: 0.6;
+}
+.feedback-list-entry-comment {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.5;
+  word-break: break-word;
+}
+.feedback-list-entry-mode {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--accent);
+  background: rgba(240, 201, 110, 0.12);
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-top: 6px;
+}
+.feedback-list-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 32px 0;
+}
+.feedback-list-actions {
+  margin-top: 20px;
+  text-align: center;
+}

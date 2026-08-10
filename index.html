@@ -191,6 +191,9 @@
               送出反饋
             </button>
           </div>
+          <button type="button" class="welcome-feedback-view" onclick="openFeedbackList()">
+            查看回饋 →
+          </button>
         </section>
 
         <p class="welcome-footer welcome-enter welcome-stagger-5" data-i18n="welcome.footer">
@@ -569,6 +572,22 @@
             data-i18n="feedback.submit"
           >
             送出反饋
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEEDBACK LIST -->
+    <div id="feedbackListScreen" class="screen">
+      <div class="feedback-list-inner">
+        <button type="button" class="btn-text" onclick="closeFeedbackList()">← 返回</button>
+        <h2 class="feedback-list-title">回饋列表</h2>
+        <p class="feedback-list-sub" id="feedbackListCount"></p>
+        <div class="feedback-list-entries" id="feedbackListEntries"></div>
+        <p class="feedback-list-empty" id="feedbackListEmpty" hidden>還沒有回饋</p>
+        <div class="feedback-list-actions">
+          <button type="button" class="btn-secondary" onclick="exportFeedbackJSON()">
+            匯出 JSON
           </button>
         </div>
       </div>
