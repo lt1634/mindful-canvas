@@ -8,14 +8,14 @@ import {
   checkSafety,
   isValidGalleryEntry,
   ZEN_TRACE_COLORS,
-} from "../src/logic.js?v=zen-v49";
+} from "../src/logic.js?v=zen-v50";
 import {
   addGalleryEntry,
   listGalleryEntries,
   deleteGalleryEntry,
   dataUrlToThumbnailBlob,
-} from "./gallery.js?v=zen-v49";
-import { addFeedbackEntry, exportFeedbackJSON } from "./feedback.js?v=zen-v49";
+} from "./gallery.js?v=zen-v50";
+import { addFeedbackEntry, exportFeedbackJSON } from "./feedback.js?v=zen-v50";
 import {
   t,
   getLang,
@@ -32,7 +32,7 @@ import {
   getAffirmations,
   getSceneGuidance,
   buildReflectionParts,
-} from "../src/i18n/index.js?v=zen-v49";
+} from "../src/i18n/index.js?v=zen-v50";
 
 const ERASER_PREVIEW_FILL = "rgba(110, 200, 255, 0.32)";
 const ERASER_PREVIEW_STROKE = "rgba(130, 210, 255, 1)";

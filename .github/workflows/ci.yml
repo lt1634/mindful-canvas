@@ -71,7 +71,7 @@ jobs:
           cp index.html manifest.json sw.js icon-192.png icon-512.png audrey_k3_co_pilot_dashboard.html _site/
           cp -r assets/* _site/assets/
           cp css/style.css _site/css/
-          cp js/app.js js/gallery.js _site/js/
+          cp js/app.js js/gallery.js js/feedback.js _site/js/
           cp src/logic.js _site/src/
           cp -r src/i18n _site/src/
           cp Songs/*.mp3 _site/Songs/ 2>/dev/null || true
