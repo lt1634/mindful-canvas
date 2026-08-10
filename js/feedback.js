@@ -42,7 +42,9 @@ function openFeedbackDB() {
  */
 export function isValidFeedbackEntry(entry) {
   return Boolean(
-    entry && typeof entry.mode === "string" && ["free", "zen", "sumi"].includes(entry.mode)
+    entry &&
+    typeof entry.mode === "string" &&
+    ["free", "zen", "sumi", "welcome"].includes(entry.mode)
   );
 }
 
