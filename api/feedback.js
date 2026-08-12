@@ -33,13 +33,20 @@ export default async function handler(req, res) {
       sumi: "墨流畫布",
     };
 
+    // Escape HTML to prevent Telegram parse errors
+    const esc = (s) =>
+      String(s || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
     const msg = [
-      `🪷 *覺知畫布 — 新回饋*`,
+      `🪷 <b>覺知畫布 — 新回饋</b>`,
       ``,
-      `📋 模式：${modeLabel[mode] || mode}`,
-      `💬 留言：${comment || "(無)"}`,
-      `⏰ 時間：${new Date(time).toLocaleString("zh-Hant", { timeZone: "Asia/Hong_Kong" })}`,
-      `📱 裝置：${(device || "未知").substring(0, 60)}`,
+      `📋 模式：${esc(modeLabel[mode] || mode)}`,
+      `💬 留言：${esc(comment || "(無)")}`,
+      `⏰ 時間：${esc(new Date(time).toLocaleString("zh-Hant", { timeZone: "Asia/Hong_Kong" }))}`,
+      `📱 裝置：${esc((device || "未知").substring(0, 60))}`,
     ].join("\n");
 
     // Send to Telegram
@@ -51,7 +58,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           chat_id: process.env.TG_CHAT_ID,
           text: msg,
-          parse_mode: "Markdown",
+          parse_mode: "HTML",
         }),
       }
     );
