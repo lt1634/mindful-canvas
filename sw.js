@@ -4,7 +4,7 @@
  * @version 2.0.1
  */
 
-const CACHE_VERSION = "v2-zen-v50";
+const CACHE_VERSION = "v2-zen-v51";
 const CACHE_NAME = `mindful-canvas-${CACHE_VERSION}`;
 const OFFLINE_CACHE = "mindful-canvas-offline";
 
@@ -26,7 +26,7 @@ const PRECACHE = [
 ];
 
 // Assets to cache on first use (stale-while-revalidate)
-const STALE_WHILE_REVALIDATE = ["./Songs/"];
+const STALE_WHILE_REVALIDATE = ["/Songs/"];
 
 /**
  * Install event: Pre-cache critical resources

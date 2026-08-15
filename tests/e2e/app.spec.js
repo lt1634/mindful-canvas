@@ -14,7 +14,7 @@ test.describe("Mindful Canvas", () => {
         });
       }
     });
-    await page.goto(`/?v=zen-v50&_=${Date.now()}`);
+    await page.goto(`/?v=zen-v51&_=${Date.now()}`);
     await page.waitForFunction(() => typeof window.openZenPicker === "function");
   });
 
@@ -118,6 +118,21 @@ test.describe("Mindful Canvas", () => {
     await page.locator(".showcase-card.showcase-free").click();
     await expect(page.locator("#canvasTitle")).toHaveText("Free Canvas");
     await expect(page.locator("#completeBtn")).toHaveText("Done →");
+  });
+
+  test("saves welcome feedback locally without calling an unconfigured remote endpoint", async ({
+    page,
+  }) => {
+    const feedbackRequests = [];
+    page.on("request", (request) => {
+      if (request.url().includes("/api/feedback")) feedbackRequests.push(request.url());
+    });
+
+    await page.locator("#welcomeFeedbackComment").fill("測試回饋");
+    await page.locator("#welcomeFeedbackSubmit").click();
+
+    await expect(page.locator(".welcome-feedback-done")).toBeVisible();
+    expect(feedbackRequests).toHaveLength(0);
   });
 
   test("gallery delete removes saved entry", async ({ page }) => {

@@ -8,19 +8,19 @@ import {
   checkSafety,
   isValidGalleryEntry,
   ZEN_TRACE_COLORS,
-} from "../src/logic.js?v=zen-v50";
+} from "../src/logic.js?v=zen-v51";
 import {
   addGalleryEntry,
   listGalleryEntries,
   deleteGalleryEntry,
   dataUrlToThumbnailBlob,
-} from "./gallery.js?v=zen-v50";
+} from "./gallery.js?v=zen-v51";
 import {
   addFeedbackEntry,
   exportFeedbackJSON,
   listFeedbackEntries,
   getFeedbackCount,
-} from "./feedback.js?v=zen-v50";
+} from "./feedback.js?v=zen-v51";
 import {
   t,
   getLang,
@@ -37,7 +37,7 @@ import {
   getAffirmations,
   getSceneGuidance,
   buildReflectionParts,
-} from "../src/i18n/index.js?v=zen-v50";
+} from "../src/i18n/index.js?v=zen-v51";
 
 const ERASER_PREVIEW_FILL = "rgba(110, 200, 255, 0.32)";
 const ERASER_PREVIEW_STROKE = "rgba(130, 210, 255, 1)";
@@ -5200,6 +5200,21 @@ window.deleteGalleryDetail = deleteGalleryDetail;
   }
 })();
 
+function getWelcomeFeedbackApiUrl() {
+  const configured = document
+    .querySelector('meta[name="mindful-canvas-feedback-api"]')
+    ?.getAttribute("content")
+    ?.trim();
+  if (!configured) return null;
+
+  try {
+    const url = new URL(configured, window.location.href);
+    return url.protocol === "https:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 window.submitWelcomeFeedback = async function submitWelcomeFeedback() {
   const textarea = document.getElementById("welcomeFeedbackComment");
   const container = document.getElementById("welcomeFeedback");
@@ -5210,8 +5225,6 @@ window.submitWelcomeFeedback = async function submitWelcomeFeedback() {
     showToast("請先寫下你的想法", 3000);
     return;
   }
-
-  const FEEDBACK_API = "https://mindful-canvas-nine.vercel.app/api/feedback";
 
   try {
     // Save to local IndexedDB
@@ -5224,19 +5237,23 @@ window.submitWelcomeFeedback = async function submitWelcomeFeedback() {
       language: getLang(),
     });
 
-    // Send to Google Sheet (fire-and-forget, don't block UI)
-    fetch(FEEDBACK_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        time: new Date().toISOString(),
-        mode: "welcome",
-        comment,
-        device: navigator.userAgent,
-      }),
-    }).catch(() => {
-      /* notification is best-effort */
-    });
+    // Optional remote notification. GitHub Pages has no serverless endpoint,
+    // so it is sent only when a valid HTTPS endpoint is explicitly configured.
+    const feedbackApiUrl = getWelcomeFeedbackApiUrl();
+    if (feedbackApiUrl) {
+      fetch(feedbackApiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          time: new Date().toISOString(),
+          mode: "welcome",
+          comment,
+          device: navigator.userAgent,
+        }),
+      }).catch(() => {
+        /* notification is best-effort */
+      });
+    }
 
     // Replace form with thank-you message
     container.innerHTML = '<p class="welcome-feedback-done">感謝你的回饋 🙏</p>';
