@@ -1259,7 +1259,16 @@ function handleLanguageChange() {
   buildZenPickerCards();
   void renderWelcomeRecentStrip();
   const galleryScreen = document.getElementById("galleryScreen");
-  if (galleryScreen?.classList.contains("active")) void renderGallery();
+  if (galleryScreen?.classList.contains("active")) {
+    void (async () => {
+      try {
+        const entries = await listGalleryEntries();
+        renderGalleryGrid(entries.filter((e) => isValidGalleryEntry(e)));
+      } catch {
+        // Gallery 刷新失敗唔好阻住語言切換
+      }
+    })();
+  }
   rerollCardIfVisible();
   restoreCardUI(cardUIMode);
 }
@@ -2972,7 +2981,9 @@ function initSumiFlowCtrl() {
   try {
     const saved = localStorage.getItem(SUMI_FLOW_STORAGE);
     if (saved !== null) sumiFlowLevel = Math.max(0, Math.min(SUMI_FLOW_PRESETS.length - 1, +saved));
-  } catch (_) {}
+  } catch (_) {
+    // localStorage 唔可用（private mode）— 用預設值
+  }
   ctrl.querySelectorAll(".sumi-flow-btn").forEach((b, i) => {
     b.onclick = () => setSumiFlowLevel(i);
   });
@@ -3191,7 +3202,9 @@ function ensureSfxAudio() {
   if (!sfxAudio) {
     try {
       sfxAudio = new (window.AudioContext || window.webkitAudioContext)();
-    } catch (e) {}
+    } catch (e) {
+      // Web Audio 唔支援 — sfx 靜默降級
+    }
   }
   return sfxAudio;
 }

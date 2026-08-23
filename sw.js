@@ -4,7 +4,7 @@
  * @version 2.0.1
  */
 
-const CACHE_VERSION = "v2-zen-v51";
+const CACHE_VERSION = "v2-zen-v52";
 const CACHE_NAME = `mindful-canvas-${CACHE_VERSION}`;
 const OFFLINE_CACHE = "mindful-canvas-offline";
 
