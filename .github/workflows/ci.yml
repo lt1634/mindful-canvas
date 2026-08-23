@@ -68,7 +68,7 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir -p _site/css _site/js _site/src _site/src/i18n _site/Songs _site/assets
-          cp index.html manifest.json sw.js icon-192.png icon-512.png audrey_k3_co_pilot_dashboard.html _site/
+          cp index.html manifest.json sw.js icon-192.png icon-512.png _site/
           cp -r assets/* _site/assets/
           cp css/style.css _site/css/
           cp js/app.js js/gallery.js js/feedback.js _site/js/
